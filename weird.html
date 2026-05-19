@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Weird Card</title>
+<script>
+  const CARD_VARIANT_CONFIG = {
+    cssVars: {
+      "--card-bg-top": "#47255f",
+      "--card-bg-bottom": "#271437",
+      "--outer-border": "#180b22",
+      "--panel-bg": "linear-gradient(90deg, rgba(20,5,29,0.96) 0%, rgba(11,2,18,0.98) 100%)",
+      "--accent": "#c784ff",
+      "--text-main": "#fbf4ff",
+      "--text-muted": "rgba(248,236,255,0.2)",
+      "--frame-highlight": "rgba(249,239,255,0.92)"
+    },
+    value: "10",
+    suitLabel: "Weird suit",
+    domain: "Consolation",
+    title: "REVELATION",
+    lines: [
+      "Ask the GM one question. Answered honestly; clarity scales to relevance of question to the current challenge."
+    ],
+    suitSvgPath: "./weird.svg"
+  };
+</script>
+<link rel="stylesheet" href="./card_base.css" />
+</head>
+<body>
+  <div class="card-preview">
+    <div class="card" id="card-root">
+      <div class="card-header">
+        <div class="card-value" id="card-value"></div>
+        <div class="suit-icon" id="suit-icon" aria-label="Suit"></div>
+      </div>
+      <div class="text-panel">
+        <div class="domain-label" id="domain-label"></div>
+        <div class="divider"></div>
+        <div class="rules-text" id="rules-text"></div>
+      </div>
+    </div>
+  </div>
+  <script src="./card_renderer.js"></script>
+</body>
+</html>

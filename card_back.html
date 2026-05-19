@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trick Card Back</title>
+<link rel="stylesheet" href="./card_base.css" />
+</head>
+<body>
+  <div class="card-preview">
+    <div class="card card-back" aria-label="Trick card back">
+      <div class="card-back__frame"></div>
+      <div class="card-back__layout" aria-hidden="true">
+        <div class="card-back__icon card-back__icon--top"><img src="./strength.svg" alt="" /></div>
+        <div class="card-back__icon card-back__icon--right"><img src="./dexterity.svg" alt="" /></div>
+        <div class="card-back__icon card-back__icon--bottom"><img src="./intelligence.svg" alt="" /></div>
+        <div class="card-back__icon card-back__icon--left"><img src="./weird.svg" alt="" /></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("export") === "1") {
+      document.body.classList.add("export-page");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Attribute Card Template</title>
+<script>
+  const CARD_VARIANT_CONFIG = {
+    cssVars: {
+      "--card-bg-top": "#234f36",
+      "--card-bg-bottom": "#163524",
+      "--outer-border": "#091a11",
+      "--panel-bg": "linear-gradient(90deg, rgba(4,24,12,0.96) 0%, rgba(1,14,7,0.98) 100%)",
+      "--accent": "#6dff9c",
+      "--text-main": "#f4fff7",
+      "--text-muted": "rgba(255,255,255,0.22)",
+      "--frame-highlight": "rgba(240,255,245,0.92)"
+    },
+    value: "10",
+    suitLabel: "Dexterity suit",
+    domain: "Trick Loss Consolation",
+    title: "REPOSITION (DEX PLAYED):",
+    lines: [
+      "Override automated rule; choose the open hand's next valid play."
+    ],
+    suitSvgPath: "./dexterity.svg"
+  };
+</script>
+<link rel="stylesheet" href="./card_base.css" />
+</head>
+<body>
+  <div class="card-preview">
+    <div class="card" id="card-root">
+      <div class="card-header">
+        <div class="card-value" id="card-value"></div>
+        <div class="suit-icon" id="suit-icon" aria-label="Suit"></div>
+      </div>
+      <div class="text-panel">
+        <div class="domain-label" id="domain-label"></div>
+        <div class="divider"></div>
+        <div class="rules-text" id="rules-text"></div>
+      </div>
+    </div>
+  </div>
+  <script src="./card_renderer.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stress Status Card</title>
+<script>
+  const CARD_VARIANT_CONFIG = {
+    cardClass: "status-card",
+    cssVars: {
+      "--card-bg-top": "#20364f",
+      "--card-bg-bottom": "#16263a",
+      "--outer-border": "#09131f",
+      "--panel-bg": "linear-gradient(90deg, rgba(3,15,29,0.96) 0%, rgba(0,9,18,0.98) 100%)",
+      "--accent": "#59afff",
+      "--text-main": "#f4f7fb",
+      "--text-muted": "rgba(255,255,255,0.22)",
+      "--frame-highlight": "rgba(240,245,250,0.92)",
+      "--inner-border": "rgba(240,245,250,0.14)"
+    },
+    value: "0",
+    suitLabel: "Stress status symbol",
+    domain: "Status",
+    title: "STRESS",
+    lines: [
+      "Duplicates a copy to discard when drawn."
+    ],
+    suitSvgPath: "./intelligence.svg"
+  };
+</script>
+<link rel="stylesheet" href="./card_base.css" />
+</head>
+<body>
+  <div class="card-preview">
+    <div class="card" id="card-root">
+      <div class="card-header">
+        <div class="card-value" id="card-value"></div>
+        <div class="suit-icon" id="suit-icon" aria-label="Suit"></div>
+      </div>
+      <div class="text-panel">
+        <div class="domain-label" id="domain-label"></div>
+        <div class="divider"></div>
+        <div class="rules-text" id="rules-text"></div>
+      </div>
+    </div>
+  </div>
+  <script src="./card_renderer.js"></script>
+</body>
+</html>

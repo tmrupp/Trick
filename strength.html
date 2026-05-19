@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Strength Card</title>
+<script>
+  const CARD_VARIANT_CONFIG = {
+    cssVars: {
+      "--card-bg-top": "#5d231f",
+      "--card-bg-bottom": "#351513",
+      "--outer-border": "#220c0a",
+      "--panel-bg": "linear-gradient(90deg, rgba(32,7,4,0.96) 0%, rgba(20,4,2,0.98) 100%)",
+      "--accent": "#ff7c6a",
+      "--text-main": "#fff5f2",
+      "--text-muted": "rgba(255,235,231,0.2)",
+      "--frame-highlight": "rgba(255,242,239,0.92)"
+    },
+    value: "10",
+    suitLabel: "Strength suit",
+    domain: "Consolation",
+    title: "BRACE",
+    lines: [
+      "Stage the lost card outside hand. Adds its value to your next played card regardless of suit. Discarded after use or end of challenge."
+    ],
+    suitSvgPath: "./strength.svg"
+  };
+</script>
+<link rel="stylesheet" href="./card_base.css" />
+</head>
+<body>
+  <div class="card-preview">
+    <div class="card" id="card-root">
+      <div class="card-header">
+        <div class="card-value" id="card-value"></div>
+        <div class="suit-icon" id="suit-icon" aria-label="Suit"></div>
+      </div>
+      <div class="text-panel">
+        <div class="domain-label" id="domain-label"></div>
+        <div class="divider"></div>
+        <div class="rules-text" id="rules-text"></div>
+      </div>
+    </div>
+  </div>
+  <script src="./card_renderer.js"></script>
+</body>
+</html>

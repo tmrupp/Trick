@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trick-Taking RPG System: Core Rules Reference</title>
+    <style>
+        :root {
+            --paper: #efe4cf;
+            --paper-shadow: #dcc9ab;
+            --ink: #2f2419;
+            --muted: #665746;
+            --pine: #40543e;
+            --clay: #8a4f37;
+            --gold: #a57c2f;
+            --line: rgba(47, 36, 25, 0.18);
+            --panel: rgba(255, 250, 240, 0.72);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top, rgba(255, 248, 233, 0.82), transparent 38%),
+                linear-gradient(180deg, #6e8362 0%, #4f6049 22%, #7a624b 22.5%, #664d39 100%);
+            min-height: 100vh;
+        }
+
+        .page {
+            width: min(1020px, calc(100% - 32px));
+            margin: 32px auto;
+            padding: 32px;
+            background: var(--paper);
+            border: 1px solid var(--paper-shadow);
+            box-shadow: 0 18px 50px rgba(26, 18, 12, 0.28);
+            position: relative;
+        }
+
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(101, 77, 51, 0.18);
+            pointer-events: none;
+        }
+
+        header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--pine);
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--clay);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: clamp(2.1rem, 4vw, 3.1rem);
+        }
+
+        h2 {
+            margin-bottom: 14px;
+            font-size: 1.4rem;
+            color: var(--pine);
+        }
+
+        h3 {
+            margin-bottom: 10px;
+            color: var(--clay);
+            font-size: 1.18rem;
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.65;
+            font-size: 1.03rem;
+        }
+
+        p + p {
+            margin-top: 12px;
+        }
+
+        .lede {
+            margin-top: 16px;
+            max-width: 48rem;
+            color: var(--muted);
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .spotlight {
+            padding: 20px;
+            background: #f7efdf;
+            border: 1px solid var(--line);
+            border-left: 6px solid var(--clay);
+        }
+
+        .card {
+            padding: 20px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--gold);
+        }
+
+        .card + .card {
+            margin-top: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .tag {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--line);
+            color: var(--pine);
+            background: rgba(255, 255, 255, 0.45);
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        ul {
+            margin: 12px 0 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+
+        li + li {
+            margin-top: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            background: rgba(255, 255, 255, 0.38);
+        }
+
+        th,
+        td {
+            border: 1px solid var(--line);
+            padding: 10px;
+            vertical-align: top;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        th {
+            background: rgba(64, 84, 62, 0.12);
+            color: var(--pine);
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: calc(100% - 20px);
+                margin: 10px auto;
+                padding: 20px;
+            }
+
+            th,
+            td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <p class="eyebrow">Core Rules Reference</p>
+            <h1>Trick-Taking RPG System</h1>
+            <p class="lede">A tabletop roleplaying game where character capability, hardship, and growth are expressed through the cards you hold.</p>
+        </header>
+
+        <section class="section spotlight">
+            <h2>1. Core Concept</h2>
+            <p>Challenges are resolved through trick-taking card play. Each player builds and maintains a personal deck representing their character's skills and capabilities. This deck is played against an open hand representing the world's opposition. The trump suit is determined by the type of check being made and is never fixed. Losing challenges leaves lasting marks on the player's deck in the form of status cards, and the composition of a deck changes over the course of a campaign.</p>
+        </section>
+
+        <section class="section">
+            <h2>1.1 Basic Structure</h2>
+            <div class="card">
+                <ul>
+                    <li>Hand size: 7 cards.</li>
+                    <li>Taking all 7 tricks is considered an incredibly difficult task.</li>
+                    <li>The open hand always plays the leftmost valid card and must follow the led suit.</li>
+                    <li>Trump is determined by the suit of the current check or challenge.</li>
+                    <li>Highest trump card wins the trick. If no trump is played, the highest card of any suit wins.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>1.2 The Four Suits</h2>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Suit</th>
+                            <th>Domain</th>
+                            <th>Status Card</th>
+                            <th>Trump When</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strength</td>
+                            <td>Physical force, endurance</td>
+                            <td>Injury</td>
+                            <td>Strength check</td>
+                        </tr>
+                        <tr>
+                            <td>Dexterity</td>
+                            <td>Agility, timing, precision</td>
+                            <td>Dazed</td>
+                            <td>Dexterity check</td>
+                        </tr>
+                        <tr>
+                            <td>Intelligence</td>
+                            <td>Knowledge, reasoning, recalculation</td>
+                            <td>Stress</td>
+                            <td>Intelligence check</td>
+                        </tr>
+                        <tr>
+                            <td>Weird</td>
+                            <td>Magic / the unknown (setting-dependent)</td>
+                            <td>Curse</td>
+                            <td>Weird check</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="muted">The Weird suit shifts with campaign setting: magic in fantasy, psychic phenomena in science fiction, the supernatural in horror, and so on.</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>2. Status Cards</h2>
+            <div class="card">
+                <p>Status cards enter a player's deck as a consequence of losing a challenge. They represent the physical, mental, and supernatural toll that failure takes on a character.</p>
+            </div>
+
+            <div class="card">
+                <h3>2.1 Universal Rules</h3>
+                <ul>
+                    <li>All status cards enter play via the player's discard pile, never directly into hand.</li>
+                    <li>All status cards have zero value. They can legally follow suit but can never win a trick.</li>
+                    <li>Each status card's suit is fixed by type regardless of which check caused it.</li>
+                    <li>On reshuffle, the player may remove exactly one status card of their choice from the discard before shuffling. Curse is not eligible for this removal.</li>
+                    <li>Curse can only be removed by fulfilling the GM-set condition.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>2.2 Reshuffle Timing</h3>
+                <p>When the player's deck is empty, the discard is shuffled into a new deck. Before shuffling, the player removes one eligible status card from the discard if able, checks for deck evolution triggers, then shuffles the remaining discard into the new deck.</p>
+            </div>
+
+            <div class="card">
+                <h3>2.3 Status Card Details</h3>
+                <h3>Injury (Strength-suited)</h3>
+                <ul>
+                    <li>Effect: Pure hand clog. No mechanical effect beyond occupying a hand slot.</li>
+                    <li>Death condition: The instant a fourth Injury card is drawn into hand, the character dies immediately.</li>
+                    <li>Survival event: If a player begins a challenge with 2 or more Injuries already in hand, a survival event triggers before the challenge begins.</li>
+                    <li>Removal: Rest between scenes, or one free removal at reshuffle.</li>
+                </ul>
+
+                <h3>Stress (Intelligence-suited)</h3>
+                <ul>
+                    <li>Effect: When a Stress card is drawn from the deck, it immediately places an identical copy of itself into the discard pile. The drawn Stress enters hand normally.</li>
+                    <li>Growth: Exponential. Every Stress card drawn guarantees another surfaces next cycle.</li>
+                    <li>Removal: Rest between scenes, or one free removal at reshuffle.</li>
+                </ul>
+
+                <h3>Dazed (Dexterity-suited)</h3>
+                <ul>
+                    <li>Effect: Must be played if it is a valid play in the current trick. It cannot be held back strategically.</li>
+                    <li>Removal on play: When a Dazed card is played it is permanently removed from the game rather than going to discard.</li>
+                    <li>Additional removal: Rest between scenes, or one free removal at reshuffle.</li>
+                </ul>
+
+                <h3>Curse (Weird-suited)</h3>
+                <ul>
+                    <li>Effect: Each Curse card carries a GM-written compulsion, a specific behavioral restriction tied to the fiction of the setting and situation.</li>
+                    <li>Breaking the compulsion: Consequences are at GM discretion but should tend toward adding another status card.</li>
+                    <li>Inert between draws: Curse does not duplicate or trigger additional effects when drawn.</li>
+                    <li>Removal: Only by fulfilling the GM-set condition. It cannot be removed by rest or reshuffle removal.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>2.4 Status Card Summary</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Suit</th>
+                            <th>Value</th>
+                            <th>Removal</th>
+                            <th>Special</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Injury</td>
+                            <td>Strength</td>
+                            <td>0</td>
+                            <td>Rest or 1 free on reshuffle</td>
+                            <td>Death when fourth Injury is drawn into hand. Two Injuries in hand at challenge start triggers a survival event.</td>
+                        </tr>
+                        <tr>
+                            <td>Stress</td>
+                            <td>Intelligence</td>
+                            <td>0</td>
+                            <td>Rest or 1 free on reshuffle</td>
+                            <td>Duplicates a copy to discard when drawn. Exponential growth.</td>
+                        </tr>
+                        <tr>
+                            <td>Dazed</td>
+                            <td>Dexterity</td>
+                            <td>0</td>
+                            <td>Rest, reshuffle, or play</td>
+                            <td>Must be played if valid. Permanently removed from game on play.</td>
+                        </tr>
+                        <tr>
+                            <td>Curse</td>
+                            <td>Weird</td>
+                            <td>0</td>
+                            <td>Fulfill GM condition only</td>
+                            <td>GM-written compulsion. Breaking it tends to add a status card. Cannot be rested away.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>3. Trick Loss Consolation Actions</h2>
+            <div class="card">
+                <p>When a player loses a trick, a consolation action is available based on the suit of the card the player played, not the suit of the winning card. All consolation actions are optional. They trigger on trick loss only, not on challenge loss.</p>
+                <p class="muted">Key principle: what you committed to determines your fallback. The card you played defines the consolation, regardless of what beat you.</p>
+            </div>
+
+            <div class="card">
+                <h3>3.1 Consolation Actions by Suit</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Suit</th>
+                            <th>Action</th>
+                            <th>Effect</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strength</td>
+                            <td>Brace</td>
+                            <td>Stage the lost card outside hand. Adds its value to your next played card regardless of suit. Discarded after use or end of challenge.</td>
+                        </tr>
+                        <tr>
+                            <td>Dexterity</td>
+                            <td>Reposition</td>
+                            <td>Choose which valid card the open hand plays next trick instead of the normal leftmost rule. No effect if only one valid play exists.</td>
+                        </tr>
+                        <tr>
+                            <td>Intelligence</td>
+                            <td>Recalculate</td>
+                            <td>Discard any one card from hand, including status cards, and draw one from the top of your deck.</td>
+                        </tr>
+                        <tr>
+                            <td>Weird</td>
+                            <td>Revelation</td>
+                            <td>Ask the GM one question, or the GM asks the player one question. It is answered honestly, with clarity scaled to relevance.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grid">
+                <article class="card">
+                    <h3>3.2 Brace - Additional Rules</h3>
+                    <ul>
+                        <li>Only one Strength card may be staged at a time.</li>
+                        <li>The staged card adds its full numeric value to the next play regardless of suit.</li>
+                        <li>The brace is discarded after use, or at the end of the challenge if unused.</li>
+                    </ul>
+                </article>
+
+                <article class="card">
+                    <h3>3.3 Reposition - Additional Rules</h3>
+                    <ul>
+                        <li>The chosen card must be a valid play and must legally follow suit under normal rules.</li>
+                        <li>If only one valid play exists for the open hand the consolation has no effect.</li>
+                        <li>The player has full information because the open hand is face-up.</li>
+                    </ul>
+                </article>
+            </div>
+
+            <div class="card">
+                <h3>3.4 Revelation - Additional Rules</h3>
+                <ul>
+                    <li>The GM must answer honestly.</li>
+                    <li>Clarity and detail scale to relevance. Questions directly about the immediate scene receive clear, useful answers.</li>
+                    <li>Questions reaching beyond the current challenge receive fragmentary, incomplete, or cryptic answers.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>4. Recovery</h2>
+            <div class="card">
+                <h3>4.1 Rest</h3>
+                <p>Rest is a narrative scene granted by the GM. During a rest scene a player may remove any number of status cards from their deck, including zero. Curse cards cannot be removed by rest regardless of any other rule.</p>
+                <p>Rest availability is at GM discretion and is a primary lever for controlling challenge difficulty. A campaign with frequent rest feels different from one where rest is scarce.</p>
+                <p class="muted">Strategic note for players: resting clears status cards but may reset deck evolution triggers. A player at 3 status cards of one suit may choose to rest selectively, keeping the evolution threshold active while reducing immediate danger.</p>
+            </div>
+
+            <div class="card">
+                <h3>4.2 Recovery Summary</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>What It Removes</th>
+                            <th>When Available</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Rest scene</td>
+                            <td>Any number of status cards, player's choice. Curse exempt.</td>
+                            <td>GM discretion</td>
+                            <td>Primary recovery mechanic. Can be withheld to increase difficulty.</td>
+                        </tr>
+                        <tr>
+                            <td>Reshuffle</td>
+                            <td>Exactly one status card, player's choice from discard. Curse is not eligible.</td>
+                            <td>Every reshuffle</td>
+                            <td>Occurs when deck empties.</td>
+                        </tr>
+                        <tr>
+                            <td>Dazed (play)</td>
+                            <td>That specific Dazed card only</td>
+                            <td>When Dazed is played</td>
+                            <td>Permanently removed from game, not just discarded.</td>
+                        </tr>
+                        <tr>
+                            <td>Curse</td>
+                            <td>That specific Curse card only</td>
+                            <td>When GM condition met</td>
+                            <td>Only method that removes Curse. GM sets condition at time of issue.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>5. Deck Construction</h2>
+            <div class="card">
+                <p>A player's deck is their character. The cards held at any moment reflect current physical, mental, and spiritual state. Decks are built at the start of a campaign through a point buy system, persist between sessions, and evolve through play.</p>
+            </div>
+
+            <div class="card">
+                <h3>5.1 Starting Deck - Point Buy</h3>
+                <ul>
+                    <li>Format: Point buy. Players spend a point budget to purchase cards freely from the full card pool.</li>
+                    <li>Finished deck size: Exactly 28 cards.</li>
+                    <li>Card values: 1 through 10 per suit. Each card costs points equal to its face value.</li>
+                    <li>No suit balance requirements. Players may buy any combination of suits freely.</li>
+                    <li>The point budget is set by the GM based on the desired power level of the campaign.</li>
+                </ul>
+                <p class="muted">Budget guidance: A budget of 140 points produces an average card value of 5 across 28 cards. Lower budgets skew low. Higher budgets allow meaningful high-card investment.</p>
+            </div>
+
+            <div class="card">
+                <h3>5.2 Point Buy Pool</h3>
+                <p>Players purchase from a full pool containing values 1-10 in all four suits. Every value in every suit is freely available. There are no scarcity limits.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Value</th>
+                            <th>Point Cost</th>
+                            <th>Total (x4 suits)</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>1</td><td>4</td><td>Cheapest, plentiful filler</td></tr>
+                        <tr><td>2</td><td>2</td><td>8</td><td></td></tr>
+                        <tr><td>3</td><td>3</td><td>12</td><td></td></tr>
+                        <tr><td>4</td><td>4</td><td>16</td><td></td></tr>
+                        <tr><td>5</td><td>5</td><td>20</td><td>Mid-range</td></tr>
+                        <tr><td>6</td><td>6</td><td>24</td><td></td></tr>
+                        <tr><td>7</td><td>7</td><td>28</td><td>Premium</td></tr>
+                        <tr><td>8</td><td>8</td><td>32</td><td></td></tr>
+                        <tr><td>9</td><td>9</td><td>36</td><td></td></tr>
+                        <tr><td>10</td><td>10</td><td>40</td><td>Most expensive, every copy is a real investment</td></tr>
+                    </tbody>
+                </table>
+                <p class="muted">Weighted costs by value tier are a planned future addition. For now all cards cost their face value in points.</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>6. Deck Evolution</h2>
+            <div class="card">
+                <p>The starting deck persists between sessions and evolves at reshuffle when status cards of the same suit accumulate. Evolution represents learning through a specific kind of hardship. The type of suffering shapes the nature of the growth.</p>
+                <p class="muted">Core rule: when a player has 3 or more status cards of the same suit in their deck at the time of reshuffle, that suit's evolution triggers. Each suit offers two options, Add or Remove, except Dexterity, which triggers both simultaneously.</p>
+            </div>
+
+            <div class="card">
+                <h3>6.1 The Universal Add Option</h3>
+                <ul>
+                    <li>Choose the matching suit's acquisition pile.</li>
+                    <li>Draw 3 cards from that pile.</li>
+                    <li>Keep 1 and return 2 to the pile.</li>
+                    <li>The acquisition pile renews to a full 1-10 and is reshuffled after each use.</li>
+                    <li>The suit is chosen after the threshold is confirmed but before drawing.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>6.2 Removal Options - Each Suit</h3>
+                <h3>Strength - Purge the Weak</h3>
+                <p>Remove the lowest value non-status card in the deck permanently. On a tie, the player chooses which is removed.</p>
+
+                <h3>Intelligence - Triage</h3>
+                <p>Remove any one non-status card from the deck freely, any suit, any value.</p>
+
+                <h3>Dexterity - Redirected</h3>
+                <p>Dazed cards are uniquely difficult to accumulate because they self-remove on play. Reaching three Dazed in the deck is rewarded: both the Add and Remove options trigger at the same time without requiring a choice. The Remove option matches Intelligence's power and lets the player remove any one non-status card freely.</p>
+
+                <h3>Weird - The Bargain</h3>
+                <p>The player removes one non-status card from their deck and places it into their discard. The GM then writes a single group compulsion on a new Curse card and places it into every other player's discard simultaneously. One condition, set by the GM, lifts the compulsion for all players at once when fulfilled.</p>
+                <p class="muted">Solo play: the destroyed card is gone and the GM introduces a Weird environmental compulsion on the location or situation until the next rest.</p>
+            </div>
+
+            <div class="card">
+                <h3>6.3 Evolution Summary</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Suit</th>
+                            <th>Trigger</th>
+                            <th>Add Option</th>
+                            <th>Remove Option</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strength</td>
+                            <td>3 Injuries in deck</td>
+                            <td>Draw 3 Strength from acquisition, keep 1</td>
+                            <td>Remove the lowest value non-status card in deck. On a tie, player chooses.</td>
+                        </tr>
+                        <tr>
+                            <td>Intelligence</td>
+                            <td>3 Stress in deck</td>
+                            <td>Draw 3 Intelligence from acquisition, keep 1</td>
+                            <td>Remove any one non-status card freely.</td>
+                        </tr>
+                        <tr>
+                            <td>Dexterity</td>
+                            <td>3 Dazed in deck</td>
+                            <td>Draw 3 Dexterity from acquisition, keep 1</td>
+                            <td>Both options trigger simultaneously. Add and remove, then remove any one non-status card freely.</td>
+                        </tr>
+                        <tr>
+                            <td>Weird</td>
+                            <td>3 Curses in deck</td>
+                            <td>Draw 3 Weird from acquisition, keep 1</td>
+                            <td>Destroy one non-status card permanently. GM writes a group compulsion into all other players' discards.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>6.4 Evolution Rules</h3>
+                <ul>
+                    <li>Timing: Evolution triggers at reshuffle, after the one free status removal but before shuffling. A player could use the free removal to drop below the threshold and prevent evolution from firing.</li>
+                    <li>Multiple suits: Each suit tracks independently. A player may trigger multiple evolutions at a single reshuffle if they hold 3 or more of multiple suit statuses.</li>
+                    <li>Repeat triggers: The threshold resets after firing. Accumulate three more of the same suit and it fires again.</li>
+                    <li>Status cards never count as the removed card. Removal always targets real cards.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>7. The Survival Event</h2>
+            <div class="card">
+                <p>When a player begins a challenge already holding 2 or more Injury cards in hand, the weight of accumulated damage demands acknowledgment before play continues. The original challenge pauses and a survival event fires.</p>
+            </div>
+
+            <div class="card">
+                <h3>7.1 Trigger Condition</h3>
+                <p>A player starts a challenge, before any cards are played, with 2 or more Injury cards already in their current hand. The challenge pauses immediately.</p>
+            </div>
+
+            <div class="card">
+                <h3>7.2 Event Sequence</h3>
+                <ul>
+                    <li>Step 1: The original challenge pauses before any cards are played.</li>
+                    <li>Step 2: The GM counts all status cards in the player's discard and announces the survival check threshold publicly.</li>
+                    <li>Step 3: One other player, and only one, may choose to lend a hand by giving one card from their hand to the injured player.</li>
+                    <li>Step 4: The injured player runs a full challenge of the same suit as the paused original challenge, at the announced threshold.</li>
+                    <li>Step 5: Normal trick loss consolation actions apply during the survival check.</li>
+                    <li>Step 6, success: The survival check resolves. The player draws back up to a full hand of 7 cards. The original challenge then proceeds immediately.</li>
+                    <li>Step 7, failure: The character dies instantly. The original challenge does not proceed.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>7.3 Survival Threshold</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status Cards in Discard</th>
+                            <th>Tricks Required to Survive</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>0-1</td><td>1 trick, floor and always fires</td></tr>
+                        <tr><td>2</td><td>2 tricks</td></tr>
+                        <tr><td>3</td><td>3 tricks</td></tr>
+                        <tr><td>4</td><td>4 tricks</td></tr>
+                        <tr><td>5</td><td>5 tricks</td></tr>
+                        <tr><td>6</td><td>6 tricks</td></tr>
+                        <tr><td>7+</td><td>7 tricks, legendary ceiling</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>7.4 Lending a Hand - Additional Rules</h3>
+                <ul>
+                    <li>Exactly one player may lend a hand per survival event.</li>
+                    <li>The threshold is announced before the lending decision. Helpers have full information.</li>
+                    <li>The helper selects one card from their hand and gives it to the injured player. This is also the card they discard as the cost.</li>
+                    <li>On success, the lent card returns to the helper's discard pile. On failure, the character dies and the lent card is removed from the helper's deck entirely.</li>
+                    <li>The lent card participates in the survival check only. The original challenge proceeds with whatever hand the injured player holds after drawing back up to 7.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>7.5 Design Note</h3>
+                <p>A character with a clean discard faces only a 1-trick survival check, manageable even while wounded. A character who has been grinding forward without rest may face a legendary 7-trick check for their life. The event scales with the entire history of accumulated damage, not just the current hand. Rest is the only way to reduce the threshold over time.</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>8. Challenge Structure</h2>
+            <div class="grid">
+                <article class="card">
+                    <h3>8.1 Framing a Challenge</h3>
+                    <ul>
+                        <li>Check type: Player suggested, GM declared.</li>
+                        <li>Trump suit: Determined by the declared check type for the duration of the challenge.</li>
+                        <li>Threshold: Declared publicly by the GM before play begins.</li>
+                        <li>Outcome: Binary. Meet or exceed the threshold to succeed, fall short to fail.</li>
+                        <li>Failure consequence: Losing a challenge adds the appropriate status card to the player's discard.</li>
+                    </ul>
+                </article>
+
+                <article class="card">
+                    <h3>8.2 The Open Hand</h3>
+                    <ul>
+                        <li>7 cards drawn randomly from a 40-card challenge deck with one each of values 1-10 in all four suits.</li>
+                        <li>Reshuffled fresh at the start of each challenge.</li>
+                        <li>Always plays the leftmost valid card and must follow the led suit.</li>
+                        <li>The open hand is face-up. Players have full information about what remains.</li>
+                    </ul>
+                </article>
+            </div>
+
+            <div class="card">
+                <h3>8.3 Challenge Difficulty Guidelines</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tricks</th>
+                            <th>Difficulty</th>
+                            <th>Examples</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>Trivial</td><td>Recalling basic knowledge, noticing something obvious. Consider skipping the check if failure has no interesting consequence.</td></tr>
+                        <tr><td>2</td><td>Easy</td><td>Picking a simple lock, jumping a small gap, persuading a friendly NPC.</td></tr>
+                        <tr><td>3</td><td>Routine</td><td>Tracking in good conditions, climbing a wall with handholds, deciphering a simple code.</td></tr>
+                        <tr><td>4</td><td>Moderate</td><td>Combat against a skilled opponent, navigating a dangerous environment, negotiating under pressure.</td></tr>
+                        <tr><td>5</td><td>Hard</td><td>Fighting multiple opponents, performing complex surgery, breaking a powerful enchantment.</td></tr>
+                        <tr><td>6</td><td>Severe</td><td>Scaling a sheer cliff in a storm, outsmarting a master tactician, resisting a powerful curse.</td></tr>
+                        <tr><td>7</td><td>Legendary</td><td>Climactic confrontations, feats of heroism that define a campaign. Use sparingly and deliberately.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>8.4 GM Guidance</h3>
+                <ul>
+                    <li>Announce the threshold before play begins. Players make meaningful card decisions when they know what they are fighting for.</li>
+                    <li>Consider the fictional stakes first. Let the narrative suggest the difficulty before reaching for a number.</li>
+                    <li>Status cards shift effective difficulty. Account for visible status card load when setting thresholds, or do not, and let the pressure speak for itself.</li>
+                    <li>Trivial checks should often be skipped entirely. The card system is most powerful when failure is interesting.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>9. Design Pillars</h2>
+            <div class="grid">
+                <article class="card">
+                    <h3>The Hand Is the Character</h3>
+                    <p>What you are holding at any moment reflects your current physical, mental, and spiritual state. Status cards do not just punish. They tell the story of what has been done to you.</p>
+                </article>
+                <article class="card">
+                    <h3>Losing Is Meaningful</h3>
+                    <p>Trick loss consolation actions ensure that no individual trick loss is purely negative. Every failure opens a specific door shaped by the nature of the attempt.</p>
+                </article>
+                <article class="card">
+                    <h3>The Reshuffle Is a Reckoning</h3>
+                    <p>As the deck thins, players feel the weight of accumulated status cards approaching. The reshuffle is simultaneously a threat and a relief. The one free removal before the shuffle is a small mercy in a system that does not offer many.</p>
+                </article>
+                <article class="card">
+                    <h3>Suffering Teaches</h3>
+                    <p>Deck evolution triggers only through suit-specific status card accumulation. The type of hardship shapes the nature of growth. A pristine deck never evolves.</p>
+                </article>
+                <article class="card">
+                    <h3>Weird Is Different</h3>
+                    <p>The Weird suit operates on different rules across every system. Its status cannot be rested away, its consolation is informational rather than mechanical, and its evolution removal spreads cost across the table. It should always feel like a different category.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section spotlight">
+            <h2>10. Open Design Questions</h2>
+            <p>The following areas have not yet been formalized and will require further development:</p>
+            <ul>
+                <li>Multiple players in a challenge, and how trick-taking works when more than one player participates simultaneously.</li>
+                <li>Character creation beyond the deck, including whether characters have attributes, identity, or narrative description beyond their cards.</li>
+                <li>The open hand challenge deck, and whether it resets between challenges or depletes across a session.</li>
+                <li>Rest gating, including specific fictional triggers or conditions that make rest available or unavailable.</li>
+                <li>Winning a challenge, and whether degrees of success exist beyond the current binary outcome.</li>
+                <li>Setting guides, including how the Weird suit and Curse compulsions should be flavored for specific campaign settings.</li>
+                <li>Weighted point buy costs as a future refinement to deck construction.</li>
+                <li>Divine and other suit expansions that have been brainstormed but not yet formalized.</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

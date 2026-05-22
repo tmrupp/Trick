@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session 0 Questions: The Town and Its People</title>
+    <style>
+        :root {
+            --paper: #efe4cf;
+            --paper-shadow: #dcc9ab;
+            --ink: #2f2419;
+            --muted: #665746;
+            --pine: #40543e;
+            --clay: #8a4f37;
+            --gold: #a57c2f;
+            --line: rgba(47, 36, 25, 0.18);
+            --panel: rgba(255, 250, 240, 0.72);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top, rgba(255, 248, 233, 0.82), transparent 38%),
+                linear-gradient(180deg, #6e8362 0%, #4f6049 22%, #7a624b 22.5%, #664d39 100%);
+            min-height: 100vh;
+        }
+
+        .page {
+            width: min(980px, calc(100% - 32px));
+            margin: 32px auto;
+            padding: 32px;
+            background: var(--paper);
+            border: 1px solid var(--paper-shadow);
+            box-shadow: 0 18px 50px rgba(26, 18, 12, 0.28);
+            position: relative;
+        }
+
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(101, 77, 51, 0.18);
+            pointer-events: none;
+        }
+
+        header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--pine);
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--clay);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: clamp(2.1rem, 4vw, 3.1rem);
+        }
+
+        h2 {
+            margin-bottom: 14px;
+            font-size: 1.4rem;
+            color: var(--pine);
+        }
+
+        h3 {
+            margin-bottom: 10px;
+            color: var(--clay);
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.65;
+            font-size: 1.03rem;
+        }
+
+        p + p {
+            margin-top: 12px;
+        }
+
+        .lede {
+            margin-top: 16px;
+            max-width: 50rem;
+            color: var(--muted);
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .spotlight {
+            padding: 20px;
+            background: #f7efdf;
+            border: 1px solid var(--line);
+            border-left: 6px solid var(--clay);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            padding: 20px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--gold);
+        }
+
+        .tag {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--line);
+            color: var(--pine);
+            background: rgba(255, 255, 255, 0.45);
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        ol,
+        ul {
+            margin: 12px 0 0;
+            padding-left: 22px;
+            line-height: 1.65;
+        }
+
+        li + li {
+            margin-top: 8px;
+        }
+
+        .prompt-list li {
+            padding-left: 2px;
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: calc(100% - 20px);
+                margin: 10px auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <p class="eyebrow">Session 0 Guide</p>
+            <h1>Questions for Building the Town and Townsfolk</h1>
+            <p class="lede">Use these in session 0 to establish the players' home town together. You do not need all of them. Pick the questions that produce useful specifics: a landmark, a household, a local feud, a custom, a pact, a rumor, or a person everyone will remember.</p>
+        </header>
+
+        <section class="section spotlight">
+            <h2>How to Use These</h2>
+            <ul>
+                <li>Ask 1 or 2 questions from each section rather than trying to clear the whole list.</li>
+                <li>Whenever a player answers in broad terms, follow with: "What is one concrete example?"</li>
+                <li>Write down names immediately: creeks, families, churches, stores, hills, spirits, and the dead all matter here.</li>
+                <li>End each section by asking who benefits, who suffers, and what everyone knows not to say aloud.</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>First Shape of the Town</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Scale</span>
+                    <ol class="prompt-list">
+                        <li>What kind of place is this: a crossroads town, a creek settlement, a mining hollow, a rail stop, a church town, a market town, or something else?</li>
+                        <li>What is the first thing a stranger notices when they come in?</li>
+                        <li>What is the one building or landmark everyone uses to give directions?</li>
+                        <li>What part of town feels oldest, and what story do people tell about why it is still standing?</li>
+                    </ol>
+                </article>
+
+                <article class="card">
+                    <span class="tag">Daily Life</span>
+                    <ol class="prompt-list">
+                        <li>What does this town live on materially: orchards, livestock, timber, ferries, coal, stilling, milling, trade, pilgrimage, or something stranger?</li>
+                        <li>What seasonal work reshapes everybody's schedule?</li>
+                        <li>What does the town have too little of every year?</li>
+                        <li>What ordinary sound defines the place at dusk?</li>
+                    </ol>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Places That Matter</h2>
+            <div class="card">
+                <span class="tag">Landmarks</span>
+                <ol class="prompt-list">
+                    <li>What place in town is considered safe, and why do people trust it?</li>
+                    <li>What place is useful but quietly feared?</li>
+                    <li>Where do young people go when they want privacy, trouble, or both?</li>
+                    <li>What nearby natural feature has a proper name and a bad reputation?</li>
+                    <li>Which road, bridge, ford, cemetery, or orchard edge is known to be haunted, watched, or claimed?</li>
+                    <li>What place has changed owners too many times, and what does everyone think is wrong with it?</li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Power, Families, and Reputation</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Influence</span>
+                    <ol class="prompt-list">
+                        <li>Who is the most respected person in town, and what have they done to earn that respect?</li>
+                        <li>Who has power without being liked?</li>
+                        <li>What family has been here long enough to think the town belongs to them?</li>
+                        <li>Who keeps the books, the keys, or the names, and how do they use that leverage?</li>
+                    </ol>
+                </article>
+
+                <article class="card">
+                    <span class="tag">Reputation</span>
+                    <ol class="prompt-list">
+                        <li>What kind of mistake will get remembered for twenty years in this town?</li>
+                        <li>What scandal does everyone know but nobody states plainly?</li>
+                        <li>Who is spoken of as a fool but is secretly right about something important?</li>
+                        <li>Who left town and became a warning story?</li>
+                    </ol>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Pacts, Spirits, and Taboos</h2>
+            <div class="card">
+                <span class="tag">Supernatural Life</span>
+                <ol class="prompt-list">
+                    <li>What kind of supernatural being is most entangled with the town: creek things, mine ghosts, orchard saints, house spirits, weather powers, road-haunters, or something else?</li>
+                    <li>What is the most common small pact ordinary people make?</li>
+                    <li>What local taboo does everyone obey even if they pretend not to believe in it?</li>
+                    <li>What offering is left at a specific place, and what happens if it is neglected?</li>
+                    <li>What kind of bargain is considered shameful even if it works?</li>
+                    <li>Who in town is known to have a dangerous patron, and why are they still tolerated?</li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>The Six Peoples in Town</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Belonging</span>
+                    <ol class="prompt-list">
+                        <li>Which people are most numerous here, and which are rare?</li>
+                        <li>Which people are treated as "from here" no matter what, and which are still treated as outsiders?</li>
+                        <li>Which people are trusted with dangerous work, and which are trusted with delicate work?</li>
+                        <li>What old insult or old compliment does the town still use for one of the peoples?</li>
+                    </ol>
+                </article>
+
+                <article class="card">
+                    <span class="tag">Race-Specific Prompts</span>
+                    <ol class="prompt-list">
+                        <li>What bargain or contract in town is famous because a Varn witnessed it?</li>
+                        <li>What do the Moon-Eyed do better than anyone else after dark?</li>
+                        <li>What do people rely on Tarrans to bring down from the ridges?</li>
+                        <li>What law, ritual, or custom exists because the Hollow-Skinned are real?</li>
+                        <li>What place can only be understood properly with Rootborn help?</li>
+                        <li>What job or ritual absolutely depends on Ashcrik switching forms at the right time?</li>
+                    </ol>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Town Conflict</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Current Trouble</span>
+                    <ol class="prompt-list">
+                        <li>What problem is getting worse right now?</li>
+                        <li>Who is profiting from that problem?</li>
+                        <li>What practical thing does the town need before winter, before market day, or before the river rises?</li>
+                        <li>What feud or grievance is one bad week away from turning violent?</li>
+                    </ol>
+                </article>
+
+                <article class="card">
+                    <span class="tag">Hidden Trouble</span>
+                    <ol class="prompt-list">
+                        <li>What has recently gone missing that people are trying not to panic about?</li>
+                        <li>What place has started behaving wrong?</li>
+                        <li>Who made a pact they should not have made?</li>
+                        <li>What truth about the town's founding would hurt living people if it came out?</li>
+                    </ol>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Personal Ties</h2>
+            <div class="card">
+                <span class="tag">Player Hooks</span>
+                <ol class="prompt-list">
+                    <li>Which townsfolk does each player character owe something to?</li>
+                    <li>Who in town thinks one of the player characters is still a child?</li>
+                    <li>Who expects one of the characters to take over a job, debt, or responsibility they do not want?</li>
+                    <li>What local place mattered deeply to one of the characters when they were younger?</li>
+                    <li>Which townsfolk would hide a character from the law, and which would not?</li>
+                    <li>What event made the whole player group known to the town before play even begins?</li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Fast Finishers</h2>
+            <div class="spotlight">
+                <p>If you want to end session 0 with a town that already feels dense and playable, make sure you leave with answers to these ten questions:</p>
+                <ol class="prompt-list">
+                    <li>What is the town called?</li>
+                    <li>What does it live on?</li>
+                    <li>What place is feared?</li>
+                    <li>Who is powerful?</li>
+                    <li>What pact is common?</li>
+                    <li>What taboo is real?</li>
+                    <li>What trouble is immediate?</li>
+                    <li>What race-specific custom shapes daily life?</li>
+                    <li>Who do the player characters already know?</li>
+                    <li>What secret would change how the town sees itself?</li>
+                </ol>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

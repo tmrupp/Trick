@@ -5,7 +5,7 @@
     "uniqueBacks": false,
     "back": "trick-card-back.png",
     "width": 10,
-    "height": 5,
+    "height": 6,
     "number": 44,
     "sideways": false,
     "backIsHidden": true

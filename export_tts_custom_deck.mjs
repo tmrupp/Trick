@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
+import { buildDeckCards, suitCards } from "./card_registry.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,42 +12,14 @@ const SOURCE_CARD_HEIGHT = 1470;
 const OUTPUT_CARD_WIDTH = 400;
 const OUTPUT_CARD_HEIGHT = 560;
 const SHEET_WIDTH = 10;
-const SHEET_HEIGHT = 5;
+const SHEET_HEIGHT = 6;
 const EXPORT_ROOT = path.join(__dirname, "exports", "tts", "deck");
 const FACE_SHEET_PATH = path.join(EXPORT_ROOT, "trick-face-sheet.png");
 const BACK_IMAGE_PATH = path.join(EXPORT_ROOT, "trick-card-back.png");
 const MANIFEST_PATH = path.join(EXPORT_ROOT, "trick-custom-deck-manifest.json");
 const README_PATH = path.join(EXPORT_ROOT, "README.md");
 
-const suitCards = [
-  { suit: "strength", file: "strength.html", statusName: "injury", statusFile: "injury.html" },
-  { suit: "dexterity", file: "dexterity.html", statusName: "dazed", statusFile: "dazed.html" },
-  { suit: "intelligence", file: "intelligence.html", statusName: "stress", statusFile: "stress.html" },
-  { suit: "weird", file: "weird.html", statusName: "curse", statusFile: "curse.html" }
-];
-
-const deckCards = suitCards.flatMap(({ suit, file, statusName, statusFile }) => {
-  const numberedCards = Array.from({ length: 10 }, (_, index) => ({
-    id: `${suit}-${index + 1}`,
-    label: `${capitalize(suit)} ${index + 1}`,
-    file,
-    params: { value: index + 1 }
-  }));
-
-  return [
-    ...numberedCards,
-    {
-      id: statusName,
-      label: capitalize(statusName),
-      file: statusFile,
-      params: {}
-    }
-  ];
-});
-
-function capitalize(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
+const deckCards = buildDeckCards();
 
 function buildFileUrl(fileName, params = {}) {
   const fileUrl = pathToFileURL(path.join(__dirname, fileName));
@@ -168,7 +141,7 @@ async function writeReadme() {
     "# Trick Tabletop Simulator Deck",
     "",
     "Files in this folder:",
-    "- `trick-face-sheet.png`: front card sheet for the full 44-card deck.",
+    `- \`trick-face-sheet.png\`: front card sheet for the full ${deckCards.length}-card deck.`,
     "- `trick-card-back.png`: shared back image.",
     "- `trick-custom-deck-manifest.json`: exact Tabletop Simulator import settings and card order.",
     "",

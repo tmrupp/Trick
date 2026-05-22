@@ -3,29 +3,27 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dazed Status Card</title>
+<title>Divine Card</title>
 <script>
   const CARD_VARIANT_CONFIG = {
-    cardClass: "status-card",
     cssVars: {
-      "--card-bg-top": "#234f36",
-      "--card-bg-bottom": "#163524",
-      "--outer-border": "#091a11",
-      "--panel-bg": "linear-gradient(90deg, rgba(4,24,12,0.96) 0%, rgba(1,14,7,0.98) 100%)",
-      "--accent": "#6dff9c",
-      "--text-main": "#f4fff7",
-      "--text-muted": "rgba(255,255,255,0.22)",
-      "--frame-highlight": "rgba(240,255,245,0.92)",
-      "--inner-border": "rgba(240,255,245,0.14)"
+      "--card-bg-top": "#f2e4b6",
+      "--card-bg-bottom": "#b18a36",
+      "--outer-border": "#6a4d18",
+      "--panel-bg": "linear-gradient(90deg, rgba(88,59,13,0.94) 0%, rgba(54,35,8,0.98) 100%)",
+      "--accent": "#fff1b8",
+      "--text-main": "#fff9e8",
+      "--text-muted": "rgba(255,244,206,0.22)",
+      "--frame-highlight": "rgba(255,250,232,0.94)"
     },
-    value: "0",
-    suitLabel: "Dazed status symbol",
-    domain: "Status",
-    title: "DAZED",
+    value: "10",
+    suitLabel: "Divine suit",
+    domain: "Consolation",
+    title: "BENEDICTION",
     lines: [
-      "Must be played if valid. May permanently remove from deck on play, if not place on top of deck."
+      "Cleanse 1 status card from your hand or discard. If no status is cleansed, draw 1 card."
     ],
-    suitSvgPath: "./dexterity.svg"
+    suitSvgPath: "./divine.svg"
   };
 </script>
 <link rel="stylesheet" href="./card_base.css" />

@@ -3,8 +3,8 @@
 Trick is a small card-rendering project for a custom deck and status cards. The source cards are authored as standalone HTML/CSS/JS files, previewed locally in the browser, and exported to PNG assets with Playwright.
 
 The project currently includes:
-- Four numbered suit families: Strength, Dexterity, Intelligence, and Weird.
-- Four status cards: Injury, Dazed, Stress, and Curse.
+- Five numbered suit families: Strength, Dexterity, Intelligence, Weird, and Divine.
+- Five status cards: Injury, Dazed, Stress, Curse, and Blessed.
 - A browser index page for local preview.
 - Export scripts for individual card images and a Tabletop Simulator deck sheet.
 
@@ -28,6 +28,7 @@ You can also open individual source files directly, for example:
 - `dexterity.html`
 - `intelligence.html`
 - `weird.html`
+- `divine.html`
 
 ## Export Commands
 
@@ -64,7 +65,7 @@ This writes files under `exports/tts/deck`, including:
 
 ## Tabletop Simulator
 
-The generated TTS deck output is documented in `exports/tts/deck/README.md`. The current deck export is built as a 10 by 5 sheet with 44 cards.
+The generated TTS deck output is documented in `exports/tts/deck/README.md`. The current deck export is built as a 10 by 6 sheet with 55 cards.
 
 ## Notes
 

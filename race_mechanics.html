@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Mechanics: Trick-Taking Identities</title>
+    <style>
+        :root {
+            --paper: #efe4cf;
+            --paper-shadow: #dcc9ab;
+            --ink: #2f2419;
+            --muted: #665746;
+            --pine: #40543e;
+            --clay: #8a4f37;
+            --gold: #a57c2f;
+            --line: rgba(47, 36, 25, 0.18);
+            --panel: rgba(255, 250, 240, 0.72);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top, rgba(255, 248, 233, 0.82), transparent 38%),
+                linear-gradient(180deg, #6e8362 0%, #4f6049 22%, #7a624b 22.5%, #664d39 100%);
+            min-height: 100vh;
+        }
+
+        .page {
+            width: min(980px, calc(100% - 32px));
+            margin: 32px auto;
+            padding: 32px;
+            background: var(--paper);
+            border: 1px solid var(--paper-shadow);
+            box-shadow: 0 18px 50px rgba(26, 18, 12, 0.28);
+            position: relative;
+        }
+
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(101, 77, 51, 0.18);
+            pointer-events: none;
+        }
+
+        header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--pine);
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--clay);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: clamp(2.1rem, 4vw, 3.1rem);
+        }
+
+        h2 {
+            margin-bottom: 14px;
+            font-size: 1.4rem;
+            color: var(--pine);
+        }
+
+        h3 {
+            margin-bottom: 10px;
+            color: var(--clay);
+            font-size: 1.35rem;
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.65;
+            font-size: 1.03rem;
+        }
+
+        p + p {
+            margin-top: 12px;
+        }
+
+        .lede {
+            margin-top: 16px;
+            max-width: 48rem;
+            color: var(--muted);
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            padding: 20px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--gold);
+        }
+
+        .tag {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--line);
+            color: var(--pine);
+            background: rgba(255, 255, 255, 0.45);
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .tag + .tag {
+            margin-left: 8px;
+        }
+
+        ul {
+            margin: 12px 0 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+
+        li + li {
+            margin-top: 6px;
+        }
+
+        .spotlight {
+            padding: 20px;
+            background: #f7efdf;
+            border: 1px solid var(--line);
+            border-left: 6px solid var(--clay);
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: calc(100% - 20px);
+                margin: 10px auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <p class="eyebrow">System Notes</p>
+            <h1>Race Mechanics: Trick-Taking Identities</h1>
+            <p class="lede">These are playtest mechanics for the six peoples of the hollow using the existing trick-taking engine. Most of these are now concrete rules rather than loose identity notes, with each race bending a different part of the card flow, recovery cycle, or valid-play structure.</p>
+        </header>
+
+        <section class="section spotlight">
+            <h2>Design Frame</h2>
+            <p>The base system already has strong levers: forced follow, trump by challenge suit, a fixed seven-card hand, volatile status cards, and consolation effects on trick loss. These race rules work best when they stay short, sharp, and visibly tied to those levers.</p>
+            <ul>
+                <li>Most races should have one signature exception or substitution, not a whole sub-engine.</li>
+                <li>Status pressure, shuffling, and check-specific draws are the cleanest knobs for race identity here.</li>
+                <li>Any race rule should still fit on a player aid or a single card.</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>Varn</h2>
+            <div class="card">
+                <span class="tag">Binding Bargain</span>
+                <span class="tag">Hand Reset</span>
+                <p>The Varn mechanic should feel like a dangerous contract made under pressure: when their current hand will not do, they can bargain for a new one and accept that the price will come due later.</p>
+                <ul>
+                    <li><strong>Rule:</strong> A Varn may propose a curse to the GM in order to discard their hand to draw another.</li>
+                    <li><strong>Cost:</strong> The curse should be specific, active, and meaningful enough to matter in later play rather than being a cosmetic drawback.</li>
+                    <li><strong>Play identity:</strong> Varn trade a bad present hand for future trouble, which matches their place as people who make binding bargains and live inside the consequences.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Moon-Eyed</h2>
+            <div class="card">
+                <span class="tag">Wax Resilience</span>
+                <span class="tag">Challenge Interference</span>
+                <p>The Moon-Eyed should feel hard to kill and subtly disruptive, as if the little candleflames behind their eyes can bend the shape of misfortune without overpowering the whole game.</p>
+                <ul>
+                    <li><strong>Rule:</strong> When shuffling, a Moon-Eyed may remove one additional Injury.</li>
+                    <li><strong>Rule:</strong> Once per check, a Moon-Eyed may discard 1 card from their hand and draw 1 card from their own deck.</li>
+                    <li><strong>Play identity:</strong> They endure bodily damage better than most and can rework their hand through flickering, candleflame intuition.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Tarrans</h2>
+            <div class="card">
+                <span class="tag">Ichor Tolerance</span>
+                <span class="tag">Weird Handling</span>
+                <p>Tarrans need a rule that makes Weird cards feel different in their hands than in anyone else's. Since they can safely drink raw ichor, Weird should become a more reliable tool for them, especially when the current check makes the led suit trump.</p>
+                <ul>
+                    <li><strong>Rule:</strong> Tarrans must treat Weird as the led suit for the purposes of valid play.</li>
+                    <li><strong>Effect:</strong> This is especially strong when the led suit is also trump, because a Tarran using Weird can satisfy follow-suit pressure with the trump suit itself.</li>
+                    <li><strong>Play identity:</strong> Tarrans handle dangerous magic so comfortably that Weird becomes a dependable road for them rather than a merely strange one.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Hollow-Skinned</h2>
+            <div class="card">
+                <span class="tag">Feeding Curse</span>
+                <span class="tag">Predatory Surge</span>
+                <p>The Hollow-Skinned mechanic works best if repeated injury pushes them toward a dangerous feeding state. Once they cross that line, they become stronger in direct violence, carry a curse that demands action, and turn impersonation into a way of stealing usable strengths.</p>
+                <ul>
+                    <li><strong>Rule:</strong> After taking an Injury with an injury in the discard, a Hollow-Skinned gains a specific Curse representing the need to consume.</li>
+                    <li><strong>While active:</strong> They may draw 2 extra cards on Strength checks.</li>
+                    <li><strong>Borrowed advantage:</strong> While not in primal form, they also gain the racial advantage of the person they are currently inhabiting.</li>
+                    <li><strong>Play identity:</strong> Accumulated harm pushes them toward monstrous appetite, and feeding lets them become a more dangerous and opportunistic version of whoever they have stolen.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Rootborn</h2>
+            <div class="card">
+                <span class="tag">Rebalancing Growth</span>
+                <span class="tag">Deck Ecology</span>
+                <p>The Rootborn mechanic should feel like restoring balance instead of simply clearing harm. Their deck wants to regrow toward whatever suit has become sparse.</p>
+                <ul>
+                    <li><strong>Rule:</strong> When shuffling, a Rootborn may choose not to remove a status card.</li>
+                    <li><strong>If they do:</strong> Add 1 card of the suit with the fewest cards currently in their deck.</li>
+                    <li><strong>Play identity:</strong> Rootborn recover by restoring imbalance in the living pattern of the deck rather than just scraping harm away.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Ashcrik</h2>
+            <div class="card">
+                <span class="tag">Two Forms</span>
+                <span class="tag">Fasting Cycle</span>
+                <p>The Ashcrik rule is now a clear long-form cycle: they choose a body state for the current stretch of play, and switching is paid for through repeated fasting harm across two shuffles rather than flipping freely from moment to moment.</p>
+                <ul>
+                    <li><strong>Reed-form:</strong> Draw an extra card on Dexterity checks.</li>
+                    <li><strong>Ember-form:</strong> Draw an extra card on Strength checks.</li>
+                    <li><strong>Switching:</strong> Declare a fast and carry it across 2 shuffles. Gain 1 Dazed on each of those shuffles. At the end of the second shuffle, switch forms. Interrupting a fast cancels the form switch and adds a stress.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section spotlight">
+            <h2>Current Playtest Spread</h2>
+            <p>The current race identities now cluster around a few clean subsystems:</p>
+            <ul>
+                <li>Varn: exchange a bad hand for a new one by taking on a negotiated curse.</li>
+                <li>Moon-Eyed: better Injury recovery and hand-cycling.</li>
+                <li>Tarrans: Weird cards always count as the led suit for them.</li>
+                <li>Hollow-Skinned: Injury triggers a hunger curse, a stronger Strength surge, and borrowed racial advantage.</li>
+                <li>Rootborn: reshuffle growth instead of status removal.</li>
+                <li>Ashcrik: form-specific extra draws gated by a two-shuffle fast.</li>
+            </ul>
+            <p>This is a strong spread because each people touches a different part of the engine: hand reset, hand-cycling, Weird handling, curse pressure, reshuffle tuning, and long-cycle stance switching.</p>
+        </section>
+    </main>
+</body>
+</html>

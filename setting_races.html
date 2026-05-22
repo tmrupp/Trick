@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Town Origins: Six Peoples of the Hollow</title>
+    <style>
+        :root {
+            --paper: #efe4cf;
+            --paper-shadow: #dcc9ab;
+            --ink: #2f2419;
+            --muted: #665746;
+            --pine: #40543e;
+            --clay: #8a4f37;
+            --gold: #a57c2f;
+            --line: rgba(47, 36, 25, 0.18);
+            --panel: rgba(255, 250, 240, 0.72);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top, rgba(255, 248, 233, 0.82), transparent 38%),
+                linear-gradient(180deg, #6e8362 0%, #4f6049 22%, #7a624b 22.5%, #664d39 100%);
+            min-height: 100vh;
+        }
+
+        .page {
+            width: min(960px, calc(100% - 32px));
+            margin: 32px auto;
+            padding: 32px;
+            background: var(--paper);
+            border: 1px solid var(--paper-shadow);
+            box-shadow: 0 18px 50px rgba(26, 18, 12, 0.28);
+            position: relative;
+        }
+
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(101, 77, 51, 0.18);
+            pointer-events: none;
+        }
+
+        header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--pine);
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--clay);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 4vw, 3.3rem);
+        }
+
+        h2 {
+            margin-bottom: 14px;
+            font-size: 1.45rem;
+            color: var(--pine);
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.65;
+            font-size: 1.04rem;
+        }
+
+        .lede {
+            margin-top: 16px;
+            max-width: 46rem;
+            color: var(--muted);
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            padding: 18px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-left: 6px solid var(--gold);
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            color: var(--clay);
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--line);
+            color: var(--pine);
+            background: rgba(255, 255, 255, 0.45);
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        ul {
+            margin: 10px 0 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+
+        li + li {
+            margin-top: 6px;
+        }
+
+        .spotlight {
+            padding: 20px;
+            background: #f7efdf;
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--clay);
+        }
+
+        .alt-names {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 0.96rem;
+        }
+
+        .quote {
+            margin-top: 14px;
+            padding-left: 16px;
+            border-left: 3px solid var(--gold);
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .race-entry {
+            padding: 22px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--pine);
+        }
+
+        .race-entry + .race-entry {
+            margin-top: 18px;
+        }
+
+        .race-entry h3 {
+            margin-bottom: 10px;
+            color: var(--clay);
+            font-size: 1.45rem;
+        }
+
+        .race-entry p + p {
+            margin-top: 12px;
+        }
+
+        .race-entry .tag + .tag {
+            margin-left: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: calc(100% - 20px);
+                margin: 10px auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <p class="eyebrow">Setting Notes</p>
+            <h1>Town Origins: Six Peoples of the Hollow</h1>
+            <p class="lede">This setting leans Appalachian pastoral fantasy: creek valleys, ridge roads, orchard fences, church suppers, lambing seasons, mine-mouth taboos, and old obligations carried longer than blood should hold. Magic comes through pacts with supernatural beings, so each people is defined not just by appearance, but by the sort of bargains they are known to survive.</p>
+        </header>
+
+        <section class="section">
+            <h2>Working Principles</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Town Focus</span>
+                    <p>Each people should have a visible place in town life: a job, a reputation, a neighborhood habit, or an old local duty.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Pact Culture</span>
+                    <p>Supernatural power is social before it is spectacular. Promises, offerings, patronage, and taboo matter as much as raw force.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Pastoral Tone</span>
+                    <p>The world should feel rooted in herding, weather, debt, kinship, creek travel, and hard-won seasonal abundance.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>The Six Peoples</h2>
+
+            <article class="race-entry">
+                <h3>Varn</h3>
+                <span class="tag">Bargain Folk</span>
+                <span class="tag">Town Brokers</span>
+                <p>The Varn are small goblin-rat folk with neat hands, quick teeth, and a reputation for never wasting a word. Their gift is simple and terrifying: when a Varn makes a pact with another person, that pact becomes binding in a way that cannot be casually evaded or softened.</p>
+                <p>They thrive in stores, counting rooms, courthouse steps, back-porch negotiations, and every place where the town has to turn trust into enforceable custom. People go to the Varn when they need a bargain to hold. People avoid them when they want room to lie.</p>
+                <ul>
+                    <li>They are natural brokers, notaries, debt-keepers, factors, quartermasters, and go-betweens for dangerous spirits.</li>
+                    <li>Varn culture likely prizes precision, public witnessing, and old forms of speech that leave no room to wriggle.</li>
+                    <li>A useful tension: they are indispensable to civic life and often resented for exactly the same reason.</li>
+                </ul>
+            </article>
+
+            <article class="race-entry">
+                <h3>Moon-Eyed</h3>
+                <span class="tag">Wax Folk</span>
+                <span class="tag">Night Keepers</span>
+                <p>The Moon-Eyed are made of literal wax. Their skin has the soft sheen of tallow or candlewax, their features can seem faintly melted or hand-smoothed, and behind each blind eye burns a tiny, flickering candleflame. They do not see the world by ordinary sight; they read warmth, motion, nearness, drafts, and the subtle disturbances left by living bodies.</p>
+                <p>That makes them eerie without making them abstract. A Moon-Eyed person belongs naturally to lamplight, wakehouses, winter roads, root cellars, and all the dim practical spaces where ordinary people trust feel over brightness.</p>
+                <ul>
+                    <li>They excel at night work, cellar-keeping, watch duty, bone-setting, and enduring cold or privation that would break others.</li>
+                    <li>The candleflame behind the eyes gives them a strong visual identity and suggests all kinds of lore about whether the flame can gutter, flare, or be sheltered.</li>
+                    <li>You can push them further by tying them to wax offerings, funeral tapers, bee-keeping, or saintly candles set in windows during storms.</li>
+                </ul>
+            </article>
+
+            <article class="race-entry">
+                <h3>Tarrans</h3>
+                <span class="tag">Ridge Herders</span>
+                <span class="tag">Ichor Carriers</span>
+                <p>The Tarrans are goatlike ridge-walkers whose lives revolve around flock, weather, trail, and upland pasture. They are the one people who can drink raw ichor without falling into the craving it awakens in everyone else, which makes them essential to any society that depends on pact-fueled magic but fears magical addiction.</p>
+                <p>They should feel older than the roads and more reliable than the roads. When the hollow needs medicine, salt, news, contraband, or a sealed vessel of dangerous fuel carried over bad country, it is a Tarran job.</p>
+                <ul>
+                    <li>They fit drovers, shepherds, guides, smugglers, couriers, trail wardens, and caravan kin.</li>
+                    <li>Their relation to ichor gives them leverage: everybody needs them, but nobody loves depending on them.</li>
+                    <li>You can deepen them by deciding whether they are welcomed as seasonal kin, treated as necessary outsiders, or divided between settled and wandering lineages.</li>
+                </ul>
+            </article>
+
+            <article class="race-entry">
+                <h3>Hollow-Skinned</h3>
+                <span class="tag">Mimics</span>
+                <span class="tag">Feared Neighbors</span>
+                <p>The Hollow-Skinned can consume a person and wear their body, though never their memories. The disguise is perfect superficially, because it is all skin-deep: a scratch, tear, or other breach can ruin the borrowed self and spill out the feral, hungry thing beneath.</p>
+                <p>They introduce paranoia into the setting in a controlled way. The important question is not just what they are, but how a town that knows they exist makes room for suspicion, mercy, law, and necessary cruelty.</p>
+                <ul>
+                    <li>Some communities kill them on sight; others regulate them through witness laws, visible marks, ritual inspections, and strict kin obligations.</li>
+                    <li>They are strongest when treated as a social problem rather than just a monster entry.</li>
+                    <li>The lack of stolen memories is excellent because it keeps impersonation dangerous but imperfect.</li>
+                </ul>
+            </article>
+
+            <article class="race-entry">
+                <h3>Rootborn</h3>
+                <span class="tag">Boundary Folk</span>
+                <span class="tag">Orchard Keepers</span>
+                <p>The Rootborn are people marked by orchard, briar, and hardwood grove: bark-tough skin, moss-thread hair, and the patience of things that survive by taking hold. Their defining gift is not simply "plant magic," but the ability to know a place by the life rooted in it.</p>
+                <p>A Rootborn can sometimes read the history of a place through the view of its plants: what was cut there, what was buried there, which feet crossed it often, when fire passed through, where blood soaked in, when a home was raised, when a family line failed. But this is not a power they can use anywhere on demand. The land must know them first.</p>
+                <ul>
+                    <li>To read a place clearly, they usually need a good relationship with it: seasons of tending, offerings buried at the roots, careful pruning, mending a wall, cleaning a spring, or otherwise doing right by the living things there.</li>
+                    <li>That makes their magic reciprocal. A neglected field, abused orchard, or stolen patch of ground will not speak plainly, and may lie, withhold, or answer in bitterness.</li>
+                    <li>They can become unmatched keepers of land memory, able to tell which family planted which tree line, when trespass began, or whether a grave was disturbed.</li>
+                    <li>They are well suited to grafting, hedge wards, seed-keeping, orchard law, bee lore, rot lore, and the uneasy truth that cultivation is a kind of violence against wild growth.</li>
+                    <li>They might treat uprooting as a spiritual wound, with exile, transplantation, and land seizure carrying very specific religious terror.</li>
+                </ul>
+            </article>
+
+            <article class="race-entry">
+                <h3>Ashcrik</h3>
+                <span class="tag">Creek and Cinder</span>
+                <span class="tag">Threshold Folk</span>
+                <p>The Ashcrik are shaped by paired pacts of creek and cinder. They belong at both the ford and the furnace, which makes them useful wherever the town must take something dangerous, flowing, smoky, or unstable and make it livable.</p>
+                <p>An Ashcrik fasts to change. Only through hunger, prayer, breath control, and a practiced rite can they pass from reed-state into ember-state or back again, usually at dawn, dusk, or in a place where water and heat meet. A full belly anchors them where they are.</p>
+                <p>In reed-state they are cool-bodied, slick-skinned, soft-jointed, and graceful in waterlogged places. In ember-state they are dry, smoke-scented, harder to hurt, and better suited to heat, fumes, kilns, stills, and refined ichor. If the rite is interrupted, the body can fail halfway and leave them feverish, confused, and unfit for either element.</p>
+                <ul>
+                    <li>They fit ferrymen, mill-workers, fishers, distillers, dye makers, tanners, lime burners, and wet-forge laborers.</li>
+                    <li>Their pacts likely involve spring spirits, kiln ghosts, drowned lantern things, and old intelligences that live where steam rises.</li>
+                    <li>Because their change costs hunger and time, they feel culturally grounded rather than like free shapeshifters.</li>
+                </ul>
+                <p class="quote">They are the people who know how to pass a thing from wild flow into useful heat, and back again.</p>
+            </article>
+        </section>
+
+        <section class="section">
+            <h2>Short Setting Paragraph</h2>
+            <p>The people of the hollow say there are six kinds of folk in town. Varn keep bargains. Moon-Eyed endure what should kill other people. Tarrans come down from the ridges with herds, gossip, and sealed jars of ichor. Hollow-Skinned live under suspicion, one torn disguise away from hunger. Rootborn read the memory of land through roots, bark, and blossom, but only where they have earned the place's trust. Ashcrik fast to pass between reed-cool water and banked ember, making them useful wherever the town must tame something dangerous without killing it. In these hills, no spell is free; every wonder comes through pact, and every pact leaves a mark on the life built around it.</p>
+        </section>
+    </main>
+</body>
+</html>

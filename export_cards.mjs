@@ -2,6 +2,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
+import { suitCards } from "./card_registry.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,13 +12,6 @@ const CARD_HEIGHT = 1470;
 const EXPORT_ROOT = path.join(__dirname, "exports", "tts");
 const FRONT_DIR = path.join(EXPORT_ROOT, "fronts");
 const BACK_DIR = path.join(EXPORT_ROOT, "back");
-
-const fronts = [
-  { name: "strength", file: "strength.html" },
-  { name: "dexterity", file: "dexterity.html" },
-  { name: "intelligence", file: "intelligence.html" },
-  { name: "weird", file: "weird.html" }
-];
 
 function buildFileUrl(fileName, params = {}) {
   const fileUrl = pathToFileURL(path.join(__dirname, fileName));
@@ -47,12 +41,16 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: CARD_WIDTH, height: CARD_HEIGHT }, deviceScaleFactor: 1 });
 
   try {
-    for (const front of fronts) {
+    for (const front of suitCards) {
       for (let value = 1; value <= 10; value += 1) {
-        const outputPath = path.join(FRONT_DIR, `${front.name}-${value}.png`);
+        const outputPath = path.join(FRONT_DIR, `${front.suit}-${value}.png`);
         await exportCard(page, front.file, outputPath, { value });
         console.log(`exported ${path.relative(__dirname, outputPath)}`);
       }
+
+      const statusPath = path.join(FRONT_DIR, `${front.statusName}.png`);
+      await exportCard(page, front.statusFile, statusPath);
+      console.log(`exported ${path.relative(__dirname, statusPath)}`);
     }
 
     const backPath = path.join(BACK_DIR, "card-back.png");

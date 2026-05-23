@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Valley: Foundational Setting Notes</title>
+    <style>
+        :root {
+            --paper: #efe4cf;
+            --paper-shadow: #dcc9ab;
+            --ink: #2f2419;
+            --muted: #665746;
+            --pine: #40543e;
+            --clay: #8a4f37;
+            --gold: #a57c2f;
+            --line: rgba(47, 36, 25, 0.18);
+            --panel: rgba(255, 250, 240, 0.72);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top, rgba(255, 248, 233, 0.82), transparent 38%),
+                linear-gradient(180deg, #6e8362 0%, #4f6049 22%, #7a624b 22.5%, #664d39 100%);
+            min-height: 100vh;
+        }
+
+        .page {
+            width: min(980px, calc(100% - 32px));
+            margin: 32px auto;
+            padding: 32px;
+            background: var(--paper);
+            border: 1px solid var(--paper-shadow);
+            box-shadow: 0 18px 50px rgba(26, 18, 12, 0.28);
+            position: relative;
+        }
+
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(101, 77, 51, 0.18);
+            pointer-events: none;
+        }
+
+        header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--pine);
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--clay);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: clamp(2.1rem, 4vw, 3.1rem);
+        }
+
+        h2 {
+            margin-bottom: 14px;
+            font-size: 1.4rem;
+            color: var(--pine);
+        }
+
+        h3 {
+            margin-bottom: 10px;
+            color: var(--clay);
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.65;
+            font-size: 1.03rem;
+        }
+
+        p + p {
+            margin-top: 12px;
+        }
+
+        .lede {
+            margin-top: 16px;
+            max-width: 50rem;
+            color: var(--muted);
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .spotlight {
+            padding: 20px;
+            background: #f7efdf;
+            border: 1px solid var(--line);
+            border-left: 6px solid var(--clay);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            padding: 20px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--gold);
+        }
+
+        .tag {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--line);
+            color: var(--pine);
+            background: rgba(255, 255, 255, 0.45);
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        ul {
+            margin: 12px 0 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+
+        li + li {
+            margin-top: 6px;
+        }
+
+        .quote {
+            margin-top: 14px;
+            padding-left: 16px;
+            border-left: 3px solid var(--gold);
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: calc(100% - 20px);
+                margin: 10px auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <p class="eyebrow">Foundational Setting Notes</p>
+            <h1>Black Valley</h1>
+            <p class="lede">Black Valley is a pastoral, mournful valley region shaped by ichor mining, labor conflict, and bad bargains that have settled into everyday life. The setting is not built around one central town, but around many small settlements, camps, hollows, and crossroads communities linked by the same poisoned economy. Some towns nearer the mountains are marked deeply by extraction, while others live more quietly at a distance and keep more of an older pastoral way of life. The players will define one of those towns as their own.</p>
+        </header>
+
+        <section class="section spotlight">
+            <h2>Core Premise</h2>
+            <p>Black Valley is called black because the valley has been darkened by ichor extraction. The ground gives up magical fuel, and that fuel has remade the region's economy, politics, and moral life. Mine owners and ichor interests hold the most visible power, while ordinary people live under tightening debt, labor conflict, and the constant risk of addiction.</p>
+            <p class="quote">In Black Valley, almost every comfort is paid for twice: once in wages, and once in what the valley remembers.</p>
+        </section>
+
+        <section class="section">
+            <h2>What Defines the Place</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Landscape</span>
+                    <p>The valley is marked by worked hillsides, runoff-blackened water, exhausted fields, and small settlements trying to hold onto ordinary beauty in the shadow of extraction. Some places are dominated by mine mouths and spoil, while others know the mines mostly through tainted creeks, strange debts, and the slow spread of consequences.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Power</span>
+                    <p>Mine owners and ichor interests dominate public life. Even when they are not liked, they control wages, debt, supply, transport, and what counts as acceptable risk.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Tone</span>
+                    <p>The setting should feel pastoral and mournful rather than purely grim: creek mist, lambing seasons, porch talk, church suppers, and fruit trees still matter even while the valley is being used up.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Ordinary Pressures</h2>
+            <div class="card">
+                <p>Everyday life in Black Valley is defined by labor conflict and ichor addiction, though not every town bears those pressures in the same way. The work is dangerous, the pay is never enough, and the line between practical use and dependency is watched with constant suspicion.</p>
+                <ul>
+                    <li>Debt is normal enough that many people speak of it like weather.</li>
+                    <li>Scarcity makes even small luxuries morally charged.</li>
+                    <li>Recreational ichor use is taboo, but even valid use is scrutinized and socially risky.</li>
+                    <li>Towns nearer the mountains feel the mines directly through labor, injury, and addiction.</li>
+                    <li>More pastoral towns still feel the mines through runoff, trade dependence, bad bargains, and the uneasy sense that damage always travels downhill.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Magic and Social Life</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Pacts</span>
+                    <p>Magic comes through pacts with supernatural beings, but Black Valley's economy has industrialized that relationship. Ichor makes power feel extractable, transportable, and ownable, even when the spirits involved clearly disagree.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Suspicion</span>
+                    <p>The valley does not treat magic as glamorous. It is useful, necessary, compromising, and often humiliating. A person using ichor for work may be tolerated; a person using it for pleasure is seen as courting ruin.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Memory</span>
+                    <p>Because this is a home-centered setting, the valley matters as kinship and habit as much as geography. Grievances, bargains, disappearances, and old injuries linger in public memory.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Central Image</h2>
+            <div class="card">
+                <p>The clearest symbol of Black Valley is a creek blackened by runoff. It is useful, poisoned, ordinary, and impossible to ignore. It says what the setting is in one image: livelihood and contamination made inseparable.</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Foundational Truths</h2>
+            <div class="card">
+                <ul>
+                    <li>Black Valley is a region of many small settlements rather than a single dominant town.</li>
+                    <li>Not every settlement is equally shaped by extraction; mountain towns feel the mines most directly, while other towns retain more of an older pastoral life.</li>
+                    <li>Ichor mining is why the valley has money, conflict, and a reputation.</li>
+                    <li>Mine interests hold visible power, but they do not hold moral legitimacy.</li>
+                    <li>Debt, labor struggle, and addiction pressure nearly every household.</li>
+                    <li>The setting should stay intimate: even across different towns, people know one another's kin, failures, bargains, and habits.</li>
+                    <li>The supernatural is embedded in daily life, but never cleanly separated from class, work, and need.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section spotlight">
+            <h2>Questions for the Next Pass</h2>
+            <ul>
+                    <li>What kind of small town will the players define as home: mining camp, church town, creek crossing, orchard hollow, rail stop, or something else?</li>
+                    <li>What nearby settlement does that town depend on or resent?</li>
+                <li>How close is that town to the mountains and the mines?</li>
+                <li>Who first profited from ichor extraction here: an old family, an outside company, a church-backed concern, or someone else?</li>
+                <li>What does addiction to ichor actually look like in daily life?</li>
+                <li>What supernatural beings are most entangled with the mines and runoff?</li>
+                <li>What recent labor conflict has made the valley feel unstable right now?</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

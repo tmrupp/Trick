@@ -3,71 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trick-Taking RPG: Quick Player Reference</title>
+    <title>Trick-Taking RPG: Quick Reference</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; max-width: 800px; }
-        h1, h2 { color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-        th, td { border: 1px solid #aaa; padding: 10px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        .warning { color: #d32f2f; font-weight: bold; }
+        :root {
+            --paper: #efe4cf;
+            --paper-shadow: #dcc9ab;
+            --ink: #2f2419;
+            --muted: #665746;
+            --pine: #40543e;
+            --clay: #8a4f37;
+            --gold: #a57c2f;
+            --line: rgba(47, 36, 25, 0.18);
+            --panel: rgba(255, 250, 240, 0.72);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top, rgba(255, 248, 233, 0.82), transparent 38%),
+                linear-gradient(180deg, #6e8362 0%, #4f6049 22%, #7a624b 22.5%, #664d39 100%);
+            min-height: 100vh;
+        }
+
+        .page {
+            width: min(940px, calc(100% - 32px));
+            margin: 32px auto;
+            padding: 32px;
+            background: var(--paper);
+            border: 1px solid var(--paper-shadow);
+            box-shadow: 0 18px 50px rgba(26, 18, 12, 0.28);
+            position: relative;
+        }
+
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(101, 77, 51, 0.18);
+            pointer-events: none;
+        }
+
+        header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--pine);
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--clay);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 4vw, 2.9rem);
+        }
+
+        h2 {
+            margin-bottom: 14px;
+            font-size: 1.35rem;
+            color: var(--pine);
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.6;
+            font-size: 1.02rem;
+        }
+
+        .lede {
+            margin-top: 16px;
+            max-width: 46rem;
+            color: var(--muted);
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            padding: 18px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--gold);
+        }
+
+        .spotlight {
+            padding: 20px;
+            background: #f7efdf;
+            border: 1px solid var(--line);
+            border-left: 6px solid var(--clay);
+        }
+
+        .tag {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--line);
+            color: var(--pine);
+            background: rgba(255, 255, 255, 0.45);
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        ul {
+            margin: 12px 0 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+
+        li + li {
+            margin-top: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            background: rgba(255, 255, 255, 0.38);
+        }
+
+        th,
+        td {
+            border: 1px solid var(--line);
+            padding: 10px;
+            vertical-align: top;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        th {
+            background: rgba(64, 84, 62, 0.12);
+            color: var(--pine);
+        }
+
+        .warning {
+            color: #9f2c1f;
+            font-weight: 700;
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: calc(100% - 20px);
+                margin: 10px auto;
+                padding: 20px;
+            }
+        }
     </style>
 </head>
 <body>
+    <main class="page">
+        <header>
+            <p class="eyebrow">Player Aid</p>
+            <h1>Trick-Taking RPG Quick Reference</h1>
+            <p class="lede">A concise table-use summary of core play, status effects, consolation actions, recovery, and deck evolution.</p>
+        </header>
 
-    <h1>Trick-Taking RPG: Player Quick Reference[cite: 1]</h1>
+        <section class="section spotlight">
+            <h2>Core Rules</h2>
+            <ul>
+                <li>Hand size is 7 cards.</li>
+                <li>Trump is determined by the suit of the current check.</li>
+                <li>The open hand always plays the leftmost valid card and must follow the led suit.</li>
+                <li>Highest trump card wins the trick. If no trump is played, the highest card of any suit wins.</li>
+            </ul>
+        </section>
 
-    <h2>1. Core Rules</h2>
-    <ul>
-        <li><strong>Hand Size:</strong> 7 cards.[cite: 1]</li>
-        <li><strong>Play:</strong> Highest trump card wins the trick, or highest card of any suit if no trump is played.[cite: 1]</li>
-        <li><strong>Trump Suit:</strong> Determined by the suit of the current challenge/check.[cite: 1]</li>
-        <li><strong>The Open Hand (Opposition):</strong> Always plays the leftmost valid card and must follow the led suit.[cite: 1]</li>
-    </ul>
+        <section class="section">
+            <h2>Suits and Status</h2>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Suit</th>
+                            <th>Domain</th>
+                            <th>Status</th>
+                            <th>Key Effect</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strength</td>
+                            <td>Physical force, endurance</td>
+                            <td>Injury</td>
+                            <td><span class="warning">Death when the 4th Injury is drawn into hand.</span> Two Injuries in hand at challenge start triggers a survival event.</td>
+                        </tr>
+                        <tr>
+                            <td>Dexterity</td>
+                            <td>Agility, timing, precision</td>
+                            <td>Dazed</td>
+                            <td>Must be played if valid. Permanently removed from the game when played.</td>
+                        </tr>
+                        <tr>
+                            <td>Intelligence</td>
+                            <td>Knowledge, reasoning, recalculation</td>
+                            <td>Stress</td>
+                            <td>When drawn, places an identical copy into the discard pile.</td>
+                        </tr>
+                        <tr>
+                            <td>Weird</td>
+                            <td>Magic, the unknown</td>
+                            <td>Curse</td>
+                            <td>GM-written compulsion. Removed only by fulfilling the GM-set condition.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-    <h2>2. Suits & Status Cards</h2>
-    <table>
-        <tr>
-            <th>Suit / Check</th>
-            <th>Status Card (0 Value)</th>
-            <th>Effects & Removal</th>
-        </tr>
-        <tr>
-            <td><strong>Strength</strong> (Physical)[cite: 1]</td>
-            <td><strong>Injury</strong>[cite: 1]</td>
-            <td><span class="warning">Death instantly if 4th drawn into hand.</span>[cite: 1] 2 in hand at start triggers Survival Event.[cite: 1] Remove via Rest or Reshuffle.[cite: 1]</td>
-        </tr>
-        <tr>
-            <td><strong>Dexterity</strong> (Agility)[cite: 1]</td>
-            <td><strong>Dazed</strong>[cite: 1]</td>
-            <td>Must be played if it is a valid play.[cite: 1] Permanently removed from game upon play.[cite: 1] Also removed via Rest or Reshuffle.[cite: 1]</td>
-        </tr>
-        <tr>
-            <td><strong>Intelligence</strong> (Knowledge)[cite: 1]</td>
-            <td><strong>Stress</strong>[cite: 1]</td>
-            <td>Duplicates an identical copy to discard pile when drawn.[cite: 1] Remove via Rest or Reshuffle.[cite: 1]</td>
-        </tr>
-        <tr>
-            <td><strong>Weird</strong> (Magic/Unknown)[cite: 1]</td>
-            <td><strong>Curse</strong>[cite: 1]</td>
-            <td>Carries a GM-written compulsion.[cite: 1] Only removed by fulfilling the GM-set condition (cannot be rested away).[cite: 1]</td>
-        </tr>
-    </table>
+        <section class="section">
+            <h2>Trick Loss Consolations</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Strength</span>
+                    <p><strong>Brace:</strong> Stage the lost card outside your hand. Add its full value to your next played card regardless of suit.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Dexterity</span>
+                    <p><strong>Reposition:</strong> Choose which valid card the open hand plays next trick instead of the normal leftmost rule. No effect if only one valid play exists.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Intelligence</span>
+                    <p><strong>Recalculate:</strong> Discard any 1 card from your hand, then draw 1 from the top of your deck.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Weird</span>
+                    <p><strong>Revelation:</strong> Ask the GM one question, or the GM asks you one question. The answer must be honest.</p>
+                </article>
+            </div>
+        </section>
 
-    <h2>3. Trick Loss Consolations (Optional)</h2>
-    <p>Triggers when losing a single trick. The effect is based on the suit <strong>you</strong> played, regardless of what beat you.[cite: 1]</p>
-    <ul>
-        <li><strong>Strength (Brace):</strong> Stage your played card outside your hand; add its full value to your next play.[cite: 1]</li>
-        <li><strong>Dexterity (Reposition):</strong> Choose which valid card the open hand must play next trick.[cite: 1]</li>
-        <li><strong>Intelligence (Recalculate):</strong> Discard any 1 card from your hand, then draw 1 from your deck.[cite: 1]</li>
-        <li><strong>Weird (Revelation):</strong> Ask the GM one question, which must be answered honestly.[cite: 1]</li>
-    </ul>
+        <section class="section">
+            <h2>Recovery</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Rest</span>
+                    <p>Remove any number of status cards from your deck. Curse cannot be removed by rest.</p>
+                </article>
+                <article class="card">
+                    <span class="tag">Reshuffle</span>
+                    <p>When your deck empties, remove exactly 1 eligible status card from discard before shuffling. Curse is not eligible.</p>
+                </article>
+            </div>
+        </section>
 
-    <h2>4. Recovery</h2>
-    <ul>
-        <li><strong>Rest Scene (GM Discretion):</strong> Remove any number of status cards from your deck (except Curses).[cite: 1]</li>
-        <li><strong>Reshuffle (Deck Empty):</strong> Remove exactly 1 eligible status card from your discard pile before shuffling (except Curses).[cite: 1]</li>
-    </ul>
-
+        <section class="section">
+            <h2>Deck Evolution</h2>
+            <div class="card">
+                <p>At reshuffle, after your 1 free status removal, trigger evolution for each suit with 3 or more matching status cards in your deck.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Suit</th>
+                            <th>Add</th>
+                            <th>Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strength</td>
+                            <td>Draw 3 Strength, keep 1.</td>
+                            <td>Remove your lowest-value non-status card.</td>
+                        </tr>
+                        <tr>
+                            <td>Intelligence</td>
+                            <td>Draw 3 Intelligence, keep 1.</td>
+                            <td>Remove any 1 non-status card.</td>
+                        </tr>
+                        <tr>
+                            <td>Dexterity</td>
+                            <td>Draw 3 Dexterity, keep 1.</td>
+                            <td>Also remove any 1 non-status card.</td>
+                        </tr>
+                        <tr>
+                            <td>Weird</td>
+                            <td>Draw 3 Weird, keep 1.</td>
+                            <td>Destroy 1 non-status card; the GM gives all other players the same Curse.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 </body>
 </html>

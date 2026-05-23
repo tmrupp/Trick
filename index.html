@@ -264,6 +264,62 @@
         </a>
       </div>
     </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Trinkets</h2>
+        <div class="section-copy">Portable occult items with visible costs on the front</div>
+      </div>
+      <div class="grid" data-item-section="trinkets"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Relics</h2>
+        <div class="section-copy">Major items with their visible invocation and effect text</div>
+      </div>
+      <div class="grid" data-item-section="relics"></div>
+    </section>
+
+    <section class="section status">
+      <div class="section-header">
+        <h2>Reveal Cards</h2>
+        <div class="section-copy">Keep these hidden until the corresponding relic is invoked</div>
+      </div>
+      <div class="grid" data-item-section="reveals"></div>
+    </section>
   </main>
+  <script src="./items/item_catalog.js"></script>
+  <script>
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function renderCard(card) {
+      return `
+        <a class="card-link" href="${card.href}">
+          <div class="thumb"><iframe src="${card.iframeSrc}" title="${escapeHtml(card.title)}" loading="lazy"></iframe></div>
+          <div class="meta">
+            <div class="eyebrow">${escapeHtml(card.eyebrow)}</div>
+            <p class="name">${escapeHtml(card.name)}</p>
+            <p class="desc">${escapeHtml(card.description)}</p>
+          </div>
+        </a>
+      `.trim();
+    }
+
+    for (const section of window.TrickItemCatalog.buildItemIndexSections()) {
+      const container = document.querySelector(`[data-item-section="${section.id}"]`);
+      if (!container) {
+        continue;
+      }
+
+      container.innerHTML = section.cards.map(renderCard).join("\n");
+    }
+  </script>
 </body>
 </html>

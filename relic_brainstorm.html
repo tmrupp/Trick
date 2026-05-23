@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relic Brainstorm: Black Valley</title>
+    <style>
+        :root {
+            --paper: #efe4cf;
+            --paper-shadow: #dcc9ab;
+            --ink: #2f2419;
+            --muted: #665746;
+            --pine: #40543e;
+            --clay: #8a4f37;
+            --gold: #a57c2f;
+            --line: rgba(47, 36, 25, 0.18);
+            --panel: rgba(255, 250, 240, 0.72);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top, rgba(255, 248, 233, 0.82), transparent 38%),
+                linear-gradient(180deg, #6e8362 0%, #4f6049 22%, #7a624b 22.5%, #664d39 100%);
+            min-height: 100vh;
+        }
+
+        .page {
+            width: min(980px, calc(100% - 32px));
+            margin: 32px auto;
+            padding: 32px;
+            background: var(--paper);
+            border: 1px solid var(--paper-shadow);
+            box-shadow: 0 18px 50px rgba(26, 18, 12, 0.28);
+            position: relative;
+        }
+
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(101, 77, 51, 0.18);
+            pointer-events: none;
+        }
+
+        header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--pine);
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--clay);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: clamp(2.1rem, 4vw, 3.1rem);
+        }
+
+        h2 {
+            margin-bottom: 14px;
+            font-size: 1.4rem;
+            color: var(--pine);
+        }
+
+        h3 {
+            margin-bottom: 10px;
+            color: var(--clay);
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.65;
+            font-size: 1.03rem;
+        }
+
+        p + p {
+            margin-top: 12px;
+        }
+
+        .lede {
+            margin-top: 16px;
+            max-width: 50rem;
+            color: var(--muted);
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .spotlight {
+            padding: 20px;
+            background: #f7efdf;
+            border: 1px solid var(--line);
+            border-left: 6px solid var(--clay);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            padding: 20px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--gold);
+        }
+
+        .tag {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--line);
+            color: var(--pine);
+            background: rgba(255, 255, 255, 0.45);
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        ul {
+            margin: 12px 0 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+
+        li + li {
+            margin-top: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            background: rgba(255, 255, 255, 0.38);
+        }
+
+        th,
+        td {
+            border: 1px solid var(--line);
+            padding: 10px;
+            vertical-align: top;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        th {
+            background: rgba(64, 84, 62, 0.12);
+            color: var(--pine);
+        }
+
+        .placeholder {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: calc(100% - 20px);
+                margin: 10px auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <p class="eyebrow">Item Workshop</p>
+            <h1>Relic Brainstorm for Black Valley</h1>
+            <p class="lede">The goal is a first-pass relic slate for the setting: 8 trinkets, 2 of each suit, and 4 relics, 1 of each suit. Trinkets should carry a small downside. Relics should carry a severe downside that worsens each time the relic is used.</p>
+        </header>
+
+        <section class="section spotlight">
+            <h2>Working Frame</h2>
+            <ul>
+                <li>Relics should feel obviously occult rather than merely useful: pact-marked tools, saint-haunted keepsakes, creek charms, grave goods, and objects that visibly carry dangerous attention.</li>
+                <li>Trinkets should be useful enough to tempt regular use, but troublesome enough that people think twice.</li>
+                <li>Relics should feel powerful, feared, and difficult to own without cost.</li>
+                <li>Suit should shape both function and downside, and each relic should matter both in the fiction and in trick-taking play.</li>
+                <li>Trinket effects should stay slight. Relic effects should be significant enough to clearly bend a challenge or scene.</li>
+                <li>Each relic should also carry at least one plainspoken fiction rule: how it is handled, what it asks of the bearer, or what sign it leaves behind when used.</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>Trinkets</h2>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Suit</th>
+                            <th>Trinket 1</th>
+                            <th>Trinket 2</th>
+                            <th>Common Downside Pattern</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strength</td>
+                            <td><strong>Black Wedge</strong><br>Ancient splitting wedge blackened with soot that never wipes clean.<br><em>Effect:</em> Once in a Strength check, draw 1 extra card before the first trick.<br><em>Cost:</em> On the next trick of that check, you must play your highest valid card.<br><em>Rule:</em> To wake it, you have to drive it into wood, a doorframe, or packed earth before the work starts. Afterward your palm is left visibly soot-dark until the check ends.</td>
+                            <td><strong>Grip Bone</strong><br>Old fingerbone wrapped in wire and carried in a pocket for hard labor.<br><em>Effect:</em> Once in a Strength check, after drawing, discard 1 card and draw 1; if the new card is Strength, draw 1 more and keep it.<br><em>Cost:</em> If you use it, you cannot choose your consolation when you lose the next trick in that check.<br><em>Rule:</em> You have to clench it in the same hand you work with. Until the check ends, that hand cramps and trembles whenever you try anything delicate.</td>
+                            <td>Useful force at the price of control: stronger hands, but a more committed or clumsy line of play inside the same check.</td>
+                        </tr>
+                        <tr>
+                            <td>Dexterity</td>
+                            <td><strong>Red Thread</strong><br>Small spool of dark red thread that never seems to tangle until the wrong moment.<br><em>Effect:</em> Once in a Dexterity check, after drawing, set 1 card from your hand aside face down. At the start of a later trick in that check, return it to your hand and discard 1 card from your hand.<br><em>Cost:</em> When you bring the set-aside card back, you must discard 1 card.<br><em>Rule:</em> You have to tie the thread around a finger, button, or wrist before the check starts. When you use it, the thread leaves a raw red mark behind.</td>
+                            <td><strong>Crooked Key</strong><br>Old bent key carried warm in the pocket and used where something sticks, catches, or will not quite open.<br><em>Effect:</em> Once in a Dexterity check, after either you or the open hand leads a trick, draw 1 card. If it is valid for that trick, you may play it instead of a card from your hand. If it is not valid, discard it immediately.<br><em>Cost:</em> It has no immediate mechanical cost.<br><em>Rule:</em> To use it, you must place it inside a real lock. After the key answers, that lock is spoiled: it jams, snaps, or will never properly close again.</td>
+                            <td>Better timing at the price of certainty: stronger staging and rescue plays, but a visible tell or a forced follow-through inside the same check.</td>
+                        </tr>
+                        <tr>
+                            <td>Intelligence</td>
+                            <td><strong>Slate Shard</strong><br>Flat piece of old school slate wrapped in cloth, still dusty with sums that no longer show unless breathed on.<br><em>Effect:</em> Once in an Intelligence check, after drawing, look at the top 2 cards of your deck. Put either or both back in any order, then draw 1 card.<br><em>Cost:</em> If you use it, discard 1 card from your hand.<br><em>Rule:</em> You have to fog the slate with your breath and trace one line across it with a fingernail. Until the check ends, stray marks and half-figures show up on nearby glass, dust, or standing water.</td>
+                            <td><strong>Tally Nail</strong><br>Iron nail notched with old count-marks, carried by people who need to keep a ledger in their head when no paper can be trusted.<br><em>Effect:</em> Once at the beginning of a challenge, look at the open hand and move 1 card to a different position. The open hand still plays the leftmost valid card as normal.<br><em>Cost:</em> It has no immediate mechanical cost, but it must be charged before use.<br><em>Rule:</em> To charge it, you have to spend a little time making tally marks into wood, leather, bone, or your own thumbnail while quietly counting something real: breaths, footsteps, drops of water, heartbeats, or coins. If it has not been properly charged, it does nothing. After you use it, the count is spent and you keep muttering numbers under your breath until the check ends.</td>
+                            <td>Better planning at the price of exposure or fixation: stronger forecasting and preparation, but with tells, mistaken certainty, or mounting mental strain inside the same check.</td>
+                        </tr>
+                        <tr>
+                            <td>Weird</td>
+                            <td><strong>Whisper Jar</strong><br>Small glass jar stoppered with wax and cloudy with breath that never quite clears.<br><em>Effect:</em> Once in a check, open the jar and let one true fear loose. Choose 1 card in the opposing hand; it is treated as a Stress card for the rest of the check.<br><em>Cost:</em> The fear is heard by everyone nearby. Once opened, people nearby keep glancing over their shoulders as if someone just spoke behind them, and the jar cannot hold that fear again until it is recharged with a new one.<br><em>Rule:</em> To charge it, you have to whisper a true fear into the jar and seal it with your thumb.</td>
+                            <td><strong>Borrowed Face</strong><br>Thin scrap of funeral wax pressed with the shape of a stranger's features and kept between paper or cloth so it does not warp.<br><em>Effect:</em> Once in a Weird check, flip the omen card. For the rest of the check, the first trick led with that omen's suit has its winner inverted.<br><em>Cost:</em> If no trick is led with the omen's suit before the check ends, add 1 Stress after the check.<br><em>Rule:</em> To use it, you have to press the wax over your own face for a breath and let it warm there. Until the check ends, mirrors, windows, and still water sometimes show you wearing the wrong expression a moment too long.</td>
+                            <td>Useful omens at the price of haunting: stronger supernatural reads and sharper moments of intervention, but with spirit attention, exposed fear, and the self becoming slightly less your own.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Relics</h2>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Suit</th>
+                            <th>Relic</th>
+                            <th>Power</th>
+                            <th>Escalating Downside</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strength</td>
+                            <td><strong>Grave Sledge</strong><br>Stone-headed sledge bound in iron straps, said to have first been raised over a grave that would not stay shut.<br><em>Rule:</em> Before you use it, you must crush something already dead beneath the head of the sledge: a bone, a dead branch, a bird carcass, a dried snake, grave flowers, or something else that has plainly finished living. If you wake it without doing that, it does not answer.</td>
+                            <td><em>Effect:</em> Once in a Strength check, after drawing, choose a suit. Until the check ends, all cards of that suit in your hand are treated as Strength for following suit and for winning tricks.<br><em>Fiction:</em> The sledge turns leverage into certainty. What should have needed finesse, timing, or patience can simply be broken through.</td>
+                            <td><em>Mechanical cost:</em> Each time you use it, remove your highest-value Dexterity card from your discard. If there is no Dexterity card there, add 1 Injury and 1 Dazed after the check. Sometimes that loss is useful, burning spent finesse out of your cycle and leaving only force behind. Sometimes it means the sledge has started teaching your body one answer to every problem.<br><em>Visible curse:</em> With each use before recovery, grave-dust blooms darker under your skin and your eyes cloud to the gray of old stone. Your steps begin to sound like grinding rock, your joints answer slowly, and by repeated use people can hear the weight of you before you reach them.</td>
+                        </tr>
+                        <tr>
+                            <td>Dexterity</td>
+                            <td><strong>Hushbell Chain</strong><br>Short length of dull bells tied on black cord, buried for years in a churchyard and dug up still silent.<br><em>Rule:</em> Before you use it, you have to wind the cord around your wrist or ankle and stand perfectly still until you can no longer hear your own movement in the bells. If they make so much as one true sound, the chain is not ready.</td>
+                            <td><em>Effect:</em> For the rest of a Dexterity check, after each trick ends, choose who leads the next trick: you or the open hand, regardless of who would normally lead. Each time you choose the next leader, you may also slide 1 card from your hand face down beneath the chain or return 1 card from beneath the chain to your hand. Cards beneath the chain remain part of your hand, but cannot be played until returned.<br><em>Fiction:</em> The chain steals the beat and remembers what you hide in it. You do not just move first; you seem to step in and out of the sequence, tucking actions away until the exact instant they matter while the bells keep the missing moments for you.</td>
+                            <td><em>Mechanical cost:</em> At the end of the check, add 1 Dazed for each card still tucked beneath the chain. The chain remembers every hidden motion you leave inside it, and getting those moments back is never free.<br><em>Visible curse:</em> The bells begin keeping sounds that should have passed already. Your footsteps echo a beat late, your voice doubles back on itself, and by repeated use people hear you arrive before they see you, or hear you answer after you have already gone quiet.</td>
+                        </tr>
+                        <tr>
+                            <td>Intelligence</td>
+                            <td><strong>Dead Ledger</strong><br>Water-warped account book with names, debts, and funeral tallies written in the same thin hand across decades.<br><em>Rule:</em> Before you use it, you must write down one true count, debt, promise, or name that matters in the coming trouble.</td>
+                            <td><em>Effect:</em> At the beginning of a challenge, pull all Stress cards from your deck and discard into your hand.<br><em>Fiction:</em> The ledger calls every burden due at once. Old anxieties, remembered failures, and unfinished reckonings rise together until you can see the whole shape of the trouble in one terrible sum.</td>
+                            <td><em>Mechanical cost:</em> At the end of the challenge, if you still have any Stress cards in hand, add 1 Injury. The relic gives you perfect access to your frayed edges, but punishes you if you cannot work through them before the trouble is done.<br><em>Visible curse:</em> Ink gathers in the nail-beds and at the creases of your fingers, tally marks appear on your skin, and you begin answering people with measures, counts, and comparisons before plain language can catch up.</td>
+                        </tr>
+                        <tr>
+                            <td>Weird</td>
+                            <td><strong>Wake Lantern</strong><br>Blackened hand lantern with no wick inside, only a little hooked space where a borrowed funeral flame can cling.<br><em>Rule:</em> Before you use it, the flame must be taken from someone's dying breath or kindled in the room before that breath has fully gone cold. If lit any other way, the lantern only smokes and never wakes.</td>
+                            <td><em>Effect:</em> Wake Lantern has its own dead hand of 7 cards, built from cards reserved to the lantern and guaranteed not to appear in normal checks. When the lantern is invoked, that dead hand is played as an additional open hand alongside the normal one. Any trick won by the lantern's hand counts as a trick won by you.<br><em>Fiction:</em> The table is no longer full of only the living. The dead sit in, play their own hand, and their winnings are counted in your name.</td>
+                            <td><em>Mechanical cost:</em> For each trick won by the dead hand, gain a status card matching that suit. The dead do not win cleanly for you; every victory leaves a mark of what answered the lantern's call.<br><em>Narrative curse:</em> Once the lantern is used, your breath comes out as smoke and the dead can just barely be made out inside. Those close to the ones you invoked can no longer remember them clearly: names blur, faces slide loose, but grief remains.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Current Direction</h2>
+            <div class="grid">
+                <article class="card">
+                    <span class="tag">Form</span>
+                    <ul>
+                        <li>Relics should be obviously occult, not just practical objects with a hidden trick.</li>
+                        <li>Trinkets should mostly be portable personal objects.</li>
+                        <li>They should still feel local to Black Valley: handmade, pact-touched, and embedded in labor, worship, mourning, creek life, or extraction.</li>
+                    </ul>
+                </article>
+                <article class="card">
+                    <span class="tag">Origin</span>
+                    <ul>
+                        <li>Relics should come from pacts, especially dangerous pacts or pacts that have gone wrong.</li>
+                        <li>That means even useful relics should feel claimed, compromised, or half-borrowed from something that wants more.</li>
+                        <li>The major relics can be a mix of known named objects and obscure horrors that only a few people would recognize.</li>
+                    </ul>
+                </article>
+                <article class="card">
+                    <span class="tag">Downsides</span>
+                    <ul>
+                        <li>Trinket downsides should lean physical or supernatural.</li>
+                        <li>Relic downsides should be severe, mechanical, and worsen each time the relic is used.</li>
+                        <li>Effects should always have both a narrative face and a trick-taking expression.</li>
+                        <li>For this pass, trinket drawbacks should usually stay inside the same check rather than adding a status card.</li>
+                        <li>Relic curses should also be visibly supernatural in the fiction, not just painful.</li>
+                    </ul>
+                </article>
+                <article class="card">
+                    <span class="tag">Object Families</span>
+                    <ul>
+                        <li>Strength relics can draw from tools, bones, work gear, and butcher's implements.</li>
+                        <li>Dexterity relics can draw from threads, charms, needles, keys, and cards.</li>
+                        <li>Intelligence relics can draw from books, ledgers, lenses, and measuring tools.</li>
+                        <li>Weird relics can draw from lanterns, tokens, masks, jars, and bells.</li>
+                    </ul>
+                </article>
+                <article class="card">
+                    <span class="tag">Current Focus</span>
+                    <ul>
+                        <li>The first detailed pass should start with Strength relics.</li>
+                        <li>The tone should lean useful before eerie.</li>
+                        <li>Names should stay plain and local rather than sounding legendary.</li>
+                        <li>Major relics should mostly feel ancient rather than tied only to the mining era.</li>
+                        <li>The major Strength relic should now be explored as a brutal, ancient labor relic rather than a flashy weapon.</li>
+                    </ul>
+                </article>
+                <article class="card">
+                    <span class="tag">Tier Names</span>
+                    <ul>
+                        <li><strong>Trinket</strong> should be the lighter tier.</li>
+                        <li><strong>Relic</strong> should be the heavier tier and the umbrella term in casual speech.</li>
+                        <li>This keeps the terms plain, local, and easy to understand at the table.</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <section class="section spotlight">
+            <h2>Next Questions</h2>
+            <ul>
+                <li>Should Grave Sledge keep the grave imagery, or would a plainer labor name make it stronger?</li>
+                <li>Is the full-suit conversion strong enough for a relic, or should it do even more?</li>
+                <li>Is the discard pressure harsh in the right way, or should the mechanical downside bite differently?</li>
+                <li>Should the next suit be Dexterity, Intelligence, or Weird?</li>
+                <li>Do you want trinkets and relics to be written as formal categories in the rules, or just used informally in the setting text?</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Item Card</title>
+<link rel="stylesheet" href="../card_base.css" />
+</head>
+<body>
+  <div class="card-preview">
+    <div class="card" id="card-root">
+      <div class="card-header">
+        <div class="card-value" id="card-value"></div>
+        <div class="item-icon" aria-hidden="true"></div>
+        <div class="suit-icon" id="suit-icon" aria-label="Suit"></div>
+      </div>
+      <div class="text-panel">
+        <div class="domain-label" id="domain-label"></div>
+        <div class="divider"></div>
+        <div class="rules-text" id="rules-text"></div>
+      </div>
+    </div>
+  </div>
+  <script src="./item_catalog.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const requestedId = params.get("id") || "black-wedge";
+    const card = window.TrickItemCatalog.getItemCardById(requestedId);
+
+    if (!card) {
+      throw new Error(`Unknown item card id: ${requestedId}`);
+    }
+
+    window.CARD_VARIANT_CONFIG = card.config;
+    document.title = card.label;
+  </script>
+  <script src="../card_renderer.js"></script>
+</body>
+</html>

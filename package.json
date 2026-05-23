@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "export:cards": "node export_cards.mjs",
-    "export:tts-deck": "node export_tts_custom_deck.mjs"
+    "export:tts-deck": "node export_tts_custom_deck.mjs",
+    "export:item-cards": "node export_item_cards.mjs",
+    "export:tts-item-deck": "node export_tts_item_deck.mjs"
   },
   "dependencies": {
     "playwright": "^1.54.1"

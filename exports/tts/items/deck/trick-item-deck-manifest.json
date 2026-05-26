@@ -5,8 +5,8 @@
     "uniqueBacks": false,
     "back": "trick-item-card-back.png",
     "width": 4,
-    "height": 4,
-    "number": 16,
+    "height": 5,
+    "number": 18,
     "sideways": false,
     "backIsHidden": true
   },
@@ -63,31 +63,41 @@
     },
     {
       "index": 11,
+      "id": "hearthhide-coat",
+      "label": "Hearthhide Coat"
+    },
+    {
+      "index": 12,
+      "id": "hearthhide-coat-price",
+      "label": "Hearthhide Coat Price"
+    },
+    {
+      "index": 13,
       "id": "hushbell-chain",
       "label": "Hushbell Chain"
     },
     {
-      "index": 12,
+      "index": 14,
       "id": "hushbell-chain-price",
       "label": "Hushbell Chain Price"
     },
     {
-      "index": 13,
+      "index": 15,
       "id": "dead-ledger",
       "label": "Dead Ledger"
     },
     {
-      "index": 14,
+      "index": 16,
       "id": "dead-ledger-price",
       "label": "Dead Ledger Price"
     },
     {
-      "index": 15,
+      "index": 17,
       "id": "wake-lantern",
       "label": "Wake Lantern"
     },
     {
-      "index": 16,
+      "index": 18,
       "id": "wake-lantern-price",
       "label": "Wake Lantern Price"
     }

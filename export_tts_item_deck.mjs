@@ -12,7 +12,6 @@ const SOURCE_CARD_HEIGHT = 1470;
 const OUTPUT_CARD_WIDTH = 400;
 const OUTPUT_CARD_HEIGHT = 560;
 const SHEET_WIDTH = 4;
-const SHEET_HEIGHT = 4;
 const EXPORT_ROOT = path.join(__dirname, "exports", "tts", "items", "deck");
 const FACE_SHEET_PATH = path.join(EXPORT_ROOT, "trick-item-face-sheet.png");
 const BACK_IMAGE_PATH = path.join(EXPORT_ROOT, "trick-item-card-back.png");
@@ -20,6 +19,7 @@ const MANIFEST_PATH = path.join(EXPORT_ROOT, "trick-item-deck-manifest.json");
 const README_PATH = path.join(EXPORT_ROOT, "README.md");
 
 const itemCards = buildItemDeckCards();
+const SHEET_HEIGHT = Math.ceil(itemCards.length / SHEET_WIDTH);
 
 function buildFileUrl(fileName, params = {}) {
   const fileUrl = pathToFileURL(path.join(__dirname, fileName));

@@ -1,0 +1,37 @@
+Black Valley Overview
+
+Black Valley is a pastoral, mournful region shaped by ichor mining, labor conflict, debt, and bad bargains that have become ordinary parts of life. It is not one central town but a region of small settlements, camps, hollows, and crossroads communities linked by the same damaged economy. Some communities live close to the mountains and mines, while others keep more distance and hold onto older pastoral rhythms.
+
+The valley is defined by runoff-blackened creeks, exhausted fields, worked hillsides, and people trying to preserve ordinary beauty under extraction. Mine owners and ichor interests hold visible power through wages, transport, debt, and supply, but they do not hold moral legitimacy. Life is intimate and social: people know one another's kin, habits, failures, bargains, and old injuries.
+
+Magic comes through pacts with supernatural beings. In Black Valley, that power is useful, compromising, and often humiliating rather than glamorous. Ichor has industrialized pact magic, making it feel extractable and ownable even when the spirits involved resist that logic. The setting should feel rooted in herding, weather, orchard work, creek travel, church suppers, lambing seasons, and hard-won seasonal abundance.
+
+The Six Peoples
+
+Varn
+The Varn are small goblin-rat folk known for binding bargains that cannot be easily evaded. They are natural brokers, notaries, debt-keepers, quartermasters, and intermediaries in dangerous dealings. Town life depends on them whenever trust must be turned into enforceable custom, which makes them both indispensable and resented.
+Mechanical identity: Varn can trade a bad hand for a new one by proposing a meaningful curse to the GM, discarding their current hand, and drawing another. Their play style is about escaping bad present odds by accepting future consequences.
+
+Moon-Eyed
+The Moon-Eyed are wax-bodied folk with candleflames burning behind blind eyes. They do not rely on ordinary sight, but instead read warmth, movement, drafts, and the traces left by living bodies. They fit naturally into lamplight, wakehouses, cellars, winter roads, and other dim practical places, and are well suited to night work, watch duty, healing, and endurance.
+Mechanical identity: Moon-Eyed recover from bodily harm better than most, removing an extra Injury when shuffling, and once per check they may discard 1 card from hand to draw 1 from their own deck. Their play style is resilience plus light hand-fixing.
+
+Tarrans
+The Tarrans are goatlike ridge herders, drovers, and couriers whose lives are shaped by weather, upland pasture, and bad roads. They are uniquely able to drink raw ichor without falling into its craving, making them essential wherever dangerous magical fuel must be carried, traded, or used. They are reliable, necessary, and never entirely free of the tension that comes from everyone depending on them.
+Mechanical identity: Tarrans always treat Weird as the led suit for valid play. This makes Weird far more reliable in their hands, especially when the led suit is also trump.
+
+Hollow-Skinned
+The Hollow-Skinned can consume a person and wear their body, though never their memories. Their disguises are perfect at a glance but fragile if broken, which makes them less a simple monster and more a social problem of fear, law, mercy, and suspicion. Different towns may kill them, regulate them, mark them, or bind them to strict kin and witness obligations.
+Mechanical identity: If a Hollow-Skinned takes an Injury while another Injury is already in the discard, they gain a hunger Curse. While that state is active, they draw 2 extra cards on Strength checks, and while wearing a borrowed body they also gain that person's racial advantage. Their play style is escalating risk that turns injury into predatory power.
+
+Rootborn
+The Rootborn are orchard and grove folk marked by bark-tough skin, moss-thread hair, and a deep relationship with rooted life. They can read the memory of a place through its plants, but only where they have earned the land's trust through tending, offerings, care, and long familiarity. They fit orchard keeping, hedge lore, seed-keeping, land memory, and the uneasy truth that cultivation is itself a controlled kind of violence.
+Mechanical identity: When shuffling, a Rootborn may choose not to remove a status card. If they do, they instead add 1 card of the suit with the fewest cards currently in their deck. Their play style is about restoring balance and regrowing the deck rather than simply clearing harm.
+
+Ashcrik
+The Ashcrik are threshold folk shaped by paired pacts of creek and cinder. Through fasting, breath control, prayer, and rite, they can shift between reed-state and ember-state, making them especially useful wherever water, smoke, heat, and dangerous transformation must be managed without losing control. They belong at fords, furnaces, mills, stills, wet forges, and other places where a community must tame something unstable.
+Mechanical identity: Ashcrik have two forms. In reed-form they draw an extra card on Dexterity checks, and in ember-form they draw an extra card on Strength checks. To switch, they must declare a fast across 2 shuffles, taking 1 Dazed on each shuffle; if the fast is interrupted, the switch fails and they gain 1 Stress. Their play style is long-cycle stance management instead of instant shapeshifting.
+
+Shared Tone
+
+Across all six peoples, the setting assumes that no wonder is free. Every useful gift comes through pact, every pact leaves a mark, and every people has a visible place in town life rather than existing only as distant folklore. The world should feel intimate, local, weathered, and socially entangled rather than grand or abstract.

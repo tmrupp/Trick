@@ -180,12 +180,27 @@ const ITEM_ENTRIES = [
     suit: "weird",
     domain: "Trinket",
     lines: [
-      "Rule: Whisper a true fear into the jar and seal it with your thumb.",
+      "Rule: Whisper a true secret that has never been uttered aloud into the jar and seal it with your thumb.",
       "Effect: Open it in a check and choose 1 card in the opposing hand; that card is treated as Stress for the rest of the check.",
-      "Cost: The fear is heard by everyone nearby and the jar cannot hold that fear again until recharged.",
-      "<em>Mark: People keep glancing over their shoulders as if someone just spoke behind them.</em>"
+      "Cost: The secret is heard by everyone nearby and the jar cannot hold that secret again.",
+      "<em>Mark: When opened people glance over their shoulders as if someone just spoke behind them.</em>"
     ],
-    previewDescription: "Lets one true fear out into the room and stains a chosen opposing card with Stress."
+    previewDescription: "Lets one true secret out into the room and stains a chosen opposing card with Stress."
+  },
+  {
+    id: "scoped-rifle",
+    label: "Scoped Rifle",
+    title: "SCOPED RIFLE",
+    kind: "trinket",
+    suit: "dexterity",
+    domain: "Trinket",
+    lines: [
+      "Rule: Set it up to watch a distant spot and look through the scope until the check starts.",
+      "Effect: In a Dexterity check, add 2 to the value of a card in your hand for the rest of the check.",
+      "Cost: Discard 1 card from your hand.",
+      "<em>Mark: Sometimes the lense appears smoky and unusable.</em>"
+    ],
+    previewDescription: "Lets one true secret out into the room and stains a chosen opposing card with Stress."
   },
   {
     id: "borrowed-face",
@@ -233,6 +248,36 @@ const ITEM_ENTRIES = [
     previewDescription: "Hidden cost and curse to reveal after the sledge answers."
   },
   {
+    id: "hearthhide-coat",
+    label: "Hearthhide Coat",
+    title: "HEARTHHIDE COAT",
+    kind: "relic",
+    suit: "strength",
+    domain: "Relic",
+    lines: [
+      "Rule: Sleep in it without fire or roof, or stand in the night wind until your body stops shaking.",
+      "Effect: Once in a survival check, set aside up to 2 Injury cards from your hand. They do not count as being in hand until the check ends.",
+      "Take 2 cards from your discard into your hand for each Injury set aside this way.",
+      "Reveal this relic's price after use."
+    ],
+    previewDescription: "Temporarily buries Injury pressure in a survival check by teaching the body to endure too much."
+  },
+  {
+    id: "hearthhide-coat-price",
+    label: "Hearthhide Coat Price",
+    title: "HEARTHHIDE COAT PRICE",
+    kind: "reveal",
+    suit: "strength",
+    domain: "Reveal After Use",
+    lines: [
+      "At the end of the check, return those Injuries to your discard.",
+      "Add 1 Dazed for each Injury set aside this way. If you set aside 2, also add 1 Stress.",
+      "<em>Your skin pales and deadens, your joints lock up, and with continued use the coat becomes harder to take off, becoming a part of you.</em>",
+      "<em>People can see the cold sitting in your flesh long before you feel how badly you are hurt.</em>"
+    ],
+    previewDescription: "Hidden cost for surviving by deadening the body's warnings."
+  },
+  {
     id: "hushbell-chain",
     label: "Hushbell Chain",
     title: "HUSHBELL CHAIN",
@@ -270,7 +315,7 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Relic",
     lines: [
-      "Rule: Write down one true count, debt, promise, or name that matters in the coming trouble.",
+      "Rule: Write down one count, debt, promise, or name that matters in the coming trouble, getting it wrong has consequences.",
       "Effect: At the beginning of a challenge, pull all Stress cards from your deck and discard into your hand.",
       "<em>Fiction: Every burden comes due at once until the whole challenge reads like one terrible sum.</em>",
       "Reveal this relic's price after use."

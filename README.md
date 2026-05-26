@@ -8,6 +8,8 @@ The project currently includes:
 - A browser index page for local preview.
 - Export scripts for individual card images and a Tabletop Simulator deck sheet.
 
+https://autorolltables.github.io/#
+
 ## Requirements
 
 - Node.js 18 or newer

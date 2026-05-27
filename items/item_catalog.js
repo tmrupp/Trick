@@ -93,7 +93,7 @@ const ITEM_ENTRIES = [
       "Rule: Drive it into wood, a doorframe, or packed earth before the work starts.",
       "Effect: In a Strength check, draw 1 extra card before the first trick.",
       "Cost: On the next trick, you must play your highest valid card.",
-      "<em>Mark: Your palm stays soot-dark until the check ends.</em>"
+      "<em>Your palm stays soot-dark until the check ends.</em>"
     ],
     previewDescription: "Wake it in wood or earth to draw deeper, then commit hard on the next trick."
   },
@@ -108,7 +108,7 @@ const ITEM_ENTRIES = [
       "Rule: Clench it in the same hand you work with.",
       "Effect: In a Strength check, discard 1 and draw 1; if the new card is Strength, draw 1 more and keep it.",
       "Cost: If you use it, you cannot choose your consolation when you lose the next trick.",
-      "<em>Mark: That hand cramps and trembles whenever you try anything delicate.</em>"
+      "<em>That hand cramps and trembles whenever you try anything delicate.</em>"
     ],
     previewDescription: "Turns a hard grip into better Strength finds at the cost of control."
   },
@@ -123,7 +123,7 @@ const ITEM_ENTRIES = [
       "Rule: Tie it around a finger, button, or wrist before the check starts.",
       "Effect: In a Dexterity check, set 1 card aside face down. At a later trick, return it to hand and discard 1.",
       "Cost: When the tucked card comes back, you must discard 1 card.",
-      "<em>Mark: The thread leaves a raw red line behind.</em>"
+      "<em>The thread leaves a raw red line behind.</em>"
     ],
     previewDescription: "Tuck one move away and pull it back when the timing is right."
   },
@@ -153,7 +153,7 @@ const ITEM_ENTRIES = [
       "Rule: Fog it with your breath and trace one line across it with a fingernail.",
       "Effect: In an Intelligence check, look at the top 2 cards of your deck, reorder them, then draw 1.",
       "Cost: Discard 1 card from your hand.",
-      "<em>Mark: Half-figures show up on nearby glass, dust, or still water.</em>"
+      "<em>Half-figures show up on nearby glass, dust, or still water.</em>"
     ],
     previewDescription: "A planning shard that trades a card for cleaner future draws."
   },
@@ -168,7 +168,7 @@ const ITEM_ENTRIES = [
       "Rule: Charge it by marking and quietly counting something real: breaths, steps, drops, heartbeats, or coins.",
       "Effect: At the beginning of a challenge, look at the open hand and move 1 card to a different position.",
       "Cost: No immediate mechanical cost, but an uncharged nail does nothing.",
-      "<em>Mark: The count is spent and you keep muttering numbers until the check ends.</em>"
+      "<em>The count is spent and you keep muttering numbers until the check ends.</em>"
     ],
     previewDescription: "A pre-charged count that lets you shift one open-hand card before the challenge starts."
   },
@@ -183,7 +183,7 @@ const ITEM_ENTRIES = [
       "Rule: Whisper a true secret that has never been uttered aloud into the jar and seal it with your thumb.",
       "Effect: Open it in a check and choose 1 card in the opposing hand; that card is treated as Stress for the rest of the check.",
       "Cost: The secret is heard by everyone nearby and the jar cannot hold that secret again.",
-      "<em>Mark: When opened people glance over their shoulders as if someone just spoke behind them.</em>"
+      "<em>When opened people glance over their shoulders as if someone just spoke behind them.</em>"
     ],
     previewDescription: "Lets one true secret out into the room and stains a chosen opposing card with Stress."
   },
@@ -198,7 +198,7 @@ const ITEM_ENTRIES = [
       "Rule: Set it up to watch a distant spot and look through the scope until the check starts.",
       "Effect: In a Dexterity check, add 2 to the value of a card in your hand for the rest of the check.",
       "Cost: Discard 1 card from your hand.",
-      "<em>Mark: Sometimes the lense appears smoky and unusable.</em>"
+      "<em>Sometimes the lense appears smoky and unusable.</em>"
     ],
     previewDescription: "Lets one true secret out into the room and stains a chosen opposing card with Stress."
   },
@@ -213,7 +213,7 @@ const ITEM_ENTRIES = [
       "Rule: Press the funeral wax over your face for a breath and let it warm there.",
       "Effect: In a Weird check, flip the omen card. The first trick led with that omen suit has its winner inverted.",
       "Cost: If no trick is led with that suit before the check ends, add 1 Stress after the check.",
-      "<em>Mark: Mirrors and still water show you wearing the wrong expression a moment too long.</em>"
+      "<em>Mirrors and still water show you wearing the wrong expression a moment too long.</em>"
     ],
     previewDescription: "Turns an omen suit into one inverted future trick."
   },
@@ -227,7 +227,7 @@ const ITEM_ENTRIES = [
     lines: [
       "Rule: Crush something already dead beneath the head before you wake it.",
       "Effect: In a Strength check, choose a suit. Until the check ends, cards of that suit in your hand are treated as Strength for following suit and winning tricks.",
-      "<em>Fiction: What should have needed finesse, timing, or patience can simply be broken through.</em>",
+      "<em>What should have needed finesse, timing, or patience can simply be broken through.</em>",
       "Reveal this relic's price after use."
     ],
     previewDescription: "Break through by turning one suit fully into Strength."
@@ -317,7 +317,7 @@ const ITEM_ENTRIES = [
     lines: [
       "Rule: Write down one count, debt, promise, or name that matters in the coming trouble, getting it wrong has consequences.",
       "Effect: At the beginning of a challenge, pull all Stress cards from your deck and discard into your hand.",
-      "<em>Fiction: Every burden comes due at once until the whole challenge reads like one terrible sum.</em>",
+      "<em>Every burden comes due at once until the whole challenge reads like one terrible sum.</em>",
       "Reveal this relic's price after use."
     ],
     previewDescription: "Calls every Stress card due at once at the start of a challenge."

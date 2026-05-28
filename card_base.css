@@ -1,5 +1,7 @@
 :root {
   --preview-scale: 0.54;
+  --surface-accent-top: 40%;
+  --surface-accent-bottom: 20%;
   --card-bg-top: #ffffff;
   --card-bg-bottom: #ffffff;
   --outer-border: #c9d3df;
@@ -69,8 +71,8 @@ body.export-page .card-preview .card {
   padding: 48px;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--accent) 12%, #ffffff) 0%,
-    color-mix(in srgb, var(--accent) 6%, #ffffff) 100%
+    color-mix(in srgb, var(--accent) var(--surface-accent-top), #ffffff) 0%,
+    color-mix(in srgb, var(--accent) var(--surface-accent-bottom), #ffffff) 100%
   );
   border: 14px solid color-mix(in srgb, var(--accent) 34%, var(--outer-border));
   box-shadow:
@@ -201,6 +203,72 @@ body.export-page .card-preview .card {
   opacity: 1;
 }
 
+.status-card {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--accent) 52%, rgba(255,255,255,0.42)),
+    0 18px 42px rgba(8, 16, 28, 0.42),
+    0 34px 90px rgba(8, 16, 28, 0.34);
+}
+
+.status-card::after {
+  border-width: 3px;
+  border-color: color-mix(in srgb, var(--frame-highlight) 72%, var(--accent));
+}
+
+.status-card .card-value {
+  color: #111111;
+  text-shadow:
+    0 2px 0 rgba(255,255,255,0.42),
+    0 0 22px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.status-card .suit-icon {
+  color: color-mix(in srgb, var(--frame-highlight) 84%, var(--accent));
+  filter: drop-shadow(0 10px 16px rgba(0,0,0,0.22));
+}
+
+.status-card .text-panel {
+  border-width: 8px;
+  border-color: color-mix(in srgb, var(--frame-highlight) 44%, var(--accent));
+  background: var(--panel-bg);
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--frame-highlight) 18%, transparent),
+    inset 0 0 52px color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,0.1)),
+    0 18px 34px rgba(4, 10, 18, 0.28);
+}
+
+.status-card .domain-label,
+.status-card .rules-text {
+  color: var(--text-main);
+}
+
+.status-card .rules-text strong {
+  color: var(--text-main);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.status-card .domain-label {
+  letter-spacing: 9px;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.status-card .divider {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 92%, white) 0%,
+    color-mix(in srgb, var(--accent) 56%, rgba(255,255,255,0.14)) 56%,
+    transparent 100%
+  );
+}
+
+.status-card .divider::before,
+.status-card .divider::after {
+  width: 12px;
+  height: 12px;
+  background: color-mix(in srgb, var(--frame-highlight) 72%, var(--accent));
+}
+
 .card::after {
   content: "";
   position: absolute;
@@ -241,29 +309,50 @@ body.export-page .card-preview .card {
 }
 
 .item-card {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent) 12%, #ffffff) 0%,
-    color-mix(in srgb, var(--accent) 6%, #ffffff) 100%
+  padding: 18px 48px 48px;
+  background: color-mix(in srgb, var(--accent) var(--surface-accent-top), #ffffff);
+  box-shadow:
+    0 12px 34px rgba(18, 38, 64, 0.24),
+    0 26px 70px rgba(18, 38, 64, 0.28);
+}
+
+.item-card::after {
+  content: none;
+}
+
+.item-relic-card {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255,255,255,1) 0%,
+    rgba(255,255,255,0.995) 42%,
+    color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,0.98)) 56%,
+    color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,0.92)) 70%,
+    color-mix(in srgb, var(--accent) 66%, rgba(255,255,255,0.68)) 84%,
+    color-mix(in srgb, var(--accent) 98%, rgba(36, 18, 16, 1)) 100%
   );
+  border: 14px solid color-mix(in srgb, var(--accent) 94%, rgba(28, 16, 14, 1));
   box-shadow:
     0 0 0 2px rgba(255,255,255,0.6),
     0 12px 34px rgba(18, 38, 64, 0.24),
     0 26px 70px rgba(18, 38, 64, 0.28),
-    inset 0 0 0 10px color-mix(in srgb, var(--accent) 10%, white);
+    inset 0 0 120px 24px color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,0.2)),
+    inset 0 0 240px 76px color-mix(in srgb, var(--accent) 8%, rgba(255,255,255,0.34)),
+    inset 0 0 0 1px rgba(255,255,255,0.34);
 }
 
-.item-card::after {
-  inset: 22px;
-  border-radius: 30px;
-  border: 3px solid color-mix(in srgb, var(--accent) 44%, rgba(255,255,255,0.45));
+.item-relic-card::before {
+  content: none;
+}
+
+.item-relic-card::after {
+  content: none;
 }
 
 .item-reveal-card {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--accent) 12%, #ffffff) 0%,
-    color-mix(in srgb, var(--accent) 6%, #ffffff) 100%
+    color-mix(in srgb, var(--accent) var(--surface-accent-top), #ffffff) 0%,
+    color-mix(in srgb, var(--accent) var(--surface-accent-bottom), #ffffff) 100%
   );
   box-shadow:
     0 0 0 2px rgba(255,255,255,0.62),
@@ -303,8 +392,9 @@ body.export-page .card-preview .card {
 }
 
 .item-card .card-header {
+  justify-content: center;
   gap: 18px;
-  margin-top: 12px;
+  margin: 0 0 14px;
 }
 
 .item-icon {
@@ -313,8 +403,8 @@ body.export-page .card-preview .card {
   justify-content: center;
   flex: 0 0 auto;
   color: color-mix(in srgb, var(--accent) 72%, #111111);
-  width: 206px;
-  height: 206px;
+  width: 188px;
+  height: 188px;
   border-radius: 26px;
   border: 4px solid color-mix(in srgb, var(--accent) 60%, #1a1a1a);
   background:
@@ -376,8 +466,8 @@ body.export-page .card-preview .card {
 }
 
 .item-card .suit-icon {
-  width: 206px;
-  height: 206px;
+  width: 188px;
+  height: 188px;
   padding: 12px;
   border-radius: 26px;
   border: 4px solid color-mix(in srgb, var(--accent) 64%, #1a1a1a);
@@ -392,12 +482,12 @@ body.export-page .card-preview .card {
 
 .item-card .suit-icon img,
 .item-card .suit-icon svg {
-  width: 170px;
-  height: 170px;
+  width: 154px;
+  height: 154px;
 }
 
 .item-card .text-panel {
-  margin-top: 24px;
+  margin-top: 0;
   padding: 36px 40px 42px;
 }
 
@@ -480,7 +570,11 @@ body.export-page .card-preview .card {
   margin-top: 72px;
   border-radius: 24px;
   border: 6px solid color-mix(in srgb, var(--accent) 44%, #d6e1ec);
-  background: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(246,250,255,0.98) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 8%, rgba(255,255,255,0.98)) 0%,
+    color-mix(in srgb, var(--accent) 4%, rgba(246,250,255,0.98)) 100%
+  );
   padding: 50px 54px 56px;
   box-shadow:
     inset 0 0 30px rgba(255,255,255,0.38),

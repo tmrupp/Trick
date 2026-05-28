@@ -14,7 +14,7 @@ const OUTPUT_CARD_HEIGHT = 560;
 const SHEET_WIDTH = 4;
 const EXPORT_ROOT = path.join(__dirname, "exports", "tts", "items", "deck");
 const FACE_SHEET_PATH = path.join(EXPORT_ROOT, "trick-item-face-sheet.png");
-const BACK_IMAGE_PATH = path.join(EXPORT_ROOT, "trick-item-card-back.png");
+const BACK_SHEET_PATH = path.join(EXPORT_ROOT, "trick-item-back-sheet.png");
 const MANIFEST_PATH = path.join(EXPORT_ROOT, "trick-item-deck-manifest.json");
 const README_PATH = path.join(EXPORT_ROOT, "README.md");
 
@@ -118,8 +118,8 @@ async function writeManifest() {
     name: "Trick Item Deck",
     importSettings: {
       face: "trick-item-face-sheet.png",
-      uniqueBacks: false,
-      back: "trick-item-card-back.png",
+      uniqueBacks: true,
+      back: "trick-item-back-sheet.png",
       width: SHEET_WIDTH,
       height: SHEET_HEIGHT,
       number: itemCards.length,
@@ -142,14 +142,14 @@ async function writeReadme() {
     "",
     "Files in this folder:",
     `- \`trick-item-face-sheet.png\`: front card sheet for the full ${itemCards.length}-card item deck.`,
-    "- `trick-item-card-back.png`: shared back image.",
+    "- `trick-item-back-sheet.png`: back card sheet with shared trinket backs and relic-price backs.",
     "- `trick-item-deck-manifest.json`: exact Tabletop Simulator import settings and card order.",
     "",
     "Import in Tabletop Simulator:",
     "1. Open `Objects > Components > Custom > Deck`.",
     "2. Set Face to the hosted or local path for `trick-item-face-sheet.png`.",
-    "3. Leave `Unique Backs` disabled.",
-    "4. Set Back to the hosted or local path for `trick-item-card-back.png`.",
+    "3. Enable `Unique Backs`.",
+    "4. Set Back to the hosted or local path for `trick-item-back-sheet.png`.",
     `5. Set Width to ${SHEET_WIDTH}, Height to ${SHEET_HEIGHT}, and Number to ${itemCards.length}.`,
     "6. Leave `Sideways` off and enable `Back is Hidden`.",
     `7. The generated face sheet is ${SHEET_WIDTH * OUTPUT_CARD_WIDTH}x${SHEET_HEIGHT * OUTPUT_CARD_HEIGHT}.`,
@@ -186,18 +186,24 @@ async function main() {
     });
     console.log(`exported ${path.relative(__dirname, FACE_SHEET_PATH)}`);
 
-    const backDataUrl = await renderCardDataUrl(renderPage, {
-      id: "item-card-back",
-      label: "Item Card Back",
-      file: "card_back.html",
-      params: {}
-    });
-    await backPage.setContent(buildSingleCardHtml(backDataUrl));
-    await backPage.locator("img").screenshot({
-      path: BACK_IMAGE_PATH,
+    const backDataUrls = [];
+    for (const card of itemCards) {
+      const dataUrl = await renderCardDataUrl(renderPage, {
+        id: `${card.id}-back`,
+        label: `${card.label} Back`,
+        file: card.backFile,
+        params: card.backParams
+      });
+      backDataUrls.push({ label: `${card.label} back`, dataUrl });
+      console.log(`rendered ${card.id} back`);
+    }
+
+    await backPage.setContent(buildSheetHtml(backDataUrls));
+    await backPage.locator("#sheet").screenshot({
+      path: BACK_SHEET_PATH,
       omitBackground: true
     });
-    console.log(`exported ${path.relative(__dirname, BACK_IMAGE_PATH)}`);
+    console.log(`exported ${path.relative(__dirname, BACK_SHEET_PATH)}`);
 
     await writeManifest();
     console.log(`wrote ${path.relative(__dirname, MANIFEST_PATH)}`);

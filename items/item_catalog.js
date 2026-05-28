@@ -371,9 +371,18 @@ const ITEM_ENTRIES = [
 
 function buildItemConfig(entry) {
   const suit = SUIT_DEFINITIONS[entry.suit];
+  const cardClass = ["item-card"];
+
+  if (entry.kind === "relic") {
+    cardClass.push("item-relic-card");
+  }
+
+  if (entry.kind === "reveal") {
+    cardClass.push("item-reveal-card");
+  }
 
   return {
-    cardClass: entry.kind === "reveal" ? "item-card item-reveal-card" : "item-card",
+    cardClass: cardClass.join(" "),
     cssVars: suit.cssVars,
     value: "",
     itemIconSvgPath: entry.kind === "trinket" ? "../trinklet.svg" : "../relic.svg",
@@ -405,14 +414,27 @@ function getItemCardById(id) {
   return itemCatalogById.get(id) || null;
 }
 
+function getPriceCardForRelic(id) {
+  return itemCatalogById.get(`${id}-price`) || null;
+}
+
 function buildItemDeckCards() {
-  return itemCatalog.map(({ id, label, suit, file, params }) => ({
-    id,
-    label,
-    suit,
-    file,
-    params
-  }));
+  return itemCatalog
+    .filter((entry) => entry.kind !== "reveal")
+    .map(({ id, label, suit, kind, file, params }) => {
+      const priceCard = kind === "relic" ? getPriceCardForRelic(id) : null;
+
+      return {
+        id,
+        label,
+        suit,
+        kind,
+        file,
+        params,
+        backFile: priceCard ? ITEM_PAGE_PATH : "card_back.html",
+        backParams: priceCard ? { id: priceCard.id } : {}
+      };
+    });
 }
 
 function buildItemIndexSections() {

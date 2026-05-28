@@ -2,11 +2,11 @@
   "name": "Trick Item Deck",
   "importSettings": {
     "face": "trick-item-face-sheet.png",
-    "uniqueBacks": false,
-    "back": "trick-item-card-back.png",
+    "uniqueBacks": true,
+    "back": "trick-item-back-sheet.png",
     "width": 4,
-    "height": 5,
-    "number": 18,
+    "height": 4,
+    "number": 14,
     "sideways": false,
     "backIsHidden": true
   },
@@ -48,18 +48,18 @@
     },
     {
       "index": 8,
+      "id": "scoped-rifle",
+      "label": "Scoped Rifle"
+    },
+    {
+      "index": 9,
       "id": "borrowed-face",
       "label": "Borrowed Face"
     },
     {
-      "index": 9,
+      "index": 10,
       "id": "grave-sledge",
       "label": "Grave Sledge"
-    },
-    {
-      "index": 10,
-      "id": "grave-sledge-price",
-      "label": "Grave Sledge Price"
     },
     {
       "index": 11,
@@ -68,38 +68,18 @@
     },
     {
       "index": 12,
-      "id": "hearthhide-coat-price",
-      "label": "Hearthhide Coat Price"
-    },
-    {
-      "index": 13,
       "id": "hushbell-chain",
       "label": "Hushbell Chain"
     },
     {
-      "index": 14,
-      "id": "hushbell-chain-price",
-      "label": "Hushbell Chain Price"
-    },
-    {
-      "index": 15,
+      "index": 13,
       "id": "dead-ledger",
       "label": "Dead Ledger"
     },
     {
-      "index": 16,
-      "id": "dead-ledger-price",
-      "label": "Dead Ledger Price"
-    },
-    {
-      "index": 17,
+      "index": 14,
       "id": "wake-lantern",
       "label": "Wake Lantern"
-    },
-    {
-      "index": 18,
-      "id": "wake-lantern-price",
-      "label": "Wake Lantern Price"
     }
   ]
 }

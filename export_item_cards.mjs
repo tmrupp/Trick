@@ -47,6 +47,10 @@ async function main() {
       const outputPath = path.join(FRONT_DIR, `${card.id}.png`);
       await exportCard(page, card.file, outputPath, card.params);
       console.log(`exported ${path.relative(__dirname, outputPath)}`);
+
+      const backOutputPath = path.join(BACK_DIR, `${card.id}-back.png`);
+      await exportCard(page, card.backFile, backOutputPath, card.backParams);
+      console.log(`exported ${path.relative(__dirname, backOutputPath)}`);
     }
 
     const backPath = path.join(BACK_DIR, "item-card-back.png");

@@ -1,0 +1,329 @@
+TRICK-TAKING RPG — CORE RULES REFERENCE
+========================================
+
+
+1. CORE CONCEPT
+---------------
+Challenges are resolved through trick-taking. Each player holds a personal deck
+played against an open hand (the world's opposition). The player draws 7 cards
+when starting a challenge. Trump suit is set by the challenge type. Taking all
+7 tricks is legendary difficulty. Losing challenges adds status cards to your
+deck. The deck is the character.
+
+
+2. THE FOUR SUITS
+-----------------
+  Suit          Domain                   Status Card   Trump When
+  Strength      Physical force           Injury        Strength challenge
+  Dexterity     Agility, precision       Dazed         Dexterity challenge
+  Intelligence  Knowledge, reasoning     Stress        Intelligence challenge
+  Weird         Magic / the unknown      Curse         Weird challenge
+
+The player leads the first trick unless the narrative grants disadvantage.
+The open hand plays the leftmost valid card and must follow the led suit.
+Highest trump wins. If no trump is played, highest card of any suit wins.
+
+
+3. STATUS CARDS
+---------------
+Status cards enter via the discard pile. All have value 0. They can follow suit
+and can win a trick as trump (value 0 beats all non-trump cards). Each suit's
+status type is fixed regardless of source.
+At reshuffle, remove exactly one status card (not Curse) before shuffling.
+
+INJURY (Strength)
+  - Clogs the hand. No additional mechanical effect.
+  - Outside of a challenge, if 2+ Injury cards appear in the top 7 cards of
+    the player's discard, a survival event fires immediately (see §8).
+
+STRESS (Intelligence)
+  - When drawn on the initial challenge hand draw, immediately places an identical copy
+    in the discard. Growth is exponential.
+  - Mid-challenge draws (e.g. via Recalculate) do not trigger this.
+
+DAZED (Dexterity)
+  - Must be played whenever it is a legal play — including when playing
+    off-suit freely. Takes priority over all other cards in hand.
+  - On trick win: permanently removed from the game.
+  - On trick loss: goes to the player's discard.
+
+CURSE (Weird)
+  - GM writes a behavioral compulsion on each Curse card.
+  - Breaking the compulsion: GM discretion, usually adds a status card.
+  - Cannot be removed by rest or reshuffle. Only by fulfilling the condition.
+
+
+4. TRICK LOSS CONSOLATION ACTIONS
+----------------------------------
+Triggered on trick loss only (not challenge loss). The consolation is determined
+by the suit of the card the player played, not the suit that won. All optional.
+
+BRACE (Strength)
+  Stage the lost card outside hand. Its value adds to your next played card
+  regardless of suit. One staged card at a time. Staging a new card discards
+  the previous. Discarded after use or at end of challenge if unused.
+
+REPOSITION (Dexterity)
+  Choose which valid card the open hand plays next trick instead of the
+  leftmost-valid default. No effect if only one valid play exists.
+
+RECALCULATE (Intelligence)
+  Discard any one card from hand (including status cards) and draw one from
+  the top of your deck.
+
+REVELATION (Weird)
+  Choose 1 status card from your discard. Your next played card counts as
+  that status card's suit in addition to its own. Then place that status
+  card on top of your deck.
+
+
+5. RECOVERY
+-----------
+REST (GM-granted narrative scene)
+  Remove any number of status cards from your discard, player's choice.
+  Curse cards cannot be removed by rest.
+
+RESHUFFLE (when deck empties)
+  Remove exactly one status card from the discard before shuffling (Curse
+  ineligible). Check for deck evolution triggers. Then shuffle.
+
+DAZED (on play): permanently removed if the trick is won; goes to discard if lost.
+CURSE: only removed by fulfilling the GM-set condition.
+
+
+6. DECK CONSTRUCTION
+--------------------
+Built at campaign start via point buy. Finished size: exactly 21 cards.
+Card values run 1–10 per suit. Each card costs points equal to its face value.
+No suit balance requirements. Budget is GM-determined.
+Budget guidance: 105 points yields an average card value of 5 across 21 cards.
+Duplicate copies of the same suit+value card are permitted.
+
+[TODO: create deck archetypes for quick character creation]
+
+
+7. DECK EVOLUTION
+-----------------
+Triggers at reshuffle when 2+ status cards of the same suit are in the deck.
+Fires after the one free removal, before shuffling. Each suit tracks
+independently. Multiple suits can trigger in one reshuffle. After firing,
+existing status cards of that suit still count — if 2+ remain, evolution fires
+again at the next reshuffle.
+
+All suits share the ADD option:
+  Draw 3 cards from that suit's acquisition pile; keep 1, return 2.
+  The kept card goes to the discard pile and is shuffled into the new deck.
+  The acquisition pile is a full 1–10, reshuffled after each draw.
+
+STRENGTH — Purge the Weak
+  Remove the lowest-value non-status card in the deck permanently.
+  Ties: player chooses.
+
+INTELLIGENCE — Triage
+  Remove any one non-status card freely (any suit, any value).
+
+DEXTERITY — Redirected  (Add and Remove both become available; each is optional)
+  Remove: any one non-status card freely.
+
+WEIRD — The Bargain
+  Remove one non-status card from the deck. The GM writes a group compulsion
+  on that card, converting it into the Curse card, which is then placed into
+  every other player's discard simultaneously. One GM-set condition lifts the
+  compulsion for all players at once.
+
+
+8. THE SURVIVAL EVENT
+---------------------
+TRIGGER
+  Outside of any challenge: 2+ Injury cards are found in the top 7 cards of
+  the player's discard. The survival event fires immediately. The top 7 scan
+  is the trigger condition only; the survival challenge itself draws normally from the deck.
+
+THRESHOLD
+  Status cards in discard   Tricks required to survive
+  0–1                       1  (floor, always fires)
+  2                         2
+  3                         3
+  4                         4
+  5                         5
+  6                         6
+  7+                        7  (ceiling)
+
+SEQUENCE
+  1. GM counts all status cards in the player's discard and announces the
+     survival challenge threshold.
+  2. One other player (only one) may lend one card from their discard to the
+     injured player before the challenge begins.
+  3. The injured player draws 7 cards from their deck normally and runs a
+     Strength check at the announced threshold. Normal trick loss consolation
+     actions apply.
+  4. SUCCESS: Played and remaining hand cards go to the player's discard
+     (as a normal challenge). Player then draws back up to 7 cards from
+     their deck.
+  5. FAILURE: Character dies.
+
+LENDING A HAND
+  Exactly one player may lend per event. Threshold is announced first.
+  The lent card comes from the helper's discard.
+  On success: lent card returns to the helper's discard.
+  On failure: lent card is removed from the helper's deck entirely.
+
+RETRIGGER
+  After the survival challenge concludes, the played cards are discarded, resetting
+  the top 7. The trigger is re-evaluated on this new top 7. If 2+ Injuries
+  remain, another survival event fires immediately.
+
+
+9. CHALLENGE STRUCTURE
+----------------------
+FRAMING
+  Challenge type: Player suggested, GM declared.
+  Trump suit: Determined by the declared challenge type.
+  Threshold: Declared publicly before play begins. Outcome is binary.
+  The player draws 7 cards from their deck when the challenge starts.
+  At the end of a challenge, all played and remaining hand cards go to the
+  player's discard.
+  Failure: Adds the appropriate status card to the player's discard.
+
+MID-CHALLENGE RESHUFFLE
+  If the player's deck empties during a challenge, reshuffle immediately:
+  remove one status card (Curse ineligible), check evolution, shuffle, then
+  continue the challenge with the refreshed deck.
+
+TRICK RULES
+  The winner of the previous trick leads the next.
+  Ties are won by the leader of that trick.
+  If the player has no cards of the led suit, they may play any card freely.
+
+THE OPEN HAND
+  7 cards from a 40-card challenge deck (values 1–10 in all four suits).
+  Reshuffled fresh at the start of each challenge. Face-up at all times.
+  Always plays the leftmost valid card and must follow the led suit. If the
+  open hand has no card of the led suit, it plays the leftmost card freely.
+  The player leads the first trick unless the narrative grants disadvantage.
+
+DIFFICULTY GUIDE
+  1 trick   Trivial    (skip if failure is uninteresting)
+  2 tricks  Easy
+  3 tricks  Routine
+  4 tricks  Moderate
+  5 tricks  Hard
+  6 tricks  Severe
+  7 tricks  Legendary  (use sparingly)
+
+
+GLOSSARY
+--------
+Acquisition Pile
+  A full set of values 1–10 for one suit, used as the draw pool during deck
+  evolution. Reshuffled after each use.
+
+Brace
+  The Strength consolation. Stage the lost card to add its value to your next
+  played card regardless of suit.
+
+Challenge
+  The core resolution unit. A full hand of 7 cards played as tricks against
+  the open hand.
+
+Consolation Action
+  An optional benefit taken when losing a trick, determined by the suit of the
+  card the losing player played. See §4.
+
+Curse
+  The Weird-suited status card. Carries a GM-written behavioral compulsion.
+  Cannot be removed by rest or reshuffle; only by fulfilling the GM condition.
+
+Dazed
+  The Dexterity-suited status card. Must be played whenever legal, including
+  when playing freely off-suit. On trick win: permanently removed from the
+  game. On trick loss: goes to discard.
+
+Deck
+  A player's personal card pool, representing their character. Persists between
+  sessions and evolves through play.
+
+Deck Evolution
+  The process by which a player's deck changes at reshuffle when 2+ status
+  cards of the same suit are present. Each suit offers Add and/or Remove
+  options. See §7.
+
+Discard
+  The face-up pile of cards a player has played or discarded during play.
+  Shuffled back into a new deck at reshuffle.
+
+Follow Suit
+  Playing a card of the same suit as the led card. Required when possible.
+  The open hand must always follow suit if able.
+
+Hand
+  The 7 cards a player holds during a challenge. Drawn from the player's deck
+  at the start of each challenge.
+
+Injury
+  The Strength-suited status card. Clogs the hand with no other effect. If 2+
+  appear in the top 7 of the discard outside a challenge, a survival event
+  fires.
+
+Lead
+  The act of playing the first card of a trick, which sets the suit that other
+  players must follow. The player leads unless the narrative grants disadvantage.
+
+Lending a Hand
+  One other player may give a single card from their discard to the injured
+  player before a survival challenge begins. On success it returns to the helper's
+  discard; on failure it is removed from the helper's deck.
+
+Open Hand
+  7 cards drawn from the 40-card challenge deck, placed face-up. Represents
+  the world's opposition. Always plays the leftmost valid card and must follow
+  suit.
+
+Recalculate
+  The Intelligence consolation. Discard any one card from hand and draw one
+  from the top of your deck.
+
+Reposition
+  The Dexterity consolation. Choose which valid card the open hand plays next
+  trick instead of the leftmost default.
+
+Reshuffle
+  When the player's deck empties, the discard becomes the new deck. Before
+  shuffling: remove one status card (not Curse), check evolution triggers.
+
+Rest
+  A GM-granted narrative scene. Remove any number of status cards from the
+  player's discard (Curse exempt). Primary recovery mechanism.
+
+Revelation
+  The Weird consolation. Choose a status card from your discard; your next
+  played card also counts as that status card's suit, then put it on top of
+  your deck.
+
+Status Card
+  Any of the four negative cards (Injury, Stress, Dazed, Curse) that enter via
+  the discard pile. Value 0. Can follow suit; can win as trump (beats all
+  non-trump despite value 0).
+
+Stress
+  The Intelligence-suited status card. When drawn on the initial hand draw,
+  immediately places an identical copy in the discard. Mid-challenge draws
+  (e.g. via Recalculate) do not trigger this.
+
+Survival Event
+  An event that fires outside any challenge when 2+ Injury cards appear in the
+  top 7 of the player's discard. The player draws 7 cards from their deck
+  normally and runs a Strength challenge. Failure means death. See §8.
+
+Threshold
+  The number of tricks required to succeed at a challenge. Declared publicly
+  by the GM before play begins.
+
+Trick
+  A single round of card play: one card from each side. The higher trump wins;
+  if no trump, the highest card of any suit wins. Ties go to the leader.
+  The winner of each trick leads the next.
+
+Trump
+  The suit that beats all other suits in a trick. Set by the declared challenge
+  type and fixed for the duration of that challenge.

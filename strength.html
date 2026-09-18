@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Strength Card</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cssVars: {
@@ -17,12 +18,7 @@
       "--frame-highlight": "rgba(17,17,17,0.2)"
     },
     value: "10",
-    suitLabel: "Strength suit",
-    domain: "Consolation",
-    title: "BRACE",
-    lines: [
-      "Stage the lost card outside hand. Adds its value to your next played card regardless of suit. Discarded after use or end of challenge."
-    ],
+    ...globalThis.TrickCoreCards.strength,
     suitSvgPath: "./strength.svg"
   };
 </script>

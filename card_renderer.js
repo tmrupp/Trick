@@ -38,6 +38,10 @@
     return;
   }
 
+  if (globalThis.TrickCoreCards && Object.values(globalThis.TrickCoreCards).some(card => card.title === config.title)) {
+    cardRoot.classList.add("core-card");
+  }
+
   if (config.cardClass) {
     config.cardClass
       .split(/\s+/)

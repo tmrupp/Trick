@@ -1,9 +1,8 @@
 export const suitCards = [
-  { suit: "strength", file: "strength.html", statusName: "injury", statusFile: "injury.html" },
-  { suit: "dexterity", file: "dexterity.html", statusName: "dazed", statusFile: "dazed.html" },
-  { suit: "intelligence", file: "intelligence.html", statusName: "stress", statusFile: "stress.html" },
-  { suit: "weird", file: "weird.html", statusName: "curse", statusFile: "curse.html" },
-//   { suit: "divine", file: "divine.html", statusName: "blessed", statusFile: "blessed.html" }
+  { suit: "strength", standardSuit: "Spades", file: "strength.html", statusName: "injury", statusFile: "injury.html" },
+  { suit: "dexterity", standardSuit: "Clubs", file: "dexterity.html", statusName: "dazed", statusLabel: "Stumble", statusFile: "dazed.html" },
+  { suit: "intelligence", standardSuit: "Diamonds", file: "intelligence.html", statusName: "stress", statusFile: "stress.html" },
+  { suit: "weird", standardSuit: "Hearts", file: "weird.html", statusName: "curse", statusFile: "curse.html" }
 ];
 
 function capitalize(value) {
@@ -11,22 +10,22 @@ function capitalize(value) {
 }
 
 export function buildDeckCards() {
-  return suitCards.flatMap(({ suit, file, statusName, statusFile }) => {
+  return suitCards.flatMap(({ suit, standardSuit, file, statusName, statusLabel, statusFile }) => {
     const numberedCards = Array.from({ length: 10 }, (_, index) => ({
       id: `${suit}-${index + 1}`,
-      label: `${capitalize(suit)} ${index + 1}`,
+      label: `${index === 0 ? "Ace" : index + 1} of ${standardSuit} — ${capitalize(suit)}`,
       file,
       params: { value: index + 1 }
     }));
 
     return [
       ...numberedCards,
-      {
-        id: statusName,
-        label: capitalize(statusName),
+      ...["J", "Q", "K"].map(rank => ({
+        id: `${statusName}-${rank.toLowerCase()}`,
+        label: `${rank} of ${standardSuit} — ${statusLabel || capitalize(statusName)} (0)`,
         file: statusFile,
         params: {}
-      }
+      }))
     ];
   });
 }

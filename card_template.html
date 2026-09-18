@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Attribute Card Template</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cssVars: {
@@ -17,12 +18,7 @@
       "--frame-highlight": "rgba(240,255,245,0.92)"
     },
     value: "10",
-    suitLabel: "Dexterity suit",
-    domain: "Trick Loss Consolation",
-    title: "REPOSITION (DEX PLAYED):",
-    lines: [
-      "Override automated rule; choose the open hand's next valid play."
-    ],
+    ...globalThis.TrickCoreCards.dexterity,
     suitSvgPath: "./dexterity.svg"
   };
 </script>

@@ -165,106 +165,12 @@
 <body>
   <main class="page">
     <h1>Trick Card Index</h1>
-    <p class="intro">Open any card directly from here. The first group contains the five trick-loss consolation cards. The second group contains the status-card suite, including the new divine blessing pair.</p>
+    <p class="intro">Trick uses two standard decks per player. These optional custom cards carry the same four suits and current rules.</p>
+    <p><a href="player_guide.html" style="color:var(--accent)">Player guide</a> · <a href="rules.html" style="color:var(--accent)">Full rules</a> · <a href="race_mechanics.html" style="color:var(--accent)">Optional peoples</a></p>
 
-    <section class="section">
-      <div class="section-header">
-        <h2>Consolation Cards</h2>
-        <div class="section-copy">Standard suit-family cards</div>
-      </div>
-      <div class="grid">
-        <a class="card-link" href="./strength.html">
-          <div class="thumb"><iframe src="./strength.html" title="Brace preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Strength</div>
-            <p class="name">Brace</p>
-            <p class="desc">Stage card; add its full value to your next play, regardless of suit.</p>
-          </div>
-        </a>
-        <a class="card-link" href="./dexterity.html">
-          <div class="thumb"><iframe src="./dexterity.html" title="Reposition preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Dexterity</div>
-            <p class="name">Reposition</p>
-            <p class="desc">Override automated rule; choose the open hand's next valid play.</p>
-          </div>
-        </a>
-        <a class="card-link" href="./intelligence.html">
-          <div class="thumb"><iframe src="./intelligence.html" title="Recalculate preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Intelligence</div>
-            <p class="name">Recalculate</p>
-            <p class="desc">Discard any 1 card from hand, then draw 1 fresh card.</p>
-          </div>
-        </a>
-        <a class="card-link" href="./weird.html">
-          <div class="thumb"><iframe src="./weird.html" title="Revelation preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Weird</div>
-            <p class="name">Revelation</p>
-            <p class="desc">Choose 1 status card from discard. Your next played card also counts as that suit, then that status goes on top of your deck.</p>
-          </div>
-        </a>
-        <a class="card-link" href="./divine.html">
-          <div class="thumb"><iframe src="./divine.html" title="Benediction preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Divine</div>
-            <p class="name">Benediction</p>
-            <p class="desc">Cleanse 1 status card from hand or discard, or draw if there is nothing to cleanse.</p>
-          </div>
-        </a>
-      </div>
-    </section>
-
-    <section class="section status">
-      <div class="section-header">
-        <h2>Status Cards</h2>
-        <div class="section-copy">Hazard / condition family</div>
-      </div>
-      <div class="grid">
-        <a class="card-link" href="./injury.html">
-          <div class="thumb"><iframe src="./injury.html" title="Injury preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Strength Status</div>
-            <p class="name">Injury</p>
-            <p class="desc">Hand clog. The second drawn triggers a survival check; the fourth drawn causes instant character death.</p>
-          </div>
-        </a>
-        <a class="card-link" href="./stress.html">
-          <div class="thumb"><iframe src="./stress.html" title="Stress preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Intelligence Status</div>
-            <p class="name">Stress</p>
-            <p class="desc">When drawn, immediately duplicates an identical copy to discard.</p>
-          </div>
-        </a>
-        <a class="card-link" href="./dazed.html">
-          <div class="thumb"><iframe src="./dazed.html" title="Dazed preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Dexterity Status</div>
-            <p class="name">Dazed</p>
-            <p class="desc">Must play if valid and is purged permanently from the game on play.</p>
-          </div>
-        </a>
-        <a class="card-link" href="./curse.html">
-          <div class="thumb"><iframe src="./curse.html" title="Curse preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Weird Status</div>
-            <p class="name">Curse</p>
-            <p class="desc">GM narrative compulsion that only clears by GM conditions.</p>
-          </div>
-        </a>
-        <a class="card-link" href="./blessed.html">
-          <div class="thumb"><iframe src="./blessed.html" title="Blessed preview" loading="lazy"></iframe></div>
-          <div class="meta">
-            <div class="eyebrow">Divine Status</div>
-            <p class="name">Blessed</p>
-            <p class="desc">Absorbs the next status that would enter your hand, then expires.</p>
-          </div>
-        </a>
-      </div>
-    </section>
-
+    <section class="section"><div class="section-header"><h2>Consolations</h2><div class="section-copy">On your trick loss; after the final trick, only Revelation's question</div></div><div class="grid" data-core-section="consolations"></div></section>
+    <section class="section status"><div class="section-header"><h2>Statuses</h2><div class="section-copy">J, Q, K are zero-value statuses; six of each suit per player</div></div><div class="grid" data-core-section="statuses"></div></section>
+    <section class="section"><h2>Optional setting items</h2><p class="section-copy">Agree on item use and goal applicability before drawing. These supplements are not needed for core play. <a href="items/README.md" style="color:var(--accent)">Item conventions</a></p></section>
     <section class="section">
       <div class="section-header">
         <h2>Trinkets</h2>
@@ -289,6 +195,7 @@
       <div class="grid" data-item-section="reveals"></div>
     </section>
   </main>
+  <script src="./card_rules.js"></script>
   <script src="./items/item_catalog.js"></script>
   <script>
     function escapeHtml(value) {
@@ -312,6 +219,12 @@
       `.trim();
     }
 
+    for (const [id, keys] of Object.entries({consolations:["strength","dexterity","intelligence","weird"],statuses:["injury","dazed","stress","curse"]})) {
+      document.querySelector(`[data-core-section="${id}"]`).innerHTML = keys.map(key => {
+        const card=globalThis.TrickCoreCards[key];
+        return renderCard({href: `./${key}.html`,iframeSrc: `./${key}.html`,title:card.title,eyebrow:card.suitLabel,name:card.title,description:card.description});
+      }).join("\n");
+    }
     for (const section of window.TrickItemCatalog.buildItemIndexSections()) {
       const container = document.querySelector(`[data-item-section="${section.id}"]`);
       if (!container) {

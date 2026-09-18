@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Weird Card</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cssVars: {
@@ -17,12 +18,7 @@
       "--frame-highlight": "rgba(17,17,17,0.2)"
     },
     value: "10",
-    suitLabel: "Weird suit",
-    domain: "Consolation",
-    title: "REVELATION",
-    lines: [
-      "Choose 1 status card from your discard. Your next played card counts as that status card’s suit in addition to its own, put that status card on top of your deck."
-    ],
+    ...globalThis.TrickCoreCards.weird,
     suitSvgPath: "./weird.svg"
   };
 </script>

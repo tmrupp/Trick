@@ -1,12 +1,15 @@
 {
-  "name": "Trick Custom Deck",
+  "name": "Trick — Standard Deck with Rule Text",
+  "copiesPerPlayer": 2,
+  "ordinaryCardsPerCopy": 40,
+  "statusCardsPerCopy": 12,
   "importSettings": {
     "face": "trick-face-sheet.png",
     "uniqueBacks": false,
     "back": "trick-card-back.png",
     "width": 10,
     "height": 6,
-    "number": 44,
+    "number": 52,
     "sideways": false,
     "backIsHidden": true
   },
@@ -14,222 +17,262 @@
     {
       "index": 1,
       "id": "strength-1",
-      "label": "Strength 1"
+      "label": "Ace of Spades — Strength"
     },
     {
       "index": 2,
       "id": "strength-2",
-      "label": "Strength 2"
+      "label": "2 of Spades — Strength"
     },
     {
       "index": 3,
       "id": "strength-3",
-      "label": "Strength 3"
+      "label": "3 of Spades — Strength"
     },
     {
       "index": 4,
       "id": "strength-4",
-      "label": "Strength 4"
+      "label": "4 of Spades — Strength"
     },
     {
       "index": 5,
       "id": "strength-5",
-      "label": "Strength 5"
+      "label": "5 of Spades — Strength"
     },
     {
       "index": 6,
       "id": "strength-6",
-      "label": "Strength 6"
+      "label": "6 of Spades — Strength"
     },
     {
       "index": 7,
       "id": "strength-7",
-      "label": "Strength 7"
+      "label": "7 of Spades — Strength"
     },
     {
       "index": 8,
       "id": "strength-8",
-      "label": "Strength 8"
+      "label": "8 of Spades — Strength"
     },
     {
       "index": 9,
       "id": "strength-9",
-      "label": "Strength 9"
+      "label": "9 of Spades — Strength"
     },
     {
       "index": 10,
       "id": "strength-10",
-      "label": "Strength 10"
+      "label": "10 of Spades — Strength"
     },
     {
       "index": 11,
-      "id": "injury",
-      "label": "Injury"
+      "id": "injury-j",
+      "label": "J of Spades — Injury (0)"
     },
     {
       "index": 12,
-      "id": "dexterity-1",
-      "label": "Dexterity 1"
+      "id": "injury-q",
+      "label": "Q of Spades — Injury (0)"
     },
     {
       "index": 13,
-      "id": "dexterity-2",
-      "label": "Dexterity 2"
+      "id": "injury-k",
+      "label": "K of Spades — Injury (0)"
     },
     {
       "index": 14,
-      "id": "dexterity-3",
-      "label": "Dexterity 3"
+      "id": "dexterity-1",
+      "label": "Ace of Clubs — Dexterity"
     },
     {
       "index": 15,
-      "id": "dexterity-4",
-      "label": "Dexterity 4"
+      "id": "dexterity-2",
+      "label": "2 of Clubs — Dexterity"
     },
     {
       "index": 16,
-      "id": "dexterity-5",
-      "label": "Dexterity 5"
+      "id": "dexterity-3",
+      "label": "3 of Clubs — Dexterity"
     },
     {
       "index": 17,
-      "id": "dexterity-6",
-      "label": "Dexterity 6"
+      "id": "dexterity-4",
+      "label": "4 of Clubs — Dexterity"
     },
     {
       "index": 18,
-      "id": "dexterity-7",
-      "label": "Dexterity 7"
+      "id": "dexterity-5",
+      "label": "5 of Clubs — Dexterity"
     },
     {
       "index": 19,
-      "id": "dexterity-8",
-      "label": "Dexterity 8"
+      "id": "dexterity-6",
+      "label": "6 of Clubs — Dexterity"
     },
     {
       "index": 20,
-      "id": "dexterity-9",
-      "label": "Dexterity 9"
+      "id": "dexterity-7",
+      "label": "7 of Clubs — Dexterity"
     },
     {
       "index": 21,
-      "id": "dexterity-10",
-      "label": "Dexterity 10"
+      "id": "dexterity-8",
+      "label": "8 of Clubs — Dexterity"
     },
     {
       "index": 22,
-      "id": "dazed",
-      "label": "Dazed"
+      "id": "dexterity-9",
+      "label": "9 of Clubs — Dexterity"
     },
     {
       "index": 23,
-      "id": "intelligence-1",
-      "label": "Intelligence 1"
+      "id": "dexterity-10",
+      "label": "10 of Clubs — Dexterity"
     },
     {
       "index": 24,
-      "id": "intelligence-2",
-      "label": "Intelligence 2"
+      "id": "dazed-j",
+      "label": "J of Clubs — Stumble (0)"
     },
     {
       "index": 25,
-      "id": "intelligence-3",
-      "label": "Intelligence 3"
+      "id": "dazed-q",
+      "label": "Q of Clubs — Stumble (0)"
     },
     {
       "index": 26,
-      "id": "intelligence-4",
-      "label": "Intelligence 4"
+      "id": "dazed-k",
+      "label": "K of Clubs — Stumble (0)"
     },
     {
       "index": 27,
-      "id": "intelligence-5",
-      "label": "Intelligence 5"
+      "id": "intelligence-1",
+      "label": "Ace of Diamonds — Intelligence"
     },
     {
       "index": 28,
-      "id": "intelligence-6",
-      "label": "Intelligence 6"
+      "id": "intelligence-2",
+      "label": "2 of Diamonds — Intelligence"
     },
     {
       "index": 29,
-      "id": "intelligence-7",
-      "label": "Intelligence 7"
+      "id": "intelligence-3",
+      "label": "3 of Diamonds — Intelligence"
     },
     {
       "index": 30,
-      "id": "intelligence-8",
-      "label": "Intelligence 8"
+      "id": "intelligence-4",
+      "label": "4 of Diamonds — Intelligence"
     },
     {
       "index": 31,
-      "id": "intelligence-9",
-      "label": "Intelligence 9"
+      "id": "intelligence-5",
+      "label": "5 of Diamonds — Intelligence"
     },
     {
       "index": 32,
-      "id": "intelligence-10",
-      "label": "Intelligence 10"
+      "id": "intelligence-6",
+      "label": "6 of Diamonds — Intelligence"
     },
     {
       "index": 33,
-      "id": "stress",
-      "label": "Stress"
+      "id": "intelligence-7",
+      "label": "7 of Diamonds — Intelligence"
     },
     {
       "index": 34,
-      "id": "weird-1",
-      "label": "Weird 1"
+      "id": "intelligence-8",
+      "label": "8 of Diamonds — Intelligence"
     },
     {
       "index": 35,
-      "id": "weird-2",
-      "label": "Weird 2"
+      "id": "intelligence-9",
+      "label": "9 of Diamonds — Intelligence"
     },
     {
       "index": 36,
-      "id": "weird-3",
-      "label": "Weird 3"
+      "id": "intelligence-10",
+      "label": "10 of Diamonds — Intelligence"
     },
     {
       "index": 37,
-      "id": "weird-4",
-      "label": "Weird 4"
+      "id": "stress-j",
+      "label": "J of Diamonds — Stress (0)"
     },
     {
       "index": 38,
-      "id": "weird-5",
-      "label": "Weird 5"
+      "id": "stress-q",
+      "label": "Q of Diamonds — Stress (0)"
     },
     {
       "index": 39,
-      "id": "weird-6",
-      "label": "Weird 6"
+      "id": "stress-k",
+      "label": "K of Diamonds — Stress (0)"
     },
     {
       "index": 40,
-      "id": "weird-7",
-      "label": "Weird 7"
+      "id": "weird-1",
+      "label": "Ace of Hearts — Weird"
     },
     {
       "index": 41,
-      "id": "weird-8",
-      "label": "Weird 8"
+      "id": "weird-2",
+      "label": "2 of Hearts — Weird"
     },
     {
       "index": 42,
-      "id": "weird-9",
-      "label": "Weird 9"
+      "id": "weird-3",
+      "label": "3 of Hearts — Weird"
     },
     {
       "index": 43,
-      "id": "weird-10",
-      "label": "Weird 10"
+      "id": "weird-4",
+      "label": "4 of Hearts — Weird"
     },
     {
       "index": 44,
-      "id": "curse",
-      "label": "Curse"
+      "id": "weird-5",
+      "label": "5 of Hearts — Weird"
+    },
+    {
+      "index": 45,
+      "id": "weird-6",
+      "label": "6 of Hearts — Weird"
+    },
+    {
+      "index": 46,
+      "id": "weird-7",
+      "label": "7 of Hearts — Weird"
+    },
+    {
+      "index": 47,
+      "id": "weird-8",
+      "label": "8 of Hearts — Weird"
+    },
+    {
+      "index": 48,
+      "id": "weird-9",
+      "label": "9 of Hearts — Weird"
+    },
+    {
+      "index": 49,
+      "id": "weird-10",
+      "label": "10 of Hearts — Weird"
+    },
+    {
+      "index": 50,
+      "id": "curse-j",
+      "label": "J of Hearts — Curse (0)"
+    },
+    {
+      "index": 51,
+      "id": "curse-q",
+      "label": "Q of Hearts — Curse (0)"
+    },
+    {
+      "index": 52,
+      "id": "curse-k",
+      "label": "K of Hearts — Curse (0)"
     }
   ]
 }

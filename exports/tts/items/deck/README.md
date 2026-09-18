@@ -1,5 +1,7 @@
 # Trick Item Deck
 
+Optional supplement for the current [rules](../../../../RULES.md). Read [item conventions](../../../../items/README.md) before use. This deck is separate from the two standard decks per player.
+
 Files in this folder:
 - `trick-item-face-sheet.png`: front card sheet for the full 19-card item deck.
 - `trick-item-back-sheet.png`: back card sheet with shared trinket backs and relic-price backs.

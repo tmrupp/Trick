@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Stress Status Card</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cardClass: "status-card",
@@ -19,12 +20,7 @@
       "--inner-border": "rgba(240,245,250,0.14)"
     },
     value: "0",
-    suitLabel: "Stress status symbol",
-    domain: "Status",
-    title: "STRESS",
-    lines: [
-      "On the initial hand draw only, places an identical copy in the discard."
-    ],
+    ...globalThis.TrickCoreCards.stress,
     suitSvgPath: "./intelligence.svg"
   };
 </script>

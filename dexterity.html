@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dexterity Card</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cssVars: {
@@ -17,12 +18,7 @@
       "--frame-highlight": "rgba(17,17,17,0.2)"
     },
     value: "10",
-    suitLabel: "Dexterity suit",
-    domain: "Consolation",
-    title: "REPOSITION",
-    lines: [
-      "Choose which valid card the open hand plays next trick instead of the normal leftmost rule. No effect if only one valid play exists."
-    ],
+    ...globalThis.TrickCoreCards.dexterity,
     suitSvgPath: "./dexterity.svg"
   };
 </script>

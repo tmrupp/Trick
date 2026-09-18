@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Intelligence Card</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cssVars: {
@@ -17,12 +18,7 @@
       "--frame-highlight": "rgba(17,17,17,0.2)"
     },
     value: "10",
-    suitLabel: "Intelligence suit",
-    domain: "Consolation",
-    title: "RECALCULATE",
-    lines: [
-      "Discard any one card from hand (including status cards) and draw one from the top of your deck."
-    ],
+    ...globalThis.TrickCoreCards.intelligence,
     suitSvgPath: "./intelligence.svg"
   };
 </script>

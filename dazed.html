@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dazed Status Card</title>
+<title>Stumble Status Card</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cardClass: "status-card",
@@ -19,12 +20,7 @@
       "--inner-border": "rgba(240,255,245,0.14)"
     },
     value: "0",
-    suitLabel: "Dazed status symbol",
-    domain: "Status",
-    title: "DAZED",
-    lines: [
-      "Must be played if valid. On trick win: permanently removed from the game. On trick loss: goes to discard."
-    ],
+    ...globalThis.TrickCoreCards.dazed,
     suitSvgPath: "./dexterity.svg"
   };
 </script>

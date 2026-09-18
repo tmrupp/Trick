@@ -1,14 +1,22 @@
 # Trick
 
-Trick is a small card-rendering project for a custom deck, status cards, and item cards. The source cards are authored as local HTML/CSS/JS files, previewed locally in the browser, and exported to PNG assets with Playwright.
+Start with the **[condensed player guide](PLAYER_GUIDE.md)** or its [printable browser version](player_guide.html). The complete rules are in **[RULES.md](RULES.md)** and [rules.html](rules.html).
 
-The project currently includes:
-- Five numbered suit families: Strength, Dexterity, Intelligence, Weird, and Divine.
-- Five status cards: Injury, Dazed, Stress, Curse, and Blessed.
-- A browser index page for local preview.
-- Export scripts for individual card images and a Tabletop Simulator deck sheet.
+Trick is a game of simultaneous group checks using **two standard decks per player** and one for the GM. Four suits describe approaches; face cards are statuses. Before drawing, each player and the world declare an approach that fixes their personal trump for the whole check. Each player has one separate goal and scores only their own wins; cooperation happens through fiction and card play. Threats can force a goal, including survival for an endangered character. Highest personal trump wins, regardless of suit; otherwise highest led-suit card wins.
 
-https://autorolltables.github.io/#
+The repository also provides optional custom card art, setting items, and Tabletop Simulator exports. Current suits are Strength/Spades, Dexterity/Clubs, Intelligence/Diamonds, and Weird/Hearts; their statuses are Injury, Stumble, Stress, and Curse. Jokers are unused. Divine and Blessed are archived concepts.
+
+The [card gallery](index.html) uses current shared card text. [Optional peoples](race_mechanics.html) and [item conventions](items/README.md) extend the core rules. Earlier audits and trump proposals are historical; see [docs/history](docs/history/README.md).
+
+Two independent deck-building prototypes, **Joinery** and **Undertow**, are described in [the alternatives comparison](docs/alternatives/README.md). They are experiments, not changes to these rules.
+
+## Updating references
+
+Edit `RULES.md` for complete procedures and `PLAYER_GUIDE.md` for the condensed guide. Keep the guide aligned when a rule changes. Edit `card_rules.js` for card summaries; it supplies every current suit/status card and the gallery.
+
+Run `npm run build:guides` to regenerate the browser guides, the legacy reference URLs, the text rules reference, and card descriptions. The old `reference.html` URL now opens the player guide; `trick_taking_rpg_rules_v4.html` now contains the current complete rules. Their original versions are archived.
+
+Run `npm run check:assets` to check current card text for clipping, verify the 52-card export composition, and check links in the readable references. Inspection images and a report are written under `exports/qa/`.
 
 ## Requirements
 
@@ -30,7 +38,6 @@ You can also open individual source files directly, for example:
 - `dexterity.html`
 - `intelligence.html`
 - `weird.html`
-- `divine.html`
 - `items/item_card.html?id=black-wedge`
 
 ## Export Commands
@@ -83,7 +90,10 @@ This writes files under `exports/tts/items/deck`, including:
 - `card_base.css`: shared card styling
 - `items/item_catalog.js`: single source of truth for item card definitions, gallery metadata, and export order
 - `items/item_card.html`: shared HTML shell for every trinket, relic, and reveal card
-- `card_descriptions.txt`: card text source/reference
+- `card_rules.js`: shared current card text
+- `card_descriptions.txt`: generated card text reference
+- `PLAYER_GUIDE.md`, `RULES.md`: player and full-rule sources
+- `scripts/build_guides.mjs`: regenerates readable HTML/text references
 - `export_cards.mjs`: exports individual PNG cards with Playwright
 - `export_tts_custom_deck.mjs`: builds the TTS sheet, back, and manifest
 - `item_registry.mjs`: item deck export entry point backed by the shared item catalog
@@ -103,7 +113,7 @@ That one catalog now drives:
 
 ## Tabletop Simulator
 
-The generated TTS deck output is documented in `exports/tts/deck/README.md`. The current deck export is built as a 10 by 6 sheet with 55 cards.
+The generated TTS deck output is documented in [exports/tts/deck/README.md](exports/tts/deck/README.md). It is a 10 by 6 sheet containing **52 cards**: forty ordinary cards and three copies of each of the four statuses. Import twice per player. From one copy, take **2, 4, 6, 8 of every suit**, plus **A, 5, 9 of your primary** and **3, 7 of a different secondary**. This gives a 21-card starter distributed 7/6/4/4; the rest of that copy and the entire second copy form reserve. Use only A–10 from a separate copy for the world.
 
 ## Notes
 

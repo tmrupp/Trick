@@ -650,3 +650,24 @@ body.export-page .card-preview .card {
     padding: 18px;
   }
 }
+
+/* Current rules summaries need room for timing and reserve instructions. */
+.core-card .text-panel {
+  margin-top: 48px;
+  padding: 36px 40px 40px;
+}
+
+.core-card .domain-label {
+  font-size: 26px;
+  letter-spacing: 4px;
+  margin-bottom: 18px;
+}
+
+.core-card .divider {
+  margin-bottom: 24px;
+}
+
+.core-card .rules-text {
+  font-size: 40px;
+  line-height: 1.28;
+}

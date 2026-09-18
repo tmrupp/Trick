@@ -92,13 +92,13 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Trinket",
     lines: [
-      "<em>A hatchet with a head of black stone, heavy and cold.</em>",
-      "Rule: Drive it into wood, before the work starts.",
-      "Effect: In a Strength check, draw 1 extra card before the first trick.",
-      "Cost: On the next trick, you must play your highest valid card.",
-      "<em>Your palm stays soot-dark until the check ends.</em>"
+      "<em>A small splitting wedge of black stone. What it is driven into fails the moment it is trusted by someone else.</em>",
+      "Wake: Drive it into something wooden, and leave it there.",
+      "Effect: Before a lead, choose 1 unplayed world card. When played, halve its printed value, rounding down; it cannot be trump.",
+      "Cost: Halve the printed value of your highest Strength card in hand, rounding down.",
+      "<em>You test your weight on everything now.</em>"
     ],
-    previewDescription: "Wake it in wood or earth to draw deeper, then commit hard on the next trick."
+    previewDescription: "Set into the world's own footing, so the thing it leans on gives at the moment it leans."
   },
   {
     id: "grip-bone",
@@ -108,13 +108,13 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Trinket",
     lines: [
-      "<em>A small knuckle bone, wrapped in thin wire.</em>",
-      "Rule: Clench it before the check starts.",
-      "Effect: In a Strength check, discard 1 and draw 1; if the new card is Strength, draw 1 more and keep it.",
-      "Cost: If you use it, you cannot choose your consolation when you lose the next trick.",
-      "<em>That hand cramps and trembles whenever you try anything delicate.</em>"
+      "<em>A small die cut from yellowed bone. It always lands on the face you carved.</em>",
+      "Wake: Carve a number from 1 to 6 into the back of your hand, then close your fist around the die. It will roll that number as long as the wound is bleeding freely.",
+      "Effect: Name that number before drawing. For this check, your cards of that printed value count as 10.",
+      "Cost: Gain 1 Injury.",
+      "<em>Everyone can read the number on your hand. Echoes of numbers carved begin to crisscross your hand.</em>"
     ],
-    previewDescription: "Turns a hard grip into better Strength finds at the cost of control."
+    previewDescription: "Name a number before you draw, and every card of that value hits like a ten."
   },
   {
     id: "iron-apple-seed",
@@ -124,13 +124,13 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Trinket",
     lines: [
-      "<em>A seed the color of rust, hard as a nail, impossible to crush between the fingers. Perhaps you could plant it.</em>",
-      "Rule: Swallow it whole.",
-      "Effect: In a Strength check, double the value of the next strength card you play.",
-      "Cost: Add 1 Dazed to your discard after the check. Remove this card from the game.",
-      "<em>You feel taller when the check begins. The feeling does not fully leave.</em>"
+      "<em>A seed the colour of rust, no bigger than a thumbnail and heavy as a full pail. It will not crush, it will not mark, and it drags at your pocket all day.</em>",
+      "Wake: Swallow it whole.",
+      "Effect: Double the printed value of the next Strength card you play.",
+      "Cost: Gain 1 Stumble. Remove this card from the game.",
+      "<em>Something in you has settled lower than it was, and your feet drag as you walk.</em>"
     ],
-    previewDescription: "Double one Strength card's value for a trick, at the cost of an Injury."
+    previewDescription: "Doubles one Strength card's printed value, and leaves you carrying the weight."
   },
   {
     id: "red-thread",
@@ -140,13 +140,13 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Trinket",
     lines: [
-      "<em>A thin blood red thread, delicate but strong.</em>",
-      "Rule: Tie it around a finger or wrist before the check starts.",
-      "Effect: In a Dexterity check, set 1 card aside face down. At a later trick, return it to hand.",
-      "Cost: When the tucked card comes back, you must discard 1 card.",
-      "<em>The thread leaves a raw red line behind that never seems to fully heal.</em>"
+      "<em>A thin blood-red thread, delicate but strong. Anchored at one end and when pulled at the other, it drags whatever it holds back to the anchor with the same force used to tug.</em>",
+      "Wake: Anchor one end to something that will not move, and tie the other around what you want returned.",
+      "When: Your approach is Dexterity.",
+      "Effect: After the deal, set 1 card aside. Before a lead, tug the thread and return it to hand. While set aside, it is not in your hand for any purpose, including following suit.",
+      "<em>The thread leaves a raw red line on whatever it has held, and that line does not fade if pulled far.</em>"
     ],
-    previewDescription: "Tuck one move away and pull it back when the timing is right."
+    previewDescription: "Send a card away to open a void, then tug it back when the timing is right."
   },
   {
     id: "crooked-key",
@@ -156,14 +156,13 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Trinket",
     lines: [
-      "<em>A dull silver key, bent too badly to fit in any lock.</em>",
-      "Rule: Place it inside a real lock.",
-      "Effect: In a Dexterity check, after either side leads a trick, draw 1 card.",
-      "Play it instead of a card from hand if valid for that trick; otherwise discard it immediately.",
-      "Price: None.",
-      "<em>Afterward the used lock is spoiled and will not work again.</em>",
+      "<em>A straight silver key that, after turning in one lock, warps as it enters the next; the second stays shut and the first opens.</em>",
+      "Wake: Turn it first in the lock you need opened, then bring it to a second lock holding someone trapped and turn it there.",
+      "Effect: Return 1 card from your discard to hand, then discard 1 card.",
+      "Cost: Gain 1 Stumble. The second lock is spoiled with the key caught inside. Recover it by dismantling the lock; to wrench it free instead, gain 1 Injury.",
+      "<em>When spoiling the second lock, your hand yearns to open it wrenching until it cramps.</em>"
     ],
-    previewDescription: "Plays a sudden drawn card off a real ruined lock."
+    previewDescription: "Leave someone trapped behind one lock to open another, exchanging a card in hand for one you had lost."
   },
   {
     id: "slate-shard",
@@ -173,13 +172,13 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Trinket",
     lines: [
-      "<em>A small shard of slate worn with etchings.</em>",
-      "Rule: Scratch it with a fingernail during a check.",
-      "Effect: In an Intelligence check, look at the top 2 cards of your deck, reorder them, then draw 1.",
-      "Cost: Discard 1 card from your hand.",
-      "<em>The shards show your marks clear as chalk until you look away.</em>"
+      "<em>A palm-sized shard of slate, chalk-dusted, with room for a single name.</em>",
+      "Wake: Write your name on the slate and put it in someone else's hands.",
+      "Effect: Once per check, the holder may speak your name and then one word. You hear it anywhere and it may be during a check. Add 2 to the printed value of your next played card.",
+      "Cost: Your name burns off the slate. Gain 1 Stress.",
+      "<em>While the slate holds your name, you seem to hear faint whispers of the words spoken before.</em>"
     ],
-    previewDescription: "A planning shard that trades a card for cleaner future draws."
+    previewDescription: "Hand someone a line to you: one word across any distance, and a boost for answering it."
   },
   {
     id: "ripped-page",
@@ -189,13 +188,13 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Trinket",
     lines: [
-      "<em>A small page, worn and fragile.</em>",
-      "Rule: Charge it by reading a new word before the check starts.",
-      "Effect: At the beginning of a challenge, look at the open hand and move 1 card to a different position.",
-      "Cost: None",
-      "<em>The words ring in your mind, guiding your actions.</em>"
+      "<em>A single blank page, soft with handling, its torn edge matching no book.</em>",
+      "Wake: Slip it into a book that would know, and ask a question aloud.",
+      "Effect: Before drawing or between checks, the GM answers briefly and truthfully within what that book could know. Then look at the top 3 cards of your deck, reorder them, and discard any you choose.",
+      "Cost: Gain 1 Stress. Asking the question unwrites the book, leaving it blank forever.",
+      "<em>You can't seem to read any book cover to cover anymore, your impatience always mounts.</em>"
     ],
-    previewDescription: "A pre-charged count that lets you shift one open-hand card before the challenge starts."
+    previewDescription: "Ask a book what it knows, then rearrange what you are about to draw."
   },
   {
     id: "whisper-jar",
@@ -205,13 +204,14 @@ const ITEM_ENTRIES = [
     suit: "weird",
     domain: "Trinket",
     lines: [
-      "<em>A jar filled with whispered secrets whirring softly.</em>",
-      "Rule: Whisper a true secret that has never been uttered aloud into the jar and seal it with your thumb.",
-      "Effect: Open it in a check and choose 1 card in the opposing hand; that card is treated as Stress for the rest of the check.",
-      "Cost: The secret is heard by everyone nearby and the jar cannot hold that secret again.",
-      "<em>When opened people glance over their shoulders as if someone just spoke behind them.</em>"
+      "<em>A jar filled with whispered secrets, whirring softly.</em>",
+      "Wake: Whisper a true secret you have never spoken aloud into the jar, then seal it.",
+      "When: Your approach is Weird.",
+      "Effect: Before a lead, choose 1 unplayed world card. It counts as Stress for the rest of the check.",
+      "Cost: Gain 1 Stress. The secret is heard by everyone nearby, and the jar will not hold it twice.",
+      "<em>When opened, people glance over their shoulders as if someone spoke behind them.</em>"
     ],
-    previewDescription: "Lets one true secret out into the room and stains a chosen opposing card with Stress."
+    previewDescription: "Silences the world's best card, paid for with a secret you cannot take back."
   },
   {
     id: "scoped-rifle",
@@ -221,13 +221,13 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Trinket",
     lines: [
-      "<em>A long rifle with a scope.</em>",
-      "Rule: Set it up to watch a distant spot and look through the scope until the check starts.",
-      "Effect: In a Dexterity check, add 2 to the value of a card in your hand for the rest of the check.",
-      "Cost: Discard 1 card from your hand.",
-      "<em>Sometimes the lens appears smoky and unusable.</em>"
+      "<em>A long rifle with a scope, set up hours before anyone arrives.</em>",
+      "Wake: Set it to watch a distant spot and look through the scope until drawing begins.",
+      "Effect: After the deal, reveal 1 Dexterity card from hand. If you play it on the final trick, add 5 to its printed value.",
+      "Cost: Gain 1 Stumble.",
+      "<em>Sometimes the lens appears smoky and unusable. Training it steadily for long makes your joint ache and stiff.</em>"
     ],
-    previewDescription: "Lets one true secret out into the room and stains a chosen opposing card with Stress."
+    previewDescription: "Reveal a card and hold it to the last trick, where it lands five higher."
   },
   {
     id: "borrowed-face",
@@ -237,13 +237,14 @@ const ITEM_ENTRIES = [
     suit: "weird",
     domain: "Trinket",
     lines: [
-      "<em>A mask with an expression that seems to shift with your thoughts.</em>",
-      "Rule: Wear it during a check and let it settle on an expression.",
-      "Effect: In a Weird check, flip an omen card. The first trick led with that omen suit has its winner inverted.",
-      "Cost: If no trick is led with that suit before the check ends, add 1 Stress after the check.",
-      "<em>Mirrors and still water show you wearing the wrong expression a moment too long even after the mask is removed.</em>"
+      "<em>A blank mask, smooth as a river stone, with no expression of its own.</em>",
+      "Wake: Peer deeply into someone's eyes. The mask takes their true feeling and wears it; the GM names its suit.",
+      "When: Your approach is Weird.",
+      "Effect: The first trick led in that suit inverts: lowest card wins, trump does not apply, ties go to the non-led suit then the latest played.",
+      "Cost: Gain 1 Curse if that suit never leads.",
+      "<em>Take the mask off and it becomes difficult to hide whatever you truly feel.</em>"
     ],
-    previewDescription: "Turns an omen suit into one inverted future trick."
+    previewDescription: "Steal a true feeling from someone, and one trick runs backwards."
   },
   {
     id: "grave-sledge",
@@ -253,13 +254,14 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Relic",
     lines: [
-      "<em>A small carpenter's hammer, made of petrified wood.</em>",
-      "Rule: Crush something already dead beneath the head before you wake it.",
-      "Effect: In a Strength check, choose a suit. Until the check ends, cards of that suit in your hand are treated as Strength for following suit and winning tricks.",
-      "<em>What should have needed finesse, timing, or patience can simply be broken through.</em>",
-      "Flip after using."
+      "<em>A petrified-wood sledge. A crushed skeleton leaves one bone pin.</em>",
+      "Wake: Shatter a headstone, exhume the named corpse, and crush every bone.",
+      "Effect: Drive the pin through 2 touching things. It cannot be removed; separating them requires destroying both. The sledge cannot wake while it remains.",
+      "In a check, pin 1 ordinary card from hand face up after drawing. It remains in hand for following suit. Once per trick, if legal, play it without moving it.",
+      "<em>The same blow lands again and again.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Break through by turning one suit fully into Strength."
+    previewDescription: "Makes one irrevocable joining and repeats one ordinary card for as long as the check lasts."
   },
   {
     id: "grave-sledge-price",
@@ -269,12 +271,11 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Reveal After Use",
     lines: [
-      "Remove your highest-value Dexterity card from discard.",
-      "If there is no Dexterity card there, add 1 Injury and 1 Dazed after the check.",
-      "<em>Grave-dust darkens under the skin and your eyes cloud to stone-gray.</em>",
-      "<em>Your steps grind like rock and your joints answer slowly.</em>"
+      "Price: When you drive the pin, gain 1 Injury. At cleanup, leave the pinned card beneath the Sledge, outside your deck. It returns to discard only when both joined things are destroyed; then the bone pin crumbles.",
+      "<em>The sledge and pin yield nothing to the blow. Your body does.</em>",
+      "<em>The pin keeps the action that set it. Until the joining is destroyed, it will not give that action back.</em>"
     ],
-    previewDescription: "Hidden cost and curse to reveal after the sledge answers."
+    previewDescription: "The blow causes an Injury and keeps the repeated card until both joined things are destroyed."
   },
   {
     id: "hearthhide-coat",
@@ -284,13 +285,14 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Relic",
     lines: [
-      "<em>A coat made from the hide of an unknown creature that endured the harshest winters.</em>",
-      "Rule: Sleep in it without fire or roof until your body stops shaking.",
-      "Effect: Once in a survival check, set aside up to 2 Injury cards from your hand. They do not count as being in hand until the check ends.",
-      "Take 2 cards from your discard into your hand for each Injury set aside this way.",
-      "Flip after using."
+      "<em>A coat of scarred hide; beneath it, cold, pain, and exhaustion cannot reach you.</em>",
+      "Wake: Sleep in it without fire or roof until you stop shaking.",
+      "When: Your approach is Strength.",
+      "Effect: After the deal, set aside every status in hand and replace each with an ordinary card from discard, if available. At cleanup, return them to discard in random order before consequence statuses. The recorded survival cost never changes.",
+      "<em>The cold stops reaching you, and so does everything else.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Temporarily buries Injury pressure in a survival check by teaching the body to endure too much."
+    previewDescription: "Forces every status out of a Strength hand and replaces it from discard, while the coat binds itself deeper."
   },
   {
     id: "hearthhide-coat-price",
@@ -300,12 +302,12 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Reveal After Use",
     lines: [
-      "At the end of the check, return those Injuries to your discard.",
-      "Add 1 Dazed for each Injury set aside this way. If you set aside 2, also add 1 Stress.",
-      "<em>Your skin pales and deadens and with continued use the coat becomes harder to take off, becoming a part of you.</em>",
-      "<em>People can see the places where the coat had to be rended from your flesh.</em>"
+      "Price: At cleanup, gain 1 Curse. If you had none, record its compulsion: you may not sleep inside.",
+      "Price: To remove the coat, gain 1 Injury for each Curse not in your reserve.",
+      "<em>The coat grows into you at the collar, cuffs, and every place your skin has broken.</em>",
+      "<em>Removing it tears away whatever has grown through the hide.</em>"
     ],
-    previewDescription: "Hidden cost for surviving by deadening the body's warnings."
+    previewDescription: "Each use adds a Curse; removing the coat tears deeper with every Curse you carry."
   },
   {
     id: "hushbell-chain",
@@ -315,13 +317,14 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Relic",
     lines: [
-      "<em>A length of thin chain strung with small bells that seem to ring before it is shaken.</em>",
-      "Rule: Wind it around wrist or ankle and stand still until you can no longer hear your own movement in the bells.",
-      "Effect: For the rest of a Dexterity check, after each trick choose who leads next: you or the open hand.",
-      "Each time you do, you may tuck 1 card beneath the chain or return 1 tucked card to hand.",
-      "Flip after using."
+      "<em>A brass bell-chain; anyone who hears it hears nothing else until it stops.</em>",
+      "Wake: Ring it while people in earshot listen for something else.",
+      "When: Your approach is Dexterity.",
+      "Effect: After a trick but the last, you may ring the chain. Before the next lead, everyone who hears it sets 1 card face down; an affected world sets its leftmost. Reveal each on its owner's turn. It is legal, and a follower counts as unable to follow suit. This repeats.",
+      "<em>Afterward, voices reach you as movement without sound.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Steals the next lead and hides motions beneath remembered silence."
+    previewDescription: "Makes everyone who hears it commit a card before the next lead, deaf to every other play."
   },
   {
     id: "hushbell-chain-price",
@@ -331,12 +334,11 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Reveal After Use",
     lines: [
-      "At the end of the check, add 1 Dazed for each card still tucked beneath the chain.",
-      "<em>The bells remember every hidden motion you leave inside them.</em>",
-      "<em>Your footsteps echo a beat late or early and your voice doubles back on itself.</em>",
-      "<em>People hear you arrive before they see you, or hear you answer after you have gone quiet.</em>"
+      "Price: At cleanup, gain 1 Stumble for each time you rang the chain.",
+      "<em>Your footsteps begin to ring like small bells, then sometimes make no sound at all.</em>",
+      "<em>With each use, more of your speech becomes ringing or silence.</em>"
     ],
-    previewDescription: "Hidden Dazed cost tied to every card you leave tucked away."
+    previewDescription: "Each ringing costs Stumble as your footsteps and speech become bells or vanish into silence."
   },
   {
     id: "dead-ledger",
@@ -346,13 +348,14 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Relic",
     lines: [
-      "<em>A large ledger bound in dark leather, its pages filled with meticulous scrawlings.</em>",
-      "Rule: Write down one count, debt, promise, or name that matters in the coming trouble, getting it wrong has consequences.",
-      "Effect: At the beginning of a challenge, pull all Stress cards from your deck and discard into your hand.",
-      "<em>Every burden comes due at once until the whole challenge reads like one terrible sum.</em>",
-      "Flip after using."
+      "<em>A dark leather ledger; write the name of someone you owe, and they forget the debt but will never bargain with you again.</em>",
+      "Wake: Write the name of someone you truly owe, then close the ledger before the ink dries.",
+      "When: Your approach is Intelligence.",
+      "Effect: After the deal, take all Stress from your draw pile and discard into hand. This is not drawing, so Stress does not duplicate. Shuffle the draw pile.",
+      "<em>You remember every erased debt in the creditor's voice.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Calls every Stress card due at once at the start of a challenge."
+    previewDescription: "Erases a real debt and every future bargain with its creditor, then calls accumulated Stress into your hand."
   },
   {
     id: "dead-ledger-price",
@@ -362,12 +365,11 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Reveal After Use",
     lines: [
-      "At the end of the challenge, if any Stress cards remain in hand, add 1 Injury.",
-      "<em>Ink gathers in the nail-beds and previous sums haunt your thoughts.</em>",
-      "<em>You begin answering with measures, counts, and comparisons before plain language can catch up.</em>",
-      "<em>What the ledger totals, it does not let go unpaid.</em>"
+      "Price: At cleanup, gain 1 Injury if any Stress remains in hand.",
+      "<em>Every debt erased from another's memory remains written beneath your name.</em>",
+      "<em>Your fingertips darken, and every promise sounds like a sum being read aloud.</em>"
     ],
-    previewDescription: "Hidden reckoning if any Stress remains in hand at the end."
+    previewDescription: "An erased debt remains with the ledger's holder, and any balance left in hand draws blood."
   },
   {
     id: "wake-lantern",
@@ -377,13 +379,13 @@ const ITEM_ENTRIES = [
     suit: "weird",
     domain: "Relic",
     lines: [
-      "<em>A lantern that burns with a cold blue flame, its light dim and flickering.</em>",
-      "Rule: The flame must be lit from a dying breath, or from a spirit that has not managed to yet escape.",
-      "Effect: Invoke a dead hand of 7 reserved cards that does not appear in normal checks. It plays as an additional open hand beside the living one.",
-      "Tricks won by the dead hand count as tricks won by you.",
-      "Flip after using."
+      "<em>A blackened brass lantern whose cold flame gives a captured spirit form.</em>",
+      "Wake: With no cards tucked, catch a final breath in its chimney or coax in a lingering spirit. Tuck the top 7 world cards face up beneath it, outside the deck until invoked.",
+      "Effect: Before drawing, move the tucked cards into a dead-hand row. It sits after you, follows the world's rule, uses your personal trump, and scores its wins for your goal. It may lead. When empty, it sits out and the world leads in its place.",
+      "<em>The spirit stands beside you, aiding your work with the skills they carried in life.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Invokes a dead hand that plays beside the living and wins in your name."
+    previewDescription: "Gives a dead spirit spectral form and a seven-card hand held out of the world deck until invoked."
   },
   {
     id: "wake-lantern-price",
@@ -393,12 +395,12 @@ const ITEM_ENTRIES = [
     suit: "weird",
     domain: "Reveal After Use",
     lines: [
-      "For each trick won by the dead hand, gain a status card matching that suit once per suit.",
-      "<em>After use your breath comes out as smoke and the dead can just barely be made out inside it.</em>",
-      "<em>Those closest to the invoked dead can no longer remember them clearly.</em>",
-      "<em>Names blur, faces slide loose, but grief remains.</em>"
+      "Price: At cleanup, for each dead-hand card, move an ordinary card of the same suit and printed value from your reserve to your discard, if available, then return the dead hand to the world deck. For each trick it won, gain 1 status matching the printed suit of its winning card.",
+      "Price: At cleanup, every living person but you forgets the invoked dead. Their spirit remains within you and cannot pass on until you die.",
+      "<em>Their belongings, likenesses, and written records remain, belonging to someone no one remembers.</em>",
+      "<em>Sometimes you hear their voice among your thoughts.</em>"
     ],
-    previewDescription: "Hidden suit-marking cost and the memory-eating smoke curse."
+    previewDescription: "The spirit joins your deck and remains within you while every other living person forgets them."
   },
   {
     id: "halved-locket",
@@ -408,12 +410,13 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Relic",
     lines: [
-      "<em>A locket broken in half, each of its halves must be possessed by a different user.</em>",
-      "Rule: The locket half is gripped causing the other to radiate in a heat that grow more intense with time. Grip the other half at the same time to swap minds.",
-      "Effect: The users swap hands and decks until the locket is linked again.",
-      "Flip after using."
+      "<em>A locket broken in half. Each half reflects the face of whoever holds the other.</em>",
+      "Wake: At the same moment, each holder grips a half over their heart and holds it until both grow hot.",
+      "Effect: Between checks, the holders exchange minds. Each mind uses the other body's complete personal card pool, including reserve and discard. If a body has none, the GM builds one before the exchange. Repeat the Wake to exchange them again.",
+      "<em>Your borrowed body reaches for what it loves and recoils from what it fears before you know why.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Users swap hands and decks until the locket is linked again."
+    previewDescription: "Remotely exchanges two minds, leaving each to live through the other's body and card pool."
   },
   {
     id: "halved-locket-price",
@@ -423,11 +426,11 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Reveal After Use",
     lines: [
-      "Gain a stress for each time the locket has been used to swap minds.",
-      "<em>With each switch your mind struggles to come to terms with its new vessel.</em>",
-      "<em>The body yearns to hold onto its current mind and resists the change more ferociously with each use.</em>",
+      "Price: Both holders gain 1 Stress for each mind exchange the locket has caused.",
+      "<em>Each exchange leaves habits, memories, and desires behind in the body you leave.</em>",
+      "<em>With every return, your body recognizes you less readily.</em>"
     ],
-    previewDescription: "Hidden suit-marking cost and the memory-eating smoke curse."
+    previewDescription: "Both minds gain mounting Stress while their bodies retain traces of everyone who inhabited them."
   },
   {
     id: "hollow-blindfold",
@@ -437,12 +440,14 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Relic",
     lines: [
-      "<em>A blindfold of undyed linen. There is no seam anywhere on it.</em>",
-      "Rule: Put it on. Do not remove it until you are sure you are standing somewhere safe.",
-      "Effect: In a Dexterity check, you are not required to follow the led suit. If you win a trick without following suit, you win the challenge entirely.",
-      "Flip after using."
+      "<em>A seamless linen blindfold dusted with pollen from no living flower.</em>",
+      "Wake: Face a built barrier, put it on, and walk forward without reaching for it. Do not remove it until you mean to return.",
+      "When: Your approach is Dexterity.",
+      "Effect: You may ignore follow-suit, counting as unable, so personal trump stays live. Your first off-suit win raises your goal score to at least its cost; then sit out the rest. Competing goals resolve normally.",
+      "<em>Behind the cloth, the air is hot and wet, and the ground has never known a road.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Step through walls by winning one trick without playing a card."
+    previewDescription: "Walks around human barriers through an older world; an off-suit win fulfills your goal, then you step out of the check."
   },
   {
     id: "hollow-blindfold-price",
@@ -452,11 +457,12 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Reveal After Use",
     lines: [
-      "Perform a Dexterity 3 check without consolations. On a failure, add 2 Injuries and 1 Dazed, you have come back to the world of edifice wrong.",
-      "<em>The land you travel through feels familiar but untouched by working hands.</em>",
-      "<em>There are creatures here that are quiet and hungry, some may be patient enough to follow you home.</em>"
+      "Price: Your next check is a lone 7-trick Dexterity check against the world to remove the blindfold and return safely. Your goal costs 3. You return whether you succeed or fail.",
+      "Price: On failure, the GM chooses what fits your return: you appear partly inside something solid and gain 2 Injuries, or a creature follows you back.",
+      "<em>The land is familiar, but no human hand has touched it.</em>",
+      "<em>You sense that hungry beasts roam this place, and some are patient enough to follow you back.</em>"
     ],
-    previewDescription: "A following thing and a binding Curse: never bare-faced inside buildings."
+    previewDescription: "A lone 3-of-7 return through an untouched world, risking solid matter or a living follower."
   },
   {
     id: "dying-ring",
@@ -466,13 +472,13 @@ const ITEM_ENTRIES = [
     suit: "weird",
     domain: "Relic",
     lines: [
-      "<em>A plain band of dark metal, always slightly cold against living skin.</em>",
-      "Rule: Charge it by holding it against the lips of someone dying while their last wish is spoken aloud and making sure it comes to pass.",
-      "Effect: Spend a charge. Discard your hand and deck. Pick 7 cards from your discard to put into your hand.",
-      "<em>Once charged a user's spoken wish will come true, but with terrible consequences.</em>",
-      "Flip after using."
+      "<em>A dark ring that frosts the wearer's breath while charged.</em>",
+      "Wake: Hold it to dying lips for their last wish. Fulfill it after they die; the ring gains 1 charge.",
+      "Effect: Spend 1 charge and wish about 1 person, object, or place here. The GM makes the smallest present change that fulfills it; it cannot alter the ring or a Price. After the deal, also shuffle and discard your hand, discard your draw pile top first, then take N cards from discard as your new hand.",
+      "<em>Everyone remembers the change, but not a world before it.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Pull any named card from your deck or discard, paid for with a dying wish."
+    previewDescription: "Earn a charge by fulfilling a last wish, then spend it to change one present fact and rebuild your hand."
   },
   {
     id: "dying-ring-price",
@@ -482,11 +488,11 @@ const ITEM_ENTRIES = [
     suit: "weird",
     domain: "Reveal After Use",
     lines: [
-      "Place 3 curses with \"Remove on death.\" into the user's discard. Trigger a survival check.",
+      "Price: At cleanup, gain 3 Injuries.",
       "<em>It was your dying wish.</em>",
-      "<em>You begin to feel terribly cold and you had so many more wishes you want to come to pass.</em>"
+      "<em>Your breath shortens and your skin grows cold.</em>"
     ],
-    previewDescription: "A death, a Curse, and a compulsion to keep listening for the dying."
+    previewDescription: "The ring grants the wish by treating it as your last, leaving three Injuries behind."
   },
   {
     id: "iron-apple",
@@ -496,13 +502,13 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Relic",
     lines: [
-      "<em>An apple the color and weight of old iron, slightly too heavy to be fruit.</em>",
-      "Rule: Consume the entire apple in one sitting. Do not stop. Leave nothing but the seeds behind.",
-      "Effect: In all future Strength checks, treat all your Strength cards as having double their printed value for every trick.",
-      "<em>It hurts to grow.</em>",
-      "Flip after using."
+      "<em>An apple the colour and weight of old iron, slightly too heavy to be fruit.</em>",
+      "Wake: Consume the entire apple in one sitting. Do not stop. Leave nothing but the seeds.",
+      "Effect: You permanently grow to twice your height, with strength in proportion. When your approach is Strength, your Strength cards below 5 count as 5 when determining the trick winner.",
+      "<em>You can no longer make yourself small, light, or gentle.</em>",
+      "Reveal its price."
     ],
-    previewDescription: "Double all Strength card values for a challenge, then grow permanently."
+    previewDescription: "Permanently doubles your height and raises every low Strength play to 5."
   },
   {
     id: "iron-apple-price",
@@ -512,12 +518,11 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Reveal After Use",
     lines: [
-      "Add 3 injuries to your discard. Gain 4 Iron Apple Seeds, and remove this card from the game.",
-      "<em>You do not grow back. Every doorframe is a problem now.</em>",
-      "<em>What was built for your old size is built wrong.</em>",
-      "<em>The seeds survived intact. With patience and the right soil, another apple might grow. And so might you.</em>"
+      "Price: Gain 1 Injury, 1 Stumble, 1 Stress, and 4 Iron Apple Seeds, then remove this card from the game.",
+      "<em>Your bones split and lengthen. Your skin closes only after the growth is done.</em>",
+      "<em>Nothing made to hold you fits, and nothing made to bear you was built for your weight.</em>"
     ],
-    previewDescription: "Permanent growth: 3 Injuries and 4 Iron Apple Seeds."
+    previewDescription: "The growth wounds body, balance, and mind, leaving four iron seeds behind."
   },
 ];
 

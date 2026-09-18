@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Injury Status Card</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cardClass: "status-card",
@@ -19,12 +20,7 @@
       "--inner-border": "rgba(255,242,239,0.14)"
     },
     value: "0",
-    suitLabel: "Injury status symbol",
-    domain: "Status",
-    title: "INJURY",
-    lines: [
-      "If 2 or more appear in the top 7 cards of your discard outside a challenge, a survival event fires immediately."
-    ],
+    ...globalThis.TrickCoreCards.injury,
     suitSvgPath: "./strength.svg"
   };
 </script>

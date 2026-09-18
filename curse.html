@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Curse Status Card</title>
+<script src="./card_rules.js"></script>
 <script>
   const CARD_VARIANT_CONFIG = {
     cardClass: "status-card",
@@ -19,13 +20,7 @@
       "--inner-border": "rgba(249,239,255,0.14)"
     },
     value: "0",
-    suitLabel: "Curse status symbol",
-    domain: "Status",
-    title: "CURSE",
-    lines: [
-      "Game Master provided compulsion.",
-      "Cannot be rested or reshuffled out. Only removed by fulfilling the GM-set condition."
-    ],
+    ...globalThis.TrickCoreCards.curse,
     suitSvgPath: "./weird.svg"
   };
 </script>

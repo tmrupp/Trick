@@ -2,7 +2,37 @@
 
 Fiction guidelines, plus the items that are not finished. Template, vocabulary and build steps live in [README.md](README.md).
 
-All ten trinkets are implemented and exported. Nothing under Outstanding is. Archive: `docs/history/before_player_guide/items/item_catalog.js`, from when the game had one shared challenge instead of per-player goals.
+The original ten trinkets are implemented and exported. Four further designs are implemented in the catalog; their notes follow below. Nothing under Outstanding is. Archive: `docs/history/before_player_guide/items/item_catalog.js`, from when the game had one shared challenge instead of per-player goals.
+
+## Four new trinkets — 2026-09-18
+
+The full card wording lives in `item_catalog.js`. These are new designs, separate from the three remaining earlier brainstorms near the end of this file. They are exported but have not been playtested.
+
+### Porter's Rope — Strength
+
+The rope makes something it hoists weightless only when its bearer could lift that object unaided. Three uses: carry a bulky chest alone; lower a person without their weight pulling you over an edge; move something across a weak floor that could never bear it. The unaided-carry test prevents buildings, vehicles and other relic-scale targets. Its Wake demonstrates that limit by requiring the bearer to secure it to something they can actually pick up, even under great strain.
+
+A Brace is weight the bearer takes by losing with Strength. Instead of taking it, the bearer hands it to another player, who carries and uses the exact modifier. The bearer's own consolation is the payment, so the card has no separate Cost. An earlier draft gave away an already-held Brace, but a Brace expires on the holder's next play, so there was never one left to give. The rope provides aid through a core Strength resource rather than another personal value multiplier.
+
+### Still Cricket — Dexterity
+
+The cricket warns specifically against inaction: it chirps when remaining where you are will bring harm to you. Three uses: catch an ambush that depends on waiting; learn that a hiding place is about to become dangerous; tell whether holding position during a negotiation is safe. It does not identify dangers caused by moving, dangers aimed only at someone else, or a generally bad situation with no approaching harm. Its Wake is simply obeying a real warning and starting to move.
+
+Before a lead, the GM identifies the harm that will reach the bearer before the trick ends if they remain where they are. A real warning lets the bearer abandon one card to the bottom of their deck and draw a replacement, changing their immediate course without rearranging discard or manufacturing an off-suit trump. If stillness is safe, the truthful answer is still useful but grants no exchange. The Stumble is the hurried escape the cricket demands. This replaces the prior recording premise entirely; the cricket senses danger itself.
+
+### Afterimage Lens — Intelligence
+
+The lens recovers a scene witnessed by a mirror in the room. Three uses: identify a visitor; reconstruct a reflected route or room arrangement; recover something said during an earlier meeting. It reports one minute of the named scene and the words and visible surroundings the mirror could witness, rather than revealing intentions or establishing whether anyone lied. To wake it, the bearer must shatter an intact mirror that stood in the room during that scene and hold the lens over its largest shard.
+
+The destroyed mirror is the first repeat-use gate: one mirror produces one viewing, and another viewing needs another intact mirror that witnessed the relevant past. The scene also supplies one detail whose consequences still shape the present. Before drawing, the bearer inspects the top three world cards, sends one to the bottom, and preserves the order of the other two. This is informed intervention rather than prophecy—the character changes their plan because the recovered cause explains part of the approaching opposition. Ripped Page answers from a book and edits the bearer's deck; the lens consumes physical evidence, reconstructs an event, and alters the world row.
+
+Each use gains 1 Stress and 1 Curse, and adds `you may not use mirrors` to the shared Curse compulsion. That clause applies whether this is the bearer's first Curse or joins an existing one. Invoking the lens again therefore requires another qualifying mirror and violates the compulsion, gaining Stress for every Curse outside reserve. Removing the last Curse ends the mirror prohibition normally. The Mark makes the loss visible to the bearer: mirrors no longer show them the present.
+
+### Sin Eater's Spoon — Weird
+
+The spoon transfers one affliction or burden from the person whose meal its bearer finishes. Three uses: take a fever from someone too weak to survive it; accept the grief that keeps someone from acting; draw a supernatural burden out of its victim. The target must be suffering, must have a meal set before them, and must willingly watch the bearer finish it without taking a bite. The suffering does not disappear: it becomes the bearer's permanently.
+
+Between checks, the giver returns one chosen status from their discard to their reserve, and the bearer gains a copy from their own reserve. Physical cards never cross decks. The status must be one the bearer can gain, so an exhausted reserve blocks the transfer rather than erasing the harm. Gaining follows the normal rules, so a transferred Injury immediately triggers the usual survival procedure and a first Curse establishes a compulsion. It cannot erase an already recorded survival requirement, because that requirement remains locked after its scan. The transferred status itself is the Cost; adding another status would weaken the decision by making unlike harms interchangeable.
 
 ---
 
@@ -93,14 +123,15 @@ One number worth keeping: the same-suit restriction was supposed to stop a free 
 
 **The fix is to commit to the name.** It is called a wedge and the Form calls it a hatchet. A hatchet cuts; a wedge is the tool that makes a thing come apart along a weakness it already had, and it has to be *driven* — which is where the Strength gate stops being decorative. Then move the mechanic from immediate destruction to **latent failure**, which the old Wake already asked for when it said *leave it standing there*.
 
-> *A splitting wedge of black stone, and there is only the one. What it is driven into fails the moment it is trusted.*
-> Wake: Drive it into something that will be trusted with weight, and leave it there.
-> When: Your approach is Strength.
-> Effect: Before a lead, wedge 1 unplayed world card. When played, halve its printed value, rounding down; it cannot be trump.
-> Cost: Halve the printed value of your highest Strength card in hand, rounding down.
-> *You test your weight on everything now, and you are right to.*
+Shipped as:
 
-`previewDescription`: "Set into the world's own footing, so the thing it leans on gives at the moment it leans."
+> *A small splitting wedge of black stone; what it is driven into fails the moment someone else trusts it.*
+> Wake: Drive it by hand into something another will trust with their weight, and leave it there.
+> Effect: After the deal, wedge 1 world card. If it would win a trick, it wins nothing; decide the trick without it.
+> Cost: For this check, your highest Strength card in hand counts as half its printed value, rounding down.
+> *You test your weight on everything now.*
+
+`previewDescription`: "Wedge one world card: it holds until the world leans on it, then fails to take the trick."
 
 **A first pass at this pointed every line inward** — the Wake broke your own property, the Cost hurt your hand, the Mark rotted your gear — and a Form reading *"holds, until weight comes onto it"* states a change of state with no agency in it. That version failed the three-use test worse than the card it replaced. The correction is that **the wedge is a sabotage tool and its fiction belongs on the world, not on you.**
 
@@ -108,13 +139,14 @@ What each change buys:
 
 - **An outward job, in the Form.** *Fails the moment it is trusted* is a capability and it generates real verbs: wedge the bridge so it carries you and drops the pursuit, the door-post so it looks sound to the guard and comes apart on your shoulder, a rope, a ladder rung, a mast, the haft of a weapon someone else is going to draw. The point is not that things break — it is that **you choose when, in advance, invisibly.** That is escape, ambush, delay and framing, which is four verbs where the shipped card had one.
 - **The Effect is that same sentence in cards.** The world plays a card at the moment it needs it; the wedge is why it gives. No translation gap at all.
-- **`it cannot be trump` is the identity.** A cracked thing cannot take strain. One clause kills the silent nullification on `RULES.md:53`, and it is what finally separates this from `whisper-jar`: the jar changes what a card *is*, the wedge stops a card from *holding*.
+- **Failing under load is the identity.** The wedged card keeps its value and suit, still forces players to follow, and still looks like a threat; it fails only at the moment it would take the trick. That is what separates it from `whisper-jar`: the jar changes what a card *is* for the rest of the check, including its suit and the world's legal plays, while the wedge stops a card from *holding*. Deciding the trick without it covers trump, ties and the led suit in one clause.
+- **Chosen after the deal, not before a lead.** The wedge is set in advance, before anyone knows how the tricks will fall; the jar is chosen with the trick in view. Wedging the world's best card usually lands, but a card that never wins wastes the wedge.
 - **One wedge, and it stays in what you drove it into.** This is what stops a player wedging every axle, door and weapon in the enemy camp, and it needs no rules clause — *there is only the one* and *leave it there* do it physically. One sabotage is live at a time, you are without the wedge until you go back for it, and pulling it free leaves the thing sound again. That is a real decision rather than a tax, and the Wake stays refusable because you still need access, privacy and something that will bear weight.
 - **The cost is exertion, not property.** You set it by hand, with your whole weight. **Highest** rather than a choice is the part doing the work — the shipped cost can be optimised down to a card you did not want, and so could "halve a Strength card." Highest means the better your hand, the more breaking the world costs you: the self-punishing shape `iron-apple` already has.
 - **Density.** 491 characters against 519, Form 88 against 123 (set median 72). This card already overflowed export by 22px, so the hedging simile *as though it burned from the inside out* had to go regardless.
 - **The Mark stops carrying a capability.** "Everything you grip flakes" was an ability players would try to use. Wariness is a condition, and it earns the cost.
 
-**Known gaps.** Halving *and* stripping trump is a bigger swing than the shipped card, so it may want a heavier gate; the cheapest lever is dropping the halving and keeping only `it cannot be trump`, which is the more distinctive half anyway. Holding no Strength card means you cannot pay and so cannot invoke — standard, but README states it nowhere, and it comes up about 3% of the time at N=7. At 503 characters it is longer than the 491 draft and wants an overflow check on export, though `red-thread` sits at 572 and renders. And the `whisper-jar` overlap is narrowed, not closed: both still answer "the world's best card is a problem."
+**Known gaps.** The shipped card dropped two parts of the rebuild: the `When: Your approach is Strength.` gate and *there is only the one* in the Form. Without the second, nothing on the card stops a player owning several wedges; decide whether to restore either. The earlier halving-and-no-trump version was replaced by the fail-under-load Effect, which is narrower and shorter. Holding no Strength card means you cannot pay and so cannot invoke — standard, but README states it nowhere, and it comes up about 3% of the time at N=7. At 503 characters it is longer than the 491 draft and wants an overflow check on export, though `red-thread` sits at 572 and renders. Both items still target one world card, but they now differ in timing, in what changes, and in when the effect bites.
 
 ## grip-bone — rebuild
 
@@ -137,19 +169,21 @@ Not merely dominant — strictly dominant, with the answer knowable before the g
 
 **The loading is the object.** A first attempt at a fix had the die roll freely and the player carve whatever came up. That inverts the item and destroys it: **the point is that it is loaded, and you are the one who loaded it.** That is also where the fictional use lives — a die that always comes up your number is a con tool, and it works in anyone's hand, so you can throw it, hand it over, or leave it somewhere. Rig the lots for who stays behind, win or lose at dice deliberately, make a decision by "chance" come out the way you need, plant it on someone and let them win until they trust it.
 
-**The fix is the Form, not the mechanic.**
+**The fix is the Form, not the mechanic.** Shipped as:
 
-> *A small die cut from yellowed bone. It rolls the number you carved into yourself, no matter whose hand throws it.*
-> Wake: Carve a number from 1 to 6 into your skin and close your fist around the die until the cut scabs over.
+> *A small bone die that rolls whatever number is carved and bleeding on your skin, no matter whose hand throws it.*
+> Wake: Carve a number from 1 to 6 into the back of your hand, then close your fist around the die.
 > Effect: For this check, your cards of that printed value count as 10.
 > Cost: Gain 1 Injury.
-> *Everyone can read the number on your arm, and people remember which number you were wearing.*
+> *Everyone can read the number on your hand, and older numbers crisscross beneath it.*
 
-`previewDescription`: "A die loaded to the number cut into your arm, and every card of that value hits like a ten."
+`previewDescription`: "A die loaded to the number bleeding on your hand, and every card of that value hits like a ten."
+
+The Form carries the limiter: the die obeys only while the carved number is bleeding. The Wake is carried out before drawing, so the number is fixed before the hand is seen.
 
 - **The contradiction closes.** The Form now reads the number off your skin, which is where the Wake puts it. Nothing is carved into the die.
 - **The use is stated, and it is the loading.** *No matter whose hand throws it* is the clause doing the work — it makes the die plantable and usable on other people, which is where the verbs come from.
-- **"Name that number" is gone.** The number is carved and visible on your arm, so there is nothing to declare, and the once-per-check timing already comes from README's preamble.
+- **"Name that number" is gone.** The number is carved and visible on your hand, so there is nothing to declare, and the once-per-check timing already comes from README's preamble.
 - **The gate slot is dropped** rather than filled with "at any time", and *which is the part that should worry you* — the narrator winking at the reader — is cut. 406 characters against 491, Form 113 against 116.
 
 **Dominance is unresolved, and the fiction is not the place to fix it.** Naming is free and happens with no information, so 2 is strictly correct every time. The only lever that does not touch the object is to let the loading cut both ways — *every* card of that value counts as 10, the world's included, since a loaded die does not care who benefits:
@@ -167,18 +201,18 @@ It does not eliminate the dominance — 2 still leads 4 still leads 6 — but it
 The old version said the key was too bent to fit a lock, then told you to put it in one. Its Effect returned any card while its preview promised an ordinary card, and its conditional Stumble had no clear relation to opening something. The replacement makes crookedness mean that the key opens a lock by taking a crooked route through another one:
 
 > *A straight silver key that, after turning in one lock, warps as it enters the next; the second stays shut and the first opens.*
-> Wake: Turn it first in the lock you need opened, then bring it to a second lock holding someone trapped and turn it there.
-> Effect: Return 1 card from your discard to hand, then discard 1 card.
+> Wake: Turn it first in the lock you need opened, then turn it in a second lock to trap someone behind it.
+> Effect: Take 1 card from your discard into hand, then discard 1 card.
 > Cost: Gain 1 Stumble. The second lock is spoiled with the key caught inside. Recover it by dismantling the lock; to wrench it free instead, gain 1 Injury.
 > *Two keyways bruise your palm: one clean and open, one crooked and black.*
 
 `previewDescription`: "Leave someone trapped behind one lock to open another, exchanging a card in hand for one you had lost."
 
-The first lock is the inaccessible card; the second lock is the card surrendered from hand. The exchange keeps hand size fixed and allowing statuses makes the key stranger and more useful: it can pull harm back into hand, with the normal draw and survival rules still applying.
+The first lock is the inaccessible card; the second lock is the card surrendered from hand. The exchange keeps hand size fixed and allowing statuses makes the key stranger and more useful: it can pull harm back into hand. Taking a card into hand is not drawing, so a retrieved Stress does not duplicate.
 
 Using the key always gains 1 Stumble: transferring an opening through the warped key is the immediate price. Retrieval remains a separate physical problem. The key is unavailable while caught, and dismantling a lock requires access, time and tools the GM can deny. Injury is the shortcut: you may always get the key back now, but the bent metal takes something with it.
 
-The sacrificial lock cannot be a loose padlock or an unattended container. It must hold someone trapped when the key turns. The second lock stays shut and is spoiled, so opening the first lock deliberately prolongs someone else's confinement. Putting the captive in the Wake lets the GM reject a merely valuable lock before the item is invoked and makes every use a concrete bargain rather than an abstract loss.
+The sacrificial lock cannot be a loose padlock or an unattended container. Turning the key there must trap someone behind it: the bearer locks a person in to let themselves out. The second lock stays shut and is spoiled, so every opening is paid for with someone else's confinement, imposed by the bearer's own hand. Putting the victim in the Wake lets the GM reject a merely valuable lock before the item is invoked and makes every use a concrete act rather than an abstract loss.
 
 ## Relic pass — use in fiction
 
@@ -192,7 +226,7 @@ Three-use test across all nine. Every relic now states its supernatural job on t
 | grave-sledge | **Yes** | One desecrated grave produces one irrevocable bone pin. In a check, the pinned card remains available and may be played repeatedly under normal follow rules. |
 | dead-ledger | **Yes** | Write a creditor's name and they forget what you owe, but will never bargain with you again. It erases an obligation by permanently closing the relationship that created it. |
 | halved-locket | **Yes** | Each half reflects the other holder's face, then simultaneous remote contact exchanges their minds. The complete card pool stays with the borrowed body; the GM builds one first for an NPC who has none. |
-| dying-ring | **Yes** | It changes one present fact about one person, object, or place in the scene. The hand rebuild accompanies that literal wish during a check rather than standing in for it. |
+| dying-ring | **Yes** | It undoes the wearer's most recent decision that could fulfil the wish. The hand rebuild accompanies that wish during a check rather than standing in for it. |
 | hollow-blindfold | **Yes** | It bypasses human barriers by walking through a hot, roadless version of the same place. An off-suit win removes the wearer from the current check; a lone return check reveals the danger. |
 | hushbell-chain | **Yes** | Its bells consume every other sound for anyone who hears them. In a check, listeners must commit before the lead and cannot respond to the trick as it develops. |
 
@@ -200,16 +234,16 @@ Three-use test across all nine. Every relic now states its supernatural job on t
 
 The Sledge no longer overlaps the Black Wedge's delayed sabotage. It desecrates one named grave to create one impossible fastener:
 
-> *A petrified-wood sledge. A crushed skeleton leaves one bone pin.*
-> Wake: Shatter a headstone, exhume the named corpse, and crush every bone.
-> Effect: Drive the pin through 2 touching things. It cannot be removed; separating them requires destroying both. The sledge cannot wake while it remains.
-> In a check, pin 1 ordinary card from hand face up after drawing. It remains in hand for following suit. Once per trick, if legal, play it without moving it.
-> *The same blow lands again and again.*
+> *A petrified-wood sledge that crushes a skeleton into one bone pin.*
+> Wake: Shatter a named headstone, exhume the corpse, and crush every bone.
+> Effect: Drive the pin through 2 touching things; nothing can separate them. The sledge cannot wake while the pin remains.
+> If driven during a check, pin 1 ordinary card in hand face up after the deal. For that check only, it stays in hand, and once per trick you may play it, if legal, without moving it.
+> *The pin imbues the joining and the objects it pierces with a bound fate.*
 > Reveal its price.
 
-The effect uses the same verb in fiction and at the table. The physical pin makes one permanent joining of any scale. The card pin repeats one action throughout the check, but continues to constrain follow-suit because it remains in hand. Restricting it to an ordinary card prevents a repeatable Blessed or status exploit.
+The effect uses the same verb in fiction and at the table. The physical pin makes one permanent joining of any scale. The card pin repeats one action for that check only, but continues to constrain follow-suit because it remains in hand. Restricting it to an ordinary card prevents a repeatable Blessed or status exploit.
 
-> Price: When you drive the pin, gain 1 Injury. At cleanup, leave the pinned card beneath the Sledge, outside your deck. It returns to discard only when both joined things are destroyed; then the bone pin crumbles.
+> Price: When you drive the pin, gain 1 Injury. At cleanup, put the pinned card face down beneath the Sledge, outside your deck. It returns to discard when both joined things are destroyed, and the pin crumbles.
 > *The sledge and pin yield nothing to the blow. Your body does.*
 > *The pin keeps the action that set it. Until the joining is destroyed, it will not give that action back.*
 
@@ -222,7 +256,7 @@ The coat no longer waits for survival. Whenever the wearer relies on Strength, i
 > *A coat of scarred hide; beneath it, cold, pain, and exhaustion cannot reach you.*
 > Wake: Sleep in it without fire or roof until you stop shaking.
 > When: Your approach is Strength.
-> Effect: After the deal, set aside every status in hand and replace each with an ordinary card from discard, if available. At cleanup, return them to discard in random order before consequence statuses. The recorded survival cost never changes.
+> Effect: After the deal, set aside every status in hand and take an ordinary card from discard into hand for each, if available. At cleanup, return them to discard in random order before consequence statuses.
 > *The cold stops reaching you, and so does everything else.*
 > Reveal its price.
 
@@ -248,7 +282,7 @@ The blindfold circumvents human construction by carrying its wearer through the 
 > *A seamless linen blindfold dusted with pollen from no living flower.*
 > Wake: Face a built barrier, put it on, and walk forward without reaching for it. Do not remove it until you mean to return.
 > When: Your approach is Dexterity.
-> Effect: You may ignore follow-suit, counting as unable, so personal trump stays live. Your first off-suit win raises your goal score to at least its cost; then sit out the rest. Competing goals resolve normally.
+> Effect: You may ignore follow-suit, counting as unable to follow. Your first off-suit win fulfills your goal; then sit out the rest. Competing goals resolve normally.
 > *Behind the cloth, the air is hot and wet, and the ground has never known a road.*
 > Reveal its price.
 
@@ -257,7 +291,7 @@ Sitting out gives the automatic score its fictional shape: the wearer has steppe
 > Price: Your next check is a lone 7-trick Dexterity check against the world to remove the blindfold and return safely. Your goal costs 3. You return whether you succeed or fail.
 > Price: On failure, the GM chooses what fits your return: you appear partly inside something solid and gain 2 Injuries, or a creature follows you back.
 > *The land is familiar, but no human hand has touched it.*
-> *Three-toed tracks cross your own. Far behind you, something answers with a low call.*
+> *You sense that hungry beasts roam this place, and some are patient enough to follow you back.*
 
 World wins during the return check are encounters with the older landscape and its animals. Failure does not stack Injuries, Stumble, and a following creature. It produces one serious complication: bodily intersection with something that exists in the present, or a living thing crossing back behind the wearer.
 
@@ -267,17 +301,17 @@ The ledger now does something worth wanting outside a check: write the name of s
 
 The card effect gathers the obligations that vanished from everyone else's memory but yours. Stress is Intelligence-suited and worth 0, so under ruff-only trump an Intelligence approach holding none of the led suit makes it trump. Accumulated pressure becomes ammunition, but every Stress must be played before cleanup or the ledger makes its holder answer for the erased balance.
 
-> *A dark leather ledger; write the name of someone you owe, and they forget the debt but will never bargain with you again.*
+> *A dark leather ledger that makes a creditor forget your debt, and never bargain with you again.*
 > Wake: Write the name of someone you truly owe, then close the ledger before the ink dries.
 > When: Your approach is Intelligence.
-> Effect: After the deal, take all Stress from your draw pile and discard into hand. This is not drawing, so Stress does not duplicate. Shuffle the draw pile.
+> Effect: After the deal, take all Stress from your draw pile and discard into hand. Shuffle the draw pile.
 > *You remember every erased debt in the creditor's voice.*
 > Reveal its price.
 > Price: At cleanup, gain 1 Injury if any Stress remains in hand.
 > *Every debt erased from another's memory remains written beneath your name.*
 > *Your fingertips darken, and every promise sounds like a sum being read aloud.*
 
-The drawing exception prevents the old multiplication bug: moved Stress neither triggers its own draw rule nor explicitly generates another copy. The Intelligence gate makes the Stress/trump interaction intentional. The Injury Price forces the player to spend every obligation they called due rather than sitting safely on a bloated hand.
+README's drawing rule prevents the old multiplication bug: taking Stress into hand is not drawing, so it generates no copies. The Intelligence gate makes the Stress/trump interaction intentional. The Injury Price forces the player to spend every obligation they called due rather than sitting safely on a bloated hand.
 
 ## wake-lantern — the dead become part of you
 
@@ -303,10 +337,10 @@ Complete forgetting is the lasting fictional price. Material evidence remains: p
 The bells do not merely conceal movement. Anyone who hears them can hear nothing else until they stop. In a check, that means committing a card before the lead and losing the ability to respond to the led suit or later plays:
 
 > *A brass bell-chain; anyone who hears it hears nothing else until it stops.*
-> Wake: Jingle it while people in earshot listen for something else.
+> Wake: Ring it while people in earshot listen for something else.
 > When: Your approach is Dexterity.
-> Effect: After a trick but the last, you may ring the chain. Before the next lead, everyone who hears it sets 1 card face down; an affected world sets its leftmost. Reveal each on its owner's turn. It is legal, and a follower counts as unable to follow suit. This repeats.
-> *Afterward, voices reach you as movement without sound.*
+> Effect: After any trick but the last, you may ring it. Before the next lead, everyone who hears it, you included, sets 1 card face down; an affected world sets its leftmost. Reveal each on its owner's turn; it is legal, and a follower counts as unable to follow. You may ring it again later.
+> *One bell rings on, and you cannot find it.*
 > Reveal its price.
 
 Precommitment is the mechanical deafness. Affected followers may play off suit and keep personal trump live, but must choose without knowing the lead or any later play. The world shares the risk and commits its leftmost card. Who can hear the chain is a fictional fact: distance, walls, deafness, and deliberate ear protection all matter.
@@ -315,17 +349,40 @@ The Effect repeats, so the Price scales with actual use:
 
 > Price: At cleanup, gain 1 Stumble for each time you rang the chain.
 > *Your footsteps begin to ring like small bells, then sometimes make no sound at all.*
-> *With each use, more of your speech becomes ringing or silence.*
+> *With each use, each word you speak begins to sound more like the ringing of the bells.*
 
 The reveal makes the damage progressive and outward. The chain first replaces footsteps, then speech, with its own ringing or with nothing at all. Other people can hear the loss before the wearer understands how much of their voice is gone.
+
+### Front Mark
+
+The previous front Mark, *Afterward, you begin to sound like the bells*, stated the second reveal Mark outright before the reveal. The front Mark should **allude** to the price instead: point at where the sound goes, so the reveal lands as the answer rather than a repeat.
+
+What the front Mark has to do:
+
+- **Hint, do not state.** The reveal says the bearer's footsteps and speech become ringing or silence. The front should make the table wonder where the ringing goes, not tell them.
+- **A condition, not an event.** *Afterward* describes a moment.
+- **No teeth.** Nothing that reads as a rule: not deafness, not a weakening chain.
+
+> *One bell rings on, and you cannot find it.*
+
+Shipped. The missing bell is the bearer, which the first reveal Mark confirms: the footsteps begin to ring.
+
+Alternatives considered:
+
+| Mark | Note |
+|---|---|
+| *Some of the ringing never goes back into the chain.* | Shorter and more pointed; closer to stating the price. |
+| *Your steps sound faintly of brass when the room is quiet.* | Hints directly at the footsteps; nearly a spoiler. |
+| *The chain rings a little fainter each time, as though the sound were going somewhere.* | Strong allusion, but implies the chain weakens, which reads as a rule. |
+| *People who have heard it fall silent when your hand goes to the chain.* | Outward and clean, but alludes to nothing in the price. |
 
 ## iron-apple — a permanent floor, not limitless multiplication
 
 The apple now makes the character physically enormous rather than treating permanent growth as an unexplained card multiplier:
 
-> *An apple the colour and weight of old iron, slightly too heavy to be fruit.*
+> *An apple the colour of old iron that weighs as much as a laden cart.*
 > Wake: Consume the entire apple in one sitting. Do not stop. Leave nothing but the seeds.
-> Effect: You permanently grow to twice your height, with strength in proportion. When your approach is Strength, your Strength cards below 5 count as 5 when determining the trick winner.
+> Effect: You permanently grow to twice your height, with strength in proportion. When your approach is Strength, your ordinary Strength cards below 5 count as 5.
 > *You can no longer make yourself small, light, or gentle.*
 > Reveal its price.
 
@@ -333,29 +390,29 @@ Doubling could create values of 16–18 against a world capped at 10, forever. A
 
 Twice the height is the effect outside checks. The character can reach, lift, carry, break, and intimidate at that scale, while buildings, vehicles, furniture, concealment, delicate work, and weak floors become concrete problems. The ordinary approach rule is enough to adjudicate those advantages and restrictions.
 
-> Price: Gain 1 Injury, 1 Stumble, 1 Stress, and 4 Iron Apple Seeds, then remove this card from the game.
+> Price: Gain 1 Injury, 1 Stumble, and 1 Stress. Acquire 4 Iron Apple Seeds, then remove this card from the game.
 > *Your bones split and lengthen. Your skin closes only after the growth is done.*
 > *Nothing made to hold you fits, and nothing made to bear you was built for your weight.*
 
 The mixed statuses divide the transformation across bodily damage, unfamiliar balance, and the shock of inhabiting a world built at the wrong scale. One Injury can combine dangerously with existing wounds but does not automatically force the three-trick survival crisis caused by the old price. The Stumble and self-replicating Stress keep the initial transformation consequential after the wound is rested away. The permanent size remains the real price.
 
-## dying-ring — the wish changes one present fact
+## dying-ring — the wish undoes one decision
 
-The hand rebuild no longer stands in for wish fulfilment. Spending a charge literally changes one present fact about one person, object, or place in the current scene. The GM makes the smallest change that satisfies the exact words. The wish cannot alter the ring or escape a revealed Price.
+Spending a charge makes a wish that could have come true had the wearer decided differently. The GM alters the most recent decision that could fulfil it, as little as possible. Reaching for the most recent decision keeps a wish from rewriting years of history when yesterday would do. The wish cannot alter the ring or escape a revealed Price.
 
 > *A dark ring that frosts the wearer's breath while charged.*
 > Wake: Hold it to dying lips for their last wish. Fulfill it after they die; the ring gains 1 charge.
-> Effect: Spend 1 charge and wish about 1 person, object, or place here. The GM makes the smallest present change that fulfills it; it cannot alter the ring or a Price. After the deal, also shuffle and discard your hand, discard your draw pile top first, then take N cards from discard as your new hand.
-> *Everyone remembers the change, but not a world before it.*
+> Effect: Spend 1 charge and make a wish that could have come to pass if you had made a different decision. The GM alters the most recent such decision as little as possible to fulfill it; the wish cannot alter the ring or a Price. After the deal, take your draw pile and discard into hand.
+> *Only you remember the world before the change.*
 > Reveal its price.
 
-Outside a check, the wish changes the fiction directly and the Price applies immediately. After the deal, the same change occurs and the wearer also rebuilds their hand from every card currently available in discard. The card selection accompanies the wish; it is not the wish's fictional effect.
+Outside a check, the wish changes the fiction directly and the Price applies immediately. During a check, the wearer also takes their draw pile and discard into hand after the deal: every card in the pool outside reserve becomes available, so any card can be played on any trick. Taking cards into hand is not drawing, so there is no reshuffle, no evolution, and no Stress duplication. The card selection accompanies the wish; it is not the wish's fictional effect.
 
 > Price: At cleanup, gain 3 Injuries.
 > *It was your dying wish.*
 > *Your breath shortens and your skin grows cold.*
 
-The old three-Curse price had no specified compulsion and could amplify an unrelated existing compulsion. Three Injuries make every wish an immediate threat to the wearer's survival under the core rules. Charges have no cap: each requires a death, a spoken final wish, and its fulfilment without the ring's help.
+The old three-Curse price had no specified compulsion and could amplify an unrelated existing compulsion. Three Injuries land on top of discard at cleanup, so the gain-triggered survival scan almost always forces an immediate survival check costing at least 3 tricks. That is the answer to a hand holding every card. Charges have no cap: each requires a death, a spoken final wish, and its fulfilment without the ring's help.
 
 ## halved-locket — the mind travels, the body keeps its cards
 
@@ -363,15 +420,15 @@ The locket explicitly exchanges minds. Each mind uses the complete personal card
 
 The halves work at any distance. Simultaneous contact is the Wake; they never need to be brought together.
 
-> *A locket broken in half. Each half reflects the face of whoever holds the other.*
+> *A locket broken in half, each half reflecting the face of whoever holds the other.*
 > Wake: At the same moment, each holder grips a half over their heart and holds it until both grow hot.
 > Effect: Between checks, the holders exchange minds. Each mind uses the other body's complete personal card pool, including reserve and discard. If a body has none, the GM builds one before the exchange. Repeat the Wake to exchange them again.
 > *Your borrowed body reaches for what it loves and recoils from what it fears before you know why.*
 > Reveal its price.
 
-Every exchange, including a return, increases the shared count. Both current holders gain that much Stress, making it tempting to remain in the wrong bodies rather than pay to return.
+Every exchange, including a return, increases the shared count. Both current holders gain that much Stress into the pool each now uses, making it tempting to remain in the wrong bodies rather than pay to return.
 
-> Price: Both holders gain 1 Stress for each mind exchange the locket has caused.
+> Price: After each exchange, both holders gain 1 Stress, into the pool each now uses, for each mind exchange the locket has caused. This resets when anyone holding the locket dies.
 > *Each exchange leaves habits, memories, and desires behind in the body you leave.*
 > *With every return, your body recognizes you less readily.*
 
@@ -411,15 +468,9 @@ Seat position alone is worth **0.08 tricks** — not an item. The follow-suit ri
 
 Falsifying the record of your own wounds. *Moving* rather than reordering, because the scan counts Injuries in the top N and shuffling inside that window changes nothing. Two decisions first: it overrides a stated RULES.md rule, so the card must say so; and it partially defuses the death spiral, which is the GM's lethality dial.
 
-### Sin Eater's Spoon — Weird · opens transferring harm
+### Unnamed — see a relic's price
 
-> *A wooden spoon worn thin on one side, smelling faintly of someone else's kitchen.*
-> Wake: Eat a meal that was set aside for someone who is suffering.
-> When: Your approach is Weird.
-> Effect: Between checks, move 1 status from another player's discard into your own.
-> Cost: Gain 1 Stress.
-
-The only way one character takes another's damage. Tiny footprint, enormous weight at the table. Timing should probably be on the card: a survival requirement locks when it triggers, so the spoon only helps *before* a scan.
+An item that lets its bearer see the reveal side of a relic before invoking it. Moved here from a comment in `item_catalog.js`; no object or cost yet.
 
 ---
 
@@ -427,12 +478,12 @@ The only way one character takes another's damage. Tiny footprint, enormous weig
 
 | Item | Question | Where it stands |
 |---|---|---|
-| whisper-jar | Is the Wake scarce enough to carry the balance alone? Zeroing a world card is worth 0.3–0.5 tricks; 1 Stress about 0.035 | Shipped on that assumption; revisit if nobody runs dry |
-| grip-bone | Let the loading cut both ways so the world's cards of that value also count as 10? Narrows dominance, keeps the fiction | Blocks re-export |
+| whisper-jar | Is the Wake scarce enough to carry the balance alone? Zeroing a world card is worth 0.3–0.5 tricks; 1 Stress about 0.035 | Shipped on that assumption. The Wake now takes any never-spoken secret, not only the bearer's, so it is less scarce; revisit if nobody runs dry |
+| grip-bone | Let the loading cut both ways so the world's cards of that value also count as 10? Narrows dominance, keeps the fiction | Shipped without it; 2 is still always the best number |
 | borrowed-face | "Trump does not apply" versus the harsher "trump loses" | Shipped as the clean reading |
 | scoped-rifle | Is 1 Stumble enough for +5 on the final trick? | Fallback: "take no consolations until it fires" |
 | Bite Strap | No fictional use | Blocks implementation |
-| black-wedge | Rebuild is stronger than what it replaces — heavier gate, or accept it? | Blocks re-export |
+| black-wedge | Restore the Strength gate and *only the one*? The fail-under-load Effect is narrower than the halving it replaced, so the gate matters less | Shipped without the gate |
 
 ---
 

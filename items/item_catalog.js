@@ -1,7 +1,5 @@
 const ITEM_PAGE_PATH = "items/item_card.html";
 
-// item that allows you to see the other side of a relic
-
 const SUIT_DEFINITIONS = {
   strength: {
     name: "Strength",
@@ -92,13 +90,13 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Trinket",
     lines: [
-      "<em>A small splitting wedge of black stone. What it is driven into fails the moment it is trusted by someone else.</em>",
-      "Wake: Drive it into something wooden, and leave it there.",
-      "Effect: Before a lead, choose 1 unplayed world card. When played, halve its printed value, rounding down; it cannot be trump.",
-      "Cost: Halve the printed value of your highest Strength card in hand, rounding down.",
+      "<em>A small splitting wedge of black stone; what it is driven into fails the moment someone else trusts it.</em>",
+      "Wake: Drive it by hand into something another will trust with their weight, and leave it there.",
+      "Effect: After the deal, wedge 1 world card. If it would win a trick, it wins nothing; decide the trick without it.",
+      "Cost: For this check, your highest Strength card in hand counts as half its printed value, rounding down.",
       "<em>You test your weight on everything now.</em>"
     ],
-    previewDescription: "Set into the world's own footing, so the thing it leans on gives at the moment it leans."
+    previewDescription: "Wedge one world card: it holds until the world leans on it, then fails to take the trick."
   },
   {
     id: "grip-bone",
@@ -108,13 +106,13 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Trinket",
     lines: [
-      "<em>A small die cut from yellowed bone. It always lands on the face you carved.</em>",
-      "Wake: Carve a number from 1 to 6 into the back of your hand, then close your fist around the die. It will roll that number as long as the wound is bleeding freely.",
-      "Effect: Name that number before drawing. For this check, your cards of that printed value count as 10.",
+      "<em>A small bone die that rolls whatever number is carved and bleeding on your skin, no matter whose hand throws it.</em>",
+      "Wake: Carve a number from 1 to 6 into the back of your hand, then close your fist around the die.",
+      "Effect: For this check, your cards of that printed value count as 10.",
       "Cost: Gain 1 Injury.",
-      "<em>Everyone can read the number on your hand. Echoes of numbers carved begin to crisscross your hand.</em>"
+      "<em>Everyone can read the number on your hand, and older numbers crisscross beneath it.</em>"
     ],
-    previewDescription: "Name a number before you draw, and every card of that value hits like a ten."
+    previewDescription: "A die loaded to the number bleeding on your hand, and every card of that value hits like a ten."
   },
   {
     id: "iron-apple-seed",
@@ -124,13 +122,13 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Trinket",
     lines: [
-      "<em>A seed the colour of rust, no bigger than a thumbnail and heavy as a full pail. It will not crush, it will not mark, and it drags at your pocket all day.</em>",
-      "Wake: Swallow it whole.",
-      "Effect: Double the printed value of the next Strength card you play.",
+      "<em>A rust-coloured seed, no bigger than a thumbnail, that weighs as much as a full pail.</em>",
+      "Wake: Swallow it whole and keep it down.",
+      "Effect: The next Strength card you play counts as double its printed value.",
       "Cost: Gain 1 Stumble. Remove this card from the game.",
       "<em>Something in you has settled lower than it was, and your feet drag as you walk.</em>"
     ],
-    previewDescription: "Doubles one Strength card's printed value, and leaves you carrying the weight."
+    previewDescription: "Makes one Strength card count double, and leaves you carrying the weight."
   },
   {
     id: "red-thread",
@@ -140,11 +138,11 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Trinket",
     lines: [
-      "<em>A thin blood-red thread, delicate but strong. Anchored at one end and when pulled at the other, it drags whatever it holds back to the anchor with the same force used to tug.</em>",
+      "<em>A blood-red thread that, when tugged, drags whatever it holds back to its anchor with the force of the tug.</em>",
       "Wake: Anchor one end to something that will not move, and tie the other around what you want returned.",
       "When: Your approach is Dexterity.",
-      "Effect: After the deal, set 1 card aside. Before a lead, tug the thread and return it to hand. While set aside, it is not in your hand for any purpose, including following suit.",
-      "<em>The thread leaves a raw red line on whatever it has held, and that line does not fade if pulled far.</em>"
+      "Effect: After the deal, set 1 card aside. Before a lead, tug the thread and take it back into hand. While set aside, it is not in your hand for any purpose, including following suit.",
+      "<em>The thread leaves a raw red line on whatever it has held, deeper the farther it was dragged.</em>"
     ],
     previewDescription: "Send a card away to open a void, then tug it back when the timing is right."
   },
@@ -157,12 +155,12 @@ const ITEM_ENTRIES = [
     domain: "Trinket",
     lines: [
       "<em>A straight silver key that, after turning in one lock, warps as it enters the next; the second stays shut and the first opens.</em>",
-      "Wake: Turn it first in the lock you need opened, then bring it to a second lock holding someone trapped and turn it there.",
-      "Effect: Return 1 card from your discard to hand, then discard 1 card.",
+      "Wake: Turn it first in the lock you need opened, then turn it in a second lock to trap someone behind it.",
+      "Effect: Take 1 card from your discard into hand, then discard 1 card.",
       "Cost: Gain 1 Stumble. The second lock is spoiled with the key caught inside. Recover it by dismantling the lock; to wrench it free instead, gain 1 Injury.",
-      "<em>When spoiling the second lock, your hand yearns to open it wrenching until it cramps.</em>"
+      "<em>Your hand yearns to wrench the second lock until it fails.</em>"
     ],
-    previewDescription: "Leave someone trapped behind one lock to open another, exchanging a card in hand for one you had lost."
+    previewDescription: "Trap someone behind one lock to open another, exchanging a card in hand for one you had lost."
   },
   {
     id: "slate-shard",
@@ -174,9 +172,9 @@ const ITEM_ENTRIES = [
     lines: [
       "<em>A palm-sized shard of slate, chalk-dusted, with room for a single name.</em>",
       "Wake: Write your name on the slate and put it in someone else's hands.",
-      "Effect: Once per check, the holder may speak your name and then one word. You hear it anywhere and it may be during a check. Add 2 to the printed value of your next played card.",
+      "Effect: The holder may speak your name and one word, and you hear it anywhere. During a check, this signal is allowed, and your next played card counts 2 higher.",
       "Cost: Your name burns off the slate. Gain 1 Stress.",
-      "<em>While the slate holds your name, you seem to hear faint whispers of the words spoken before.</em>"
+      "<em>While the slate holds your name, you catch yourself listening for it.</em>"
     ],
     previewDescription: "Hand someone a line to you: one word across any distance, and a boost for answering it."
   },
@@ -192,7 +190,7 @@ const ITEM_ENTRIES = [
       "Wake: Slip it into a book that would know, and ask a question aloud.",
       "Effect: Before drawing or between checks, the GM answers briefly and truthfully within what that book could know. Then look at the top 3 cards of your deck, reorder them, and discard any you choose.",
       "Cost: Gain 1 Stress. Asking the question unwrites the book, leaving it blank forever.",
-      "<em>You can't seem to read any book cover to cover anymore, your impatience always mounts.</em>"
+      "<em>You can no longer read a book cover to cover; impatience takes you within the first couple of pages.</em>"
     ],
     previewDescription: "Ask a book what it knows, then rearrange what you are about to draw."
   },
@@ -205,11 +203,11 @@ const ITEM_ENTRIES = [
     domain: "Trinket",
     lines: [
       "<em>A jar filled with whispered secrets, whirring softly.</em>",
-      "Wake: Whisper a true secret you have never spoken aloud into the jar, then seal it.",
+      "Wake: Whisper a true secret that has never been spoken aloud into the jar, then seal it.",
       "When: Your approach is Weird.",
       "Effect: Before a lead, choose 1 unplayed world card. It counts as Stress for the rest of the check.",
       "Cost: Gain 1 Stress. The secret is heard by everyone nearby, and the jar will not hold it twice.",
-      "<em>When opened, people glance over their shoulders as if someone spoke behind them.</em>"
+      "<em>You poke and prod others to fill the jar with their secrets.</em>"
     ],
     previewDescription: "Silences the world's best card, paid for with a secret you cannot take back."
   },
@@ -222,10 +220,10 @@ const ITEM_ENTRIES = [
     domain: "Trinket",
     lines: [
       "<em>A long rifle with a scope, set up hours before anyone arrives.</em>",
-      "Wake: Set it to watch a distant spot and look through the scope until drawing begins.",
-      "Effect: After the deal, reveal 1 Dexterity card from hand. If you play it on the final trick, add 5 to its printed value.",
+      "Wake: Before anyone arrives, set it to watch a distant spot, and do not leave the scope until drawing begins.",
+      "Effect: After the deal, reveal 1 Dexterity card from hand. If you play it on the final trick, it counts 5 higher.",
       "Cost: Gain 1 Stumble.",
-      "<em>Sometimes the lens appears smoky and unusable. Training it steadily for long makes your joint ache and stiff.</em>"
+      "<em>Your shooting eye waters at anything far away, and your shoulder aches from holding still.</em>"
     ],
     previewDescription: "Reveal a card and hold it to the last trick, where it lands five higher."
   },
@@ -241,10 +239,72 @@ const ITEM_ENTRIES = [
       "Wake: Peer deeply into someone's eyes. The mask takes their true feeling and wears it; the GM names its suit.",
       "When: Your approach is Weird.",
       "Effect: The first trick led in that suit inverts: lowest card wins, trump does not apply, ties go to the non-led suit then the latest played.",
-      "Cost: Gain 1 Curse if that suit never leads.",
+      "Cost: At cleanup, gain 1 Curse if that suit never led.",
       "<em>Take the mask off and it becomes difficult to hide whatever you truly feel.</em>"
     ],
     previewDescription: "Steal a true feeling from someone, and one trick runs backwards."
+  },
+  {
+    id: "porters-rope",
+    label: "Porter's Rope",
+    title: "PORTER'S ROPE",
+    kind: "trinket",
+    suit: "strength",
+    domain: "Trinket",
+    lines: [
+      "<em>A coarse rope; whatever it hoists weighs nothing if you could carry it unaided.</em>",
+      "Wake: Secure it to something you could pick up unaided, even under great strain.",
+      "Effect: After a trick you lose with a Strength card, give that Brace to another player instead of taking it; they hold it as their own.",
+      "<em>When someone is using the rope, you feel the strain as if it were your own.</em>"
+    ],
+    previewDescription: "Make a carryable burden weightless, or hand the Brace from your loss to another player."
+  },
+  {
+    id: "still-cricket",
+    label: "Still Cricket",
+    title: "STILL CRICKET",
+    kind: "trinket",
+    suit: "dexterity",
+    domain: "Trinket",
+    lines: [
+      "<em>A brass cricket that chirps when staying where you are will bring you harm.</em>",
+      "Wake: When it chirps, start moving.",
+      "Effect: Before a lead, ask what harm will reach you before the trick ends if you stay where you are. The GM answers briefly and truthfully. If the answer names a harm, you may put 1 card from hand on the bottom of your deck, then draw 1.",
+      "Cost: Gain 1 Stumble.",
+      "<em>Every silence sounds like the pause before a warning.</em>"
+    ],
+    previewDescription: "Learn what harm reaches you if you stay put, and trade a card to move before it lands."
+  },
+  {
+    id: "afterimage-lens",
+    label: "Afterimage Lens",
+    title: "AFTERIMAGE LENS",
+    kind: "trinket",
+    suit: "intelligence",
+    domain: "Trinket",
+    lines: [
+      "<em>A smoked-glass lens that makes a shard replay one scene its mirror witnessed in the room.</em>",
+      "Wake: Shatter an intact mirror that stood in this room during the scene you seek, then hold the lens over its largest shard.",
+      "Effect: The GM describes 1 minute from that earlier scene and names 1 detail that still shapes the present. Before drawing, look at the top 3 world cards, put 1 on the bottom of its deck, and return the others in the same order.",
+      "Cost: Gain 1 Stress and 1 Curse. Add to its compulsion: you may not use mirrors.",
+      "<em>Mirrors no longer reflect the present to you, but an indiscernible past.</em>"
+    ],
+    previewDescription: "Destroy a mirror to recover a scene it witnessed, then use what you learn to alter the approaching world row."
+  },
+  {
+    id: "sin-eaters-spoon",
+    label: "Sin Eater's Spoon",
+    title: "SIN EATER'S SPOON",
+    kind: "trinket",
+    suit: "weird",
+    domain: "Trinket",
+    lines: [
+      "<em>A wooden spoon that makes another's suffering yours when you finish the meal meant for them.</em>",
+      "Wake: Eat a meal set before someone who is suffering, while they only watch.",
+      "Effect: One of their afflictions or burdens passes permanently to you. Between checks, choose 1 status you can gain in another willing player's discard. They return it to reserve; you gain a copy.",
+      "<em>Their old pains, habits, and nightmares settle among your own.</em>"
+    ],
+    previewDescription: "Finish a suffering person's meal to take on one of their statuses: it leaves their discard and a copy enters yours."
   },
   {
     id: "grave-sledge",
@@ -254,14 +314,14 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Relic",
     lines: [
-      "<em>A petrified-wood sledge. A crushed skeleton leaves one bone pin.</em>",
-      "Wake: Shatter a headstone, exhume the named corpse, and crush every bone.",
-      "Effect: Drive the pin through 2 touching things. It cannot be removed; separating them requires destroying both. The sledge cannot wake while it remains.",
-      "In a check, pin 1 ordinary card from hand face up after drawing. It remains in hand for following suit. Once per trick, if legal, play it without moving it.",
-      "<em>The same blow lands again and again.</em>",
+      "<em>A petrified-wood sledge that crushes a skeleton into one bone pin.</em>",
+      "Wake: Shatter a named headstone, exhume the corpse, and crush every bone.",
+      "Effect: Drive the pin through 2 touching things; nothing can separate them.",
+      "If driven during a check, pin 1 ordinary card in hand face up after the deal. For that check only, it stays in hand, and once per trick you may play it, if legal, without moving it.",
+      "<em>The pin imbues the joining and the objects it pierces with a bound fate.</em>",
       "Reveal its price."
     ],
-    previewDescription: "Makes one irrevocable joining and repeats one ordinary card for as long as the check lasts."
+    previewDescription: "Makes one irrevocable joining and repeats one ordinary card for a single check."
   },
   {
     id: "grave-sledge-price",
@@ -271,7 +331,7 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Reveal After Use",
     lines: [
-      "Price: When you drive the pin, gain 1 Injury. At cleanup, leave the pinned card beneath the Sledge, outside your deck. It returns to discard only when both joined things are destroyed; then the bone pin crumbles.",
+      "Price: When you drive the pin, gain 1 Injury. At cleanup, put the pinned card face down beneath the Sledge, outside your deck. It returns to discard when both joined things are destroyed, and the pin crumbles.",
       "<em>The sledge and pin yield nothing to the blow. Your body does.</em>",
       "<em>The pin keeps the action that set it. Until the joining is destroyed, it will not give that action back.</em>"
     ],
@@ -288,7 +348,7 @@ const ITEM_ENTRIES = [
       "<em>A coat of scarred hide; beneath it, cold, pain, and exhaustion cannot reach you.</em>",
       "Wake: Sleep in it without fire or roof until you stop shaking.",
       "When: Your approach is Strength.",
-      "Effect: After the deal, set aside every status in hand and replace each with an ordinary card from discard, if available. At cleanup, return them to discard in random order before consequence statuses. The recorded survival cost never changes.",
+      "Effect: After the deal, set aside every status in hand and take an ordinary card from discard into hand for each, if available. At cleanup, return them to discard in random order before consequence statuses.",
       "<em>The cold stops reaching you, and so does everything else.</em>",
       "Reveal its price."
     ],
@@ -320,8 +380,8 @@ const ITEM_ENTRIES = [
       "<em>A brass bell-chain; anyone who hears it hears nothing else until it stops.</em>",
       "Wake: Ring it while people in earshot listen for something else.",
       "When: Your approach is Dexterity.",
-      "Effect: After a trick but the last, you may ring the chain. Before the next lead, everyone who hears it sets 1 card face down; an affected world sets its leftmost. Reveal each on its owner's turn. It is legal, and a follower counts as unable to follow suit. This repeats.",
-      "<em>Afterward, voices reach you as movement without sound.</em>",
+      "Effect: After any trick but the last, you may ring it. Before the next lead, everyone who hears it, you included, sets 1 card face down; an affected world sets its leftmost. Reveal each on its owner's turn; it is legal, and a follower counts as unable to follow. You may ring it again later.",
+      "<em>One bell rings on, and you cannot find it.</em>",
       "Reveal its price."
     ],
     previewDescription: "Makes everyone who hears it commit a card before the next lead, deaf to every other play."
@@ -336,7 +396,7 @@ const ITEM_ENTRIES = [
     lines: [
       "Price: At cleanup, gain 1 Stumble for each time you rang the chain.",
       "<em>Your footsteps begin to ring like small bells, then sometimes make no sound at all.</em>",
-      "<em>With each use, more of your speech becomes ringing or silence.</em>"
+      "<em>With each use, each word you speak begins to sound more like the ringing of the bells.</em>"
     ],
     previewDescription: "Each ringing costs Stumble as your footsteps and speech become bells or vanish into silence."
   },
@@ -348,10 +408,10 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Relic",
     lines: [
-      "<em>A dark leather ledger; write the name of someone you owe, and they forget the debt but will never bargain with you again.</em>",
+      "<em>A dark leather ledger that makes a creditor forget your debt, and never bargain with you again.</em>",
       "Wake: Write the name of someone you truly owe, then close the ledger before the ink dries.",
       "When: Your approach is Intelligence.",
-      "Effect: After the deal, take all Stress from your draw pile and discard into hand. This is not drawing, so Stress does not duplicate. Shuffle the draw pile.",
+      "Effect: After the deal, take all Stress from your draw pile and discard into hand. Shuffle the draw pile.",
       "<em>You remember every erased debt in the creditor's voice.</em>",
       "Reveal its price."
     ],
@@ -410,7 +470,7 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Relic",
     lines: [
-      "<em>A locket broken in half. Each half reflects the face of whoever holds the other.</em>",
+      "<em>A locket broken in half, each half reflecting the face of whoever holds the other.</em>",
       "Wake: At the same moment, each holder grips a half over their heart and holds it until both grow hot.",
       "Effect: Between checks, the holders exchange minds. Each mind uses the other body's complete personal card pool, including reserve and discard. If a body has none, the GM builds one before the exchange. Repeat the Wake to exchange them again.",
       "<em>Your borrowed body reaches for what it loves and recoils from what it fears before you know why.</em>",
@@ -426,7 +486,7 @@ const ITEM_ENTRIES = [
     suit: "intelligence",
     domain: "Reveal After Use",
     lines: [
-      "Price: Both holders gain 1 Stress for each mind exchange the locket has caused.",
+      "Price: After each exchange, both holders gain 1 Stress, into the pool each now uses, for each mind exchange the locket has caused. This resets when anyone holding the locket dies.",
       "<em>Each exchange leaves habits, memories, and desires behind in the body you leave.</em>",
       "<em>With every return, your body recognizes you less readily.</em>"
     ],
@@ -443,7 +503,7 @@ const ITEM_ENTRIES = [
       "<em>A seamless linen blindfold dusted with pollen from no living flower.</em>",
       "Wake: Face a built barrier, put it on, and walk forward without reaching for it. Do not remove it until you mean to return.",
       "When: Your approach is Dexterity.",
-      "Effect: You may ignore follow-suit, counting as unable, so personal trump stays live. Your first off-suit win raises your goal score to at least its cost; then sit out the rest. Competing goals resolve normally.",
+      "Effect: You may ignore follow-suit, counting as unable to follow. Your first off-suit win fulfills your goal; then sit out the rest. Competing goals resolve normally.",
       "<em>Behind the cloth, the air is hot and wet, and the ground has never known a road.</em>",
       "Reveal its price."
     ],
@@ -474,11 +534,11 @@ const ITEM_ENTRIES = [
     lines: [
       "<em>A dark ring that frosts the wearer's breath while charged.</em>",
       "Wake: Hold it to dying lips for their last wish. Fulfill it after they die; the ring gains 1 charge.",
-      "Effect: Spend 1 charge and wish about 1 person, object, or place here. The GM makes the smallest present change that fulfills it; it cannot alter the ring or a Price. After the deal, also shuffle and discard your hand, discard your draw pile top first, then take N cards from discard as your new hand.",
-      "<em>Everyone remembers the change, but not a world before it.</em>",
+      "Effect: Spend 1 charge and make a wish that could have come to pass if you had made a different decision. The GM alters the most recent such decision as little as possible to fulfill it; the wish cannot alter the ring or a Price. After the deal, take your draw pile and discard into hand.",
+      "<em>Only you remember the world before the change.</em>",
       "Reveal its price."
     ],
-    previewDescription: "Earn a charge by fulfilling a last wish, then spend it to change one present fact and rebuild your hand."
+    previewDescription: "Earn a charge by fulfilling a last wish, then undo one of your decisions and take your whole deck into hand."
   },
   {
     id: "dying-ring-price",
@@ -502,9 +562,9 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Relic",
     lines: [
-      "<em>An apple the colour and weight of old iron, slightly too heavy to be fruit.</em>",
+      "<em>An apple the colour of old iron that weighs as much as a laden cart.</em>",
       "Wake: Consume the entire apple in one sitting. Do not stop. Leave nothing but the seeds.",
-      "Effect: You permanently grow to twice your height, with strength in proportion. When your approach is Strength, your Strength cards below 5 count as 5 when determining the trick winner.",
+      "Effect: You permanently grow to twice your height, with strength in proportion. When your approach is Strength, your ordinary Strength cards below 5 count as 5.",
       "<em>You can no longer make yourself small, light, or gentle.</em>",
       "Reveal its price."
     ],
@@ -518,7 +578,7 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Reveal After Use",
     lines: [
-      "Price: Gain 1 Injury, 1 Stumble, 1 Stress, and 4 Iron Apple Seeds, then remove this card from the game.",
+      "Price: Gain 1 Injury, 1 Stumble, and 1 Stress. Acquire 4 Iron Apple Seeds, then remove this card from the game.",
       "<em>Your bones split and lengthen. Your skin closes only after the growth is done.</em>",
       "<em>Nothing made to hold you fits, and nothing made to bear you was built for your weight.</em>"
     ],

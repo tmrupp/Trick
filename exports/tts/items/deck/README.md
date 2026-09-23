@@ -3,7 +3,7 @@
 Optional supplement for the current [rules](../../../../RULES.md). Read [item conventions](../../../../items/README.md) before use. This deck is separate from the two standard decks per player.
 
 Files in this folder:
-- `trick-item-face-sheet.png`: front card sheet for the full 19-card item deck.
+- `trick-item-face-sheet.png`: front card sheet for the full 23-card item deck.
 - `trick-item-back-sheet.png`: back card sheet with shared trinket backs and relic-price backs.
 - `trick-item-deck-manifest.json`: exact Tabletop Simulator import settings and card order.
 
@@ -12,8 +12,8 @@ Import in Tabletop Simulator:
 2. Set Face to the hosted or local path for `trick-item-face-sheet.png`.
 3. Enable `Unique Backs`.
 4. Set Back to the hosted or local path for `trick-item-back-sheet.png`.
-5. Set Width to 4, Height to 5, and Number to 19.
+5. Set Width to 4, Height to 6, and Number to 23.
 6. Leave `Sideways` off and enable `Back is Hidden`.
-7. The generated face sheet is 1600x2800.
+7. The generated face sheet is 1600x3360.
 
 Card order on the sheet is listed in `trick-item-deck-manifest.json`.

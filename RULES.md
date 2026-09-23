@@ -35,7 +35,7 @@ The GM brings one standard deck and uses its A–10 cards for the world. Shuffle
 
 1. Choose **N from 1–13 tricks** to fit the situation. Use **1 trick** for a quick check.
 2. Check each player's discard for survival before drawing or reshuffling.
-3. Agree goals, costs, failure consequences, and any incompatible goals or stalemates. Each player and the world declare an approach whose suit is their **personal trump**, fixed for the check. **An approach must fit the fiction**: being good at sneaking does not help once you have been spotted. The GM has final say on whether an approach applies and may rule out one the situation has closed off. Choose the first leader; the world leads first if the GM declared disadvantage.
+3. Agree goals, costs, failure consequences, and any incompatible goals or stalemates. Each player and the world declare an approach whose suit is their **personal trump**, fixed for the check. **An approach must fit the fiction**: being good at sneaking does not help once you have been spotted. The GM has final say on whether an approach applies and may rule out one the situation has closed off. The world is the first leader unless the GM specifies someone else.
 4. Each participant draws N cards. Deal the world's cards face-up in a fixed row. Resolve draw effects as cards are drawn.
 
 Cost guide: **1** for a narrow advantage, **2** for a modest outcome, **3** for a substantial outcome, **5** for an ambitious outcome. The whole table has only N tricks to divide among goals and the world.

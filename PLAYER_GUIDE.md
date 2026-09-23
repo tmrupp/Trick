@@ -15,7 +15,7 @@ Choose a primary suit and a different secondary suit. From **one deck**, take **
 
 ## Before drawing
 
-The GM sets **N from 1–13 tricks** to fit the situation, checks survival, and states goal costs and consequences. A typical check runs **2p + 1 tricks for p players**; use **1 trick** for a quick check. Each player commits to **one separate goal** and declares an approach whose suit is their **personal trump**. Your approach must fit the fiction — being good at sneaking does not help once you have been spotted — and the GM has final say on whether one applies. The GM declares the world's approach and trump. Goals, approaches, and trumps stay fixed for the check. Only your wins score your goal, even after meeting its cost; help others through fiction and card play.
+The GM sets **N from 1–13 tricks** to fit the situation, checks survival, and states goal costs and consequences. A typical check runs **2p + 1 tricks for p players**; use **1 trick** for a quick check. Each player commits to **one separate goal** and declares an approach whose suit is their **personal trump**. Your approach must fit the fiction — being good at sneaking does not help once you have been spotted — and the GM has final say on whether one applies. The GM declares the world's approach and trump. Goals, approaches, and trumps stay fixed for the check. The world is the first leader unless the GM specifies someone else. Only your wins score your goal, even after meeting its cost; help others through fiction and card play.
 
 An immediate threat can **force your goal**, such as getting through an attack safely. You still choose your approach. Combine simultaneous threats into one goal before drawing.
 

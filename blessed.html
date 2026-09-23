@@ -1,1 +1,40 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Archived blessed concept</title></head><body><main><h1>Archived expansion concept</h1><p>Divine and Blessed are not part of the current four-suit game.</p><p><a href="player_guide.html">Current player guide</a> · <a href="index.html">Current cards</a></p><p>The earlier design is preserved in <a href="docs/history/before_player_guide/blessed.html">the history archive</a>.</p></main></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Blessed Card</title>
+<script src="./card_rules.js"></script>
+<script>
+  const CARD_VARIANT_CONFIG = {
+    cardClass: "blessed-card",
+    cssVars: {},
+    value: "",
+    ...globalThis.TrickCoreCards.blessed,
+    suitSvgPath: "./blessed.svg"
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400&family=Alegreya+SC:wght@700&family=Cormorant+Garamond:wght@700&display=block" />
+<link rel="stylesheet" href="./card_base.css" />
+<link rel="stylesheet" href="./deck_cards.css" />
+</head>
+<body>
+  <div class="card-preview">
+    <div class="card" id="card-root">
+      <div class="card-header">
+        <div class="card-value" id="card-value"></div>
+        <div class="suit-icon" id="suit-icon" aria-label="Suit"></div>
+      </div>
+      <div class="text-panel">
+        <div class="domain-label" id="domain-label"></div>
+        <div class="divider"></div>
+        <div class="rules-text" id="rules-text"></div>
+      </div>
+    </div>
+  </div>
+  <script src="./suit_icons.js"></script>
+  <script src="./card_renderer.js"></script>
+</body>
+</html>

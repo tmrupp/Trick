@@ -81,4 +81,23 @@
   }
   domainLabel.textContent = domain;
   rulesText.innerHTML = [`<strong>${title}</strong>`, ...lines].join("<br><br>");
+
+  // Standard-deck cards use the catalogue layout from deck_cards.css: suit ink, inline mark,
+  // a small-caps name over ruled paragraphs, and a reversed corner index.
+  const icons = globalThis.TrickSuitIcons;
+  const suitKey = (suitSvgPath.match(/([a-z]+)\.svg$/) || [])[1];
+  if (cardRoot.classList.contains("core-card") && icons && icons.suits[suitKey]) {
+    const suit = icons.suits[suitKey];
+    const name = title.charAt(0) + title.slice(1).toLowerCase();
+    cardRoot.style.setProperty("--suit-ink", suit.ink);
+    suitIcon.innerHTML = icons.svg(suitKey, suit.name);
+    domainLabel.textContent = domain.replace(" / ", " · ");
+    rulesText.innerHTML = `<h2 class="core-title">${name}</h2><div class="core-rules">${lines.map((line) => `<p>${line}</p>`).join("")}</div>`;
+
+    const index = document.createElement("div");
+    index.className = "core-index";
+    index.setAttribute("aria-hidden", "true");
+    index.innerHTML = `<span>${value}</span>${icons.svg(suitKey)}`;
+    cardRoot.appendChild(index);
+  }
 }());

@@ -311,4 +311,4 @@ The following operational choices make this reference specific where the convers
 
 Trump/card comparison is explicitly unresolved in section 4. This document is a consolidated design reference, not a claim of a fully tested game or a finalized comparison engine.
 
-The pre-consolidation text reference, including its local edits, is preserved in [the history folder](docs/history/trick_rules_reference_before_group_play_2026-09-14.txt). Earlier audit notes are not alternative current rules.
+The pre-consolidation text reference, including its local edits, is preserved in [the history folder](trick_rules_reference_before_group_play_2026-09-14.txt). Earlier audit notes are not alternative current rules.

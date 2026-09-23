@@ -28,6 +28,7 @@ async function exportCard(page, fileName, outputPath, params = {}) {
   await page.setViewportSize({ width: CARD_WIDTH, height: CARD_HEIGHT });
   await page.waitForLoadState("networkidle");
   await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete));
+  await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
     path: outputPath,
     clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT },

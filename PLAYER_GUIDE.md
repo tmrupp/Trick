@@ -36,7 +36,7 @@ You may use your card's **printed suit** consolation, even if an ally won. Resol
 | --- | --- |
 | **Brace — Spades** | On your next play, add or subtract **this card's printed value** to or from the card you play, minimum 0. Choose which as you play the card. |
 | **Reposition — Clubs** | You may ignore follow-suit on your next play, which **counts as being unable to follow**, so your personal trump can win. |
-| **Recalculate — Diamonds** | Discard one card from hand, then draw one. |
+| **Recalculate — Diamonds** | Discard one card from hand, then draw one. If that draw reshuffles your deck, you may evolve. |
 | **Revelation — Hearts** | Ask the GM one question about the situation for a brief truthful answer, **or** put a status from discard atop your deck; your next card takes that status's suit instead of its own. |
 
 Next-play effects expire after that play or at check end. Brace changes value, not suit priority, and **Braces never stack** — you hold at most one, and a new one replaces it. For Revelation's next play, treat cards in hand as the chosen suit for follow-suit, leading, and trump; consolation uses the printed suit. Your whole hand takes that suit, so you follow if it matches the led suit and cannot follow if it does not — picking your own trump suit when the led suit differs wins you the trick. Your personal trump never changes.

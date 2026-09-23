@@ -1,0 +1,269 @@
+/* Standard deck and card back in the catalogue style shared with the item cards.
+   Sizes are for the 1050 x 1470 export; card_base.css scales cards for previews. */
+
+/* ---------- numbered cards: pale paper, one printed rule ---------- */
+.core-card {
+  --suit-ink: #1b1917;
+  --paper: color-mix(in srgb, var(--suit-ink) 5%, #faf8f3);
+  display: flex;
+  flex-direction: column;
+  padding: 62px 66px 196px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--paper);
+  color: #1b1917;
+  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+}
+
+.core-card::before {
+  inset: 25px;
+  border: 2.3px solid color-mix(in srgb, var(--suit-ink) 70%, transparent);
+  background: none;
+  opacity: 1;
+}
+
+.core-card::after {
+  content: none;
+}
+
+.core-card .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0;
+}
+
+.core-card .card-value {
+  color: var(--suit-ink);
+  font: 700 380px/0.82 "Cormorant Garamond", Garamond, Georgia, serif;
+  font-variant-numeric: lining-nums;
+  letter-spacing: -8px;
+  text-shadow: none;
+}
+
+.core-card .suit-icon {
+  width: 290px;
+  height: 290px;
+  margin: 0;
+  color: var(--suit-ink);
+  filter: none;
+}
+
+.core-card .suit-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.core-card .text-panel {
+  margin: 44px 0 0;
+  padding: 22px 0 16px;
+  border: 0;
+  border-top: 2px solid color-mix(in srgb, var(--suit-ink) 50%, transparent);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.core-card .domain-label {
+  margin: 0 0 6px;
+  color: var(--suit-ink);
+  font: 700 30px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 3px;
+  text-transform: none;
+  text-shadow: none;
+}
+
+.core-card .divider {
+  display: none;
+}
+
+.core-card .rules-text {
+  color: #1b1917;
+  font: 400 50px/1.22 Alegreya, Georgia, "Times New Roman", serif;
+}
+
+.core-title {
+  margin: 0 0 10px;
+  color: #1b1917;
+  font: 700 96px/1 "Cormorant Garamond", Garamond, Georgia, serif;
+  font-variant: small-caps;
+  letter-spacing: 2px;
+}
+
+.core-rules p {
+  margin: 0;
+  padding: 14px 0;
+  border-top: 1.3px solid color-mix(in srgb, var(--suit-ink) 28%, transparent);
+}
+
+/* reversed corner index, as on a playing card */
+.core-index {
+  position: absolute;
+  right: 66px;
+  bottom: 58px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--suit-ink);
+  font: 700 118px/0.8 "Cormorant Garamond", Garamond, Georgia, serif;
+  font-variant-numeric: lining-nums;
+  transform: rotate(180deg);
+}
+
+.core-index svg {
+  display: block;
+  width: 96px;
+  height: 96px;
+}
+
+/* ---------- status cards: aged paper, double rule, value on a suit-ink band ---------- */
+.core-card.status-card,
+.core-card.blessed-card {
+  --paper: color-mix(in srgb, var(--suit-ink) 10%, #f1ece1);
+  padding: 50px 50px 196px;
+  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+}
+
+.core-card.status-card::before,
+.core-card.blessed-card::before {
+  inset: 19px;
+  border: 12px double #1b1917;
+  background: none;
+}
+
+.core-card.status-card .card-header,
+.core-card.blessed-card .card-header {
+  padding: 26px 44px;
+  border-radius: 5px;
+  background: var(--suit-ink);
+  box-shadow:
+    inset 0 0 0 5px var(--suit-ink),
+    inset 0 0 0 7px color-mix(in srgb, var(--paper) 60%, transparent);
+}
+
+.core-card.status-card .card-value,
+.core-card.status-card .suit-icon,
+.core-card.blessed-card .suit-icon {
+  color: var(--paper);
+  text-shadow: none;
+  filter: none;
+}
+
+.core-card.status-card .suit-icon,
+.core-card.blessed-card .suit-icon {
+  width: 250px;
+  height: 250px;
+}
+
+.core-card.status-card .text-panel,
+.core-card.blessed-card .text-panel {
+  width: auto;
+  margin: 40px 16px 0;
+  border-color: color-mix(in srgb, var(--suit-ink) 50%, transparent);
+  background: none;
+  box-shadow: none;
+}
+
+.core-card.status-card .domain-label {
+  letter-spacing: 3px;
+  text-shadow: none;
+}
+
+.core-card.status-card .core-index,
+.core-card.blessed-card .core-index {
+  right: 60px;
+  bottom: 54px;
+}
+
+/* ---------- Blessed: a status-style card whose band carries only its mark ---------- */
+.core-card.no-value-card .card-header {
+  justify-content: center;
+}
+
+/* same band height as a status card's value */
+.core-card.blessed-card .card-header {
+  min-height: 364px;
+}
+
+/* ---------- card back: double rule, engraved field, suit medallion ---------- */
+.card.card-back {
+  --paper: color-mix(in srgb, #1b1917 7%, #f6f3ec);
+  --ink: #1b1917;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 13px;
+  background: var(--paper);
+  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+}
+
+.card.card-back::before {
+  inset: 19px;
+  border: 12px double var(--ink);
+  background: none;
+  opacity: 1;
+}
+
+.card.card-back::after {
+  content: none;
+}
+
+.card-back__field {
+  position: absolute;
+  inset: 62px;
+  border: 2.3px solid var(--ink);
+  background:
+    repeating-linear-gradient(45deg, color-mix(in srgb, var(--ink) 11%, transparent) 0 2.4px, transparent 2.4px 18px),
+    repeating-linear-gradient(-45deg, color-mix(in srgb, var(--ink) 11%, transparent) 0 2.4px, transparent 2.4px 18px);
+}
+
+.card-back__field::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1.2px solid color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.card-back__medallion {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 640px;
+  height: 640px;
+  border: 12px double var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 18px var(--paper), 0 0 0 20.5px var(--ink);
+  transform: translate(-50%, -50%);
+}
+
+.card-back__icon {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+}
+
+.card-back__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.card-back__icon--strength { top: 58px; left: calc(50% - 85px); color: #7a1f16; }
+.card-back__icon--dexterity { top: calc(50% - 85px); right: 58px; color: #1f5e2d; }
+.card-back__icon--intelligence { bottom: 58px; left: calc(50% - 85px); color: #1f4072; }
+.card-back__icon--weird { top: calc(50% - 85px); left: 58px; color: #4f2a73; }
+
+.card-back__center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  background: var(--ink);
+  transform: translate(-50%, -50%) rotate(45deg);
+  box-shadow:
+    0 0 0 10px var(--paper),
+    0 0 0 12.5px var(--ink);
+}

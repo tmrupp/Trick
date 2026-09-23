@@ -1,0 +1,50 @@
+{
+  "name": "Trick Reference Deck",
+  "importSettings": {
+    "face": "trick-reference-face-sheet.png",
+    "uniqueBacks": true,
+    "back": "trick-reference-back-sheet.png",
+    "width": 4,
+    "height": 2,
+    "number": 7,
+    "sideways": false,
+    "backIsHidden": false
+  },
+  "cardOrder": [
+    {
+      "index": 1,
+      "id": "varn",
+      "label": "Varn"
+    },
+    {
+      "index": 2,
+      "id": "moon-eyed",
+      "label": "Moon-Eyed"
+    },
+    {
+      "index": 3,
+      "id": "tarrans",
+      "label": "Tarrans"
+    },
+    {
+      "index": 4,
+      "id": "hollow-skinned",
+      "label": "Hollow-Skinned"
+    },
+    {
+      "index": 5,
+      "id": "rootborn",
+      "label": "Rootborn"
+    },
+    {
+      "index": 6,
+      "id": "ashcrik",
+      "label": "Ashcrik"
+    },
+    {
+      "index": 7,
+      "id": "rules-card",
+      "label": "Rules Reference"
+    }
+  ]
+}

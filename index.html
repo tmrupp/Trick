@@ -166,10 +166,27 @@
   <main class="page">
     <h1>Trick Card Index</h1>
     <p class="intro">Trick uses two standard decks per player. These optional custom cards carry the same four suits and current rules.</p>
-    <p><a href="player_guide.html" style="color:var(--accent)">Player guide</a> · <a href="rules.html" style="color:var(--accent)">Full rules</a> · <a href="race_mechanics.html" style="color:var(--accent)">Optional peoples</a></p>
+    <p><a href="player_guide.html" style="color:var(--accent)">Player guide</a> · <a href="rules.html" style="color:var(--accent)">Full rules</a> · <a href="race_mechanics.html" style="color:var(--accent)">Optional peoples</a> · <a href="setting_races.html" style="color:var(--accent)">Setting notes</a></p>
 
     <section class="section"><div class="section-header"><h2>Consolations</h2><div class="section-copy">On your trick loss; after the final trick, only Revelation's question</div></div><div class="grid" data-core-section="consolations"></div></section>
     <section class="section status"><div class="section-header"><h2>Statuses</h2><div class="section-copy">J, Q, K are zero-value statuses; six of each suit per player</div></div><div class="grid" data-core-section="statuses"></div></section>
+    <section class="section"><div class="section-header"><h2>Blessed</h2><div class="section-copy">The jokers; four per player, granted by the GM for play at the table</div></div><div class="grid" data-core-section="blessed"></div></section>
+    <section class="section">
+      <div class="section-header">
+        <h2>Rules reference</h2>
+        <div class="section-copy">One double-sided card carrying the whole table procedure</div>
+      </div>
+      <div class="grid" data-rules-section></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Optional peoples</h2>
+        <div class="section-copy">One card per people; the shared timing card is their common back</div>
+      </div>
+      <div class="grid" data-race-section="peoples"></div>
+    </section>
+
     <section class="section"><h2>Optional setting items</h2><p class="section-copy">Agree on item use and goal applicability before drawing. These supplements are not needed for core play. <a href="items/README.md" style="color:var(--accent)">Item conventions</a></p></section>
     <section class="section">
       <div class="section-header">
@@ -196,6 +213,8 @@
     </section>
   </main>
   <script src="./card_rules.js"></script>
+  <script src="./rules_reference.js"></script>
+  <script src="./races/race_catalog.js"></script>
   <script src="./items/item_catalog.js"></script>
   <script>
     function escapeHtml(value) {
@@ -219,12 +238,20 @@
       `.trim();
     }
 
-    for (const [id, keys] of Object.entries({consolations:["strength","dexterity","intelligence","weird"],statuses:["injury","dazed","stress","curse"]})) {
+    for (const [id, keys] of Object.entries({consolations:["strength","dexterity","intelligence","weird"],statuses:["injury","dazed","stress","curse"],blessed:["blessed"]})) {
       document.querySelector(`[data-core-section="${id}"]`).innerHTML = keys.map(key => {
         const card=globalThis.TrickCoreCards[key];
         return renderCard({href: `./${key}.html`,iframeSrc: `./${key}.html`,title:card.title,eyebrow:card.suitLabel,name:card.title,description:card.description});
       }).join("\n");
     }
+    document.querySelector("[data-rules-section]").innerHTML = globalThis.TrickRulesCard.sides.map(side => {
+      const href = `./rules_reference_card.html?side=${side.side}`;
+      return renderCard({href, iframeSrc: href, title: `${side.title} ${side.side}`, eyebrow: side.subtitle, name: `Rules card — ${side.side}`, description: side.sections.map(s => s.heading).join(" · ")});
+    }).join("\n");
+
+    const raceSection = globalThis.TrickRaceCatalog.buildRaceIndexSection();
+    document.querySelector(`[data-race-section="${raceSection.id}"]`).innerHTML = raceSection.cards.map(renderCard).join("\n");
+
     for (const section of window.TrickItemCatalog.buildItemIndexSections()) {
       const container = document.querySelector(`[data-item-section="${section.id}"]`);
       if (!container) {

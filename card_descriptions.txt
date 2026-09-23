@@ -11,7 +11,7 @@ Skip after the final trick. Expires after your next play or at check end.
 
 RECALCULATE (Diamonds — Intelligence)
 On a trick loss, discard one card from hand, including a status, then draw one. You need a card to discard.
-Skip after the final trick. Mid-check reshuffles give no evolution or free status removal.
+If that draw reshuffles your deck, you may evolve first. Skip after the final trick.
 
 REVELATION (Hearts — Weird)
 On a trick loss, choose: ask the GM one question for a brief truthful answer; or put a status from discard atop your deck. Your next card takes that suit instead of its own.
@@ -32,3 +32,7 @@ Gaining Stress into discard is not drawing it. All face-card ranks of this suit 
 CURSE (Hearts — Curse)
 Your Curses share one supernatural compulsion, recorded with your first Curse. Each violation gains one Stress per Curse outside reserve.
 Count six minus the Curses in reserve. Remove Curses through evolution, never rest. Removing the last ends the compulsion.
+
+BLESSED (Joker — Blessed)
+Wins any trick it is played in, beating trump. It has no suit: it never follows suit and is always legal. Leading it sets no led suit. If two meet, the earliest wins.
+A played Blessed returns to reserve. Unplayed, it cleans up like an ordinary card. Between tricks you may give it to another player, then draw one; no advice goes with it.

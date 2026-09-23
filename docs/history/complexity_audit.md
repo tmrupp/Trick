@@ -1,8 +1,8 @@
 # Complexity audit: shared bids, simpler statuses, no survival subgame
 
-**Archived proposal. The current consolidated rules are [RULES.md](RULES.md).** This document records an earlier audit, including ideas that were rejected.
+**Archived proposal. The current consolidated rules are [RULES.md](../../RULES.md).** This document records an earlier audit, including ideas that were rejected.
 
-**Historical first proposal.** See [current decisions and open questions](C:/Users/tmrup/Documents/Trick/design_decisions.md) for the latest direction. [Iteration 2](C:/Users/tmrup/Documents/Trick/complexity_iteration_2.md) is also retained as an earlier proposal. The recommendations below are the original audit, not the current proposal.
+**Historical first proposal.** See [the later decision record](design_decisions.md) and [Iteration 2](complexity_iteration_2.md). The recommendations below are the original audit, not current rules.
 
 Design proposal, 14 September 2026. This is a playtest draft, not a replacement for the published cards. The working baseline is `trick_rules_reference.txt`, including its existing local edits. Findings below are rule analysis; the proposed costs and pacing have not been validated in play.
 

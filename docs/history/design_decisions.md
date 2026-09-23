@@ -1,6 +1,6 @@
-# Current rules have been consolidated
+# Historical decision record
 
-Use [RULES.md](RULES.md) as the full current reference and [PLAYER_GUIDE.md](PLAYER_GUIDE.md) at the table. Browser and text references are generated with `npm run build:guides`; shared card copy lives in `card_rules.js`.
+These decisions were consolidated into [RULES.md](../../RULES.md) and [PLAYER_GUIDE.md](../../PLAYER_GUIDE.md). Those files are authoritative; this one records the route taken.
 
 Each player uses two standard decks: A–10 are ordinary cards and face cards are
 statuses. From one deck, take 2, 4, 6, 8 of every suit, add A, 5, 9 of a

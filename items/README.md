@@ -67,4 +67,4 @@ npm run export:tts-item-deck
 
 The first command writes individual images under `exports/tts/items/fronts/` and `back/`. The second rebuilds the sheet, back, manifest, and README under `exports/tts/items/deck/`.
 
-[item_card.html](item_card.html) renders every card. [item_catalog.js](item_catalog.js) drives the renderer, gallery, and exports.
+[item_card.html](item_card.html) renders every card: [item_renderer.js](item_renderer.js) splits each card's lines into name, Form, slots, Marks, and the reveal band, and [item_card.css](item_card.css) styles them. The fonts load from Google Fonts, so previews and exports need a network connection. [item_catalog.js](item_catalog.js) drives the renderer, gallery, and exports.

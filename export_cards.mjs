@@ -1,8 +1,8 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
-import { suitCards } from "./card_registry.mjs";
+import { blessedCards, suitCards } from "./card_registry.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,11 +26,22 @@ async function exportCard(page, fileName, outputPath, params = {}) {
   await page.setViewportSize({ width: CARD_WIDTH, height: CARD_HEIGHT });
   await page.waitForLoadState("networkidle");
   await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete));
-  await page.screenshot({
-    path: outputPath,
+  await page.evaluate(() => document.fonts.ready);
+  const image = await page.screenshot({
     clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT },
     omitBackground: true
   });
+
+  // Another program (an image preview, a sync client) can hold a PNG open for a moment on Windows.
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await writeFile(outputPath, image);
+      return;
+    } catch (error) {
+      if (attempt === 5) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+    }
+  }
 }
 
 async function main() {
@@ -52,6 +63,11 @@ async function main() {
       await exportCard(page, front.statusFile, statusPath);
       console.log(`exported ${path.relative(__dirname, statusPath)}`);
     }
+
+    // Both Blessed copies share one face.
+    const blessedPath = path.join(FRONT_DIR, "blessed.png");
+    await exportCard(page, blessedCards[0].file, blessedPath);
+    console.log(`exported ${path.relative(__dirname, blessedPath)}`);
 
     const backPath = path.join(BACK_DIR, "card-back.png");
     await exportCard(page, "card_back.html", backPath);

@@ -37,6 +37,7 @@ async function renderCardDataUrl(page, card) {
   await page.setViewportSize({ width: SOURCE_CARD_WIDTH, height: SOURCE_CARD_HEIGHT });
   await page.waitForLoadState("networkidle");
   await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete));
+  await page.evaluate(() => document.fonts.ready);
 
   const buffer = await page.screenshot({
     clip: { x: 0, y: 0, width: SOURCE_CARD_WIDTH, height: SOURCE_CARD_HEIGHT },

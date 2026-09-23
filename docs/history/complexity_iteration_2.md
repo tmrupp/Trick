@@ -1,8 +1,8 @@
 # Iteration 2: a scene played through one shared hand
 
-**Archived proposal. The current consolidated rules are [RULES.md](RULES.md).** Its fixed-goal and beginning/end survival rules supersede this iteration.
+**Archived proposal. The current consolidated rules are [RULES.md](../../RULES.md).** Its fixed-goal and beginning/end survival rules supersede this iteration.
 
-**Historical proposal.** See [current decisions and open questions](C:/Users/tmrup/Documents/Trick/design_decisions.md) for the accepted original Recalculate/Revelation effects and the newer discussion of evolution and discard-based rescue. In particular, this document's no-draw and conserved-opening-hand assumptions are superseded.
+**Historical proposal.** See [the later decision record](design_decisions.md) for the accepted original Recalculate/Revelation effects and the newer discussion of evolution and discard-based rescue. This document's no-draw and conserved-opening-hand assumptions are superseded.
 
 Design draft, 14 September 2026. Supersedes the first audit's recommendations. This is a proposal for discussion and playtesting; the core reference and existing cards have not been rewritten.
 

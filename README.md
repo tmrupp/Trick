@@ -6,15 +6,17 @@ Trick is a game of simultaneous group checks using **two standard decks per play
 
 The repository also provides optional custom card art, setting items, and Tabletop Simulator exports. Current suits are Strength/Spades, Dexterity/Clubs, Intelligence/Diamonds, and Weird/Hearts; their statuses are Injury, Stumble, Stress, and Curse. Jokers are unused. Divine and Blessed are archived concepts.
 
-The [card gallery](index.html) uses current shared card text. [Optional peoples](race_mechanics.html) and [item conventions](items/README.md) extend the core rules. Earlier audits and trump proposals are historical; see [docs/history](docs/history/README.md).
+The [card gallery](index.html) uses current shared card text. [Optional peoples](race_mechanics.html), [item conventions](items/README.md), and [Session 0 town questions](session0_town_questions.html) extend the core rules. Earlier audits and trump proposals are historical; see [docs/history](docs/history/README.md).
+
+Two reference card sets print at the same size as the deck: a **two-sided rules card** carrying the whole table procedure, and **one card per people** with its ability, backed by a shared timing card. See the [peoples guide](races/README.md).
 
 Two independent deck-building prototypes, **Joinery** and **Undertow**, are described in [the alternatives comparison](docs/alternatives/README.md). They are experiments, not changes to these rules.
 
 ## Updating references
 
-Edit `RULES.md` for complete procedures and `PLAYER_GUIDE.md` for the condensed guide. Keep the guide aligned when a rule changes. Edit `card_rules.js` for card summaries; it supplies every current suit/status card and the gallery.
+Edit `RULES.md` for complete procedures and `PLAYER_GUIDE.md` for the condensed guide. Keep the guide aligned when a rule changes. Edit `card_rules.js` for card summaries; it supplies every current suit/status card and the gallery. Edit `rules_reference.js` for the two-sided rules card and `races/race_catalog.js` for the peoples; the catalog also generates `race_mechanics.html`, so edit the catalog rather than that page.
 
-Run `npm run build:guides` to regenerate the browser guides, the legacy reference URLs, the text rules reference, and card descriptions. The old `reference.html` URL now opens the player guide; `trick_taking_rpg_rules_v4.html` now contains the current complete rules. Their original versions are archived.
+Run `npm run build:guides` to regenerate the browser guides, the legacy reference URLs, the text rules reference, the peoples page, and card descriptions. The old `reference.html` URL now opens the player guide; `trick_taking_rpg_rules_v4.html` now contains the current complete rules. Their original versions are archived.
 
 Run `npm run check:assets` to check current card text for clipping, verify the 52-card export composition, and check links in the readable references. Inspection images and a report are written under `exports/qa/`.
 
@@ -82,6 +84,26 @@ This writes files under `exports/tts/items/deck`, including:
 - `trick-item-deck-manifest.json`
 - `README.md` with Tabletop Simulator import settings
 
+Export the separate reference card fronts and backs, one per people plus the two-sided rules card:
+
+```bash
+npm run export:reference-cards
+```
+
+This writes rendered assets under `exports/tts/reference/fronts` and `exports/tts/reference/back`. Every people's back is the shared timing card; the rules card's back is its second side.
+
+Export the combined Tabletop Simulator reference deck assets:
+
+```bash
+npm run export:tts-reference-deck
+```
+
+This writes files under `exports/tts/reference/deck`, including:
+- `trick-reference-face-sheet.png`
+- `trick-reference-back-sheet.png`
+- `trick-reference-deck-manifest.json`
+- `README.md` with Tabletop Simulator import and printing settings
+
 ## Project Layout
 
 - `index.html`: local gallery for browsing cards
@@ -92,6 +114,11 @@ This writes files under `exports/tts/items/deck`, including:
 - `items/item_card.html`: shared HTML shell for every trinket, relic, and reveal card
 - `card_rules.js`: shared current card text
 - `card_descriptions.txt`: generated card text reference
+- `races/race_catalog.js`: single source of truth for the peoples' abilities, card text, and generated `race_mechanics.html`
+- `races/race_card.html`: shared HTML shell for every people's card
+- `rules_reference.js` and `rules_reference_card.html`: text and shell for the two-sided rules card
+- `reference_registry.mjs`: reference deck export entry point backed by the race catalog and the rules card
+- `export_reference_cards.mjs`, `export_tts_reference_deck.mjs`: individual and combined reference card exports
 - `PLAYER_GUIDE.md`, `RULES.md`: player and full-rule sources
 - `scripts/build_guides.mjs`: regenerates readable HTML/text references
 - `export_cards.mjs`: exports individual PNG cards with Playwright

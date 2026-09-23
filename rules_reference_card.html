@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rules Reference Card</title>
+<script src="./rules_reference.js"></script>
+<link rel="stylesheet" href="./card_base.css" />
+</head>
+<body>
+  <div class="card-preview">
+    <div class="card reference-card" id="card-root">
+      <div class="ref-head">
+        <div>
+          <div class="ref-title" id="ref-title"></div>
+          <div class="ref-sub" id="ref-sub"></div>
+        </div>
+        <div class="ref-marks" aria-hidden="true">
+          <img src="./strength.svg" alt="" />
+          <img src="./dexterity.svg" alt="" />
+          <img src="./intelligence.svg" alt="" />
+          <img src="./weird.svg" alt="" />
+        </div>
+      </div>
+      <div class="ref-body" id="ref-body"></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get("side") || "front";
+      const data = globalThis.TrickRulesCard;
+      const side = data.sides.find((entry) => entry.side === requested || entry.id === requested);
+
+      if (!side) {
+        throw new Error(`Unknown rules reference side: ${requested}`);
+      }
+
+      if (params.get("export") === "1") {
+        document.body.classList.add("export-page");
+      }
+
+      const root = document.getElementById("card-root");
+      root.style.setProperty("--accent", data.accent);
+      root.classList.add(`reference-card--${side.side}`);
+
+      document.getElementById("ref-title").textContent = side.title;
+      document.getElementById("ref-sub").textContent = side.subtitle;
+      document.title = `Trick rules reference — ${side.side}`;
+
+      const escapeHtml = (value) => value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+
+      document.getElementById("ref-body").innerHTML = side.sections.map((section) => {
+        const lines = (section.lines || []).map((line) => `<p class="ref-line">${escapeHtml(line)}</p>`);
+        const rows = (section.rows || []).map((row) =>
+          `<p class="ref-line"><span class="ref-label">${escapeHtml(row.label)}</span> ${escapeHtml(row.text)}</p>`);
+        const note = section.note ? `<p class="ref-note">${escapeHtml(section.note)}</p>` : "";
+
+        return `<section class="ref-section"><h2 class="ref-heading">${escapeHtml(section.heading)}</h2>${lines.join("")}${rows.join("")}${note}</section>`;
+      }).join("");
+    }());
+  </script>
+</body>
+</html>

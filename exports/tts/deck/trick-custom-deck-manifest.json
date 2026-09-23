@@ -3,13 +3,14 @@
   "copiesPerPlayer": 2,
   "ordinaryCardsPerCopy": 40,
   "statusCardsPerCopy": 12,
+  "blessedCardsPerCopy": 2,
   "importSettings": {
     "face": "trick-face-sheet.png",
     "uniqueBacks": false,
     "back": "trick-card-back.png",
     "width": 10,
     "height": 6,
-    "number": 52,
+    "number": 54,
     "sideways": false,
     "backIsHidden": true
   },
@@ -273,6 +274,16 @@
       "index": 52,
       "id": "curse-k",
       "label": "K of Hearts — Curse (0)"
+    },
+    {
+      "index": 53,
+      "id": "blessed-1",
+      "label": "Joker — Blessed"
+    },
+    {
+      "index": 54,
+      "id": "blessed-2",
+      "label": "Joker — Blessed"
     }
   ]
 }

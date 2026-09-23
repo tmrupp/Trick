@@ -5,22 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Trick Card Back</title>
 <link rel="stylesheet" href="./card_base.css" />
+<link rel="stylesheet" href="./deck_cards.css" />
 </head>
 <body>
   <div class="card-preview">
     <div class="card card-back" aria-label="Trick card back">
-      <div class="card-back__frame"></div>
-      <div class="card-back__layout" aria-hidden="true">
-        <div class="card-back__icon card-back__icon--top"><img src="./strength.svg" alt="" /></div>
-        <div class="card-back__icon card-back__icon--right"><img src="./dexterity.svg" alt="" /></div>
-        <div class="card-back__icon card-back__icon--bottom"><img src="./intelligence.svg" alt="" /></div>
-        <div class="card-back__icon card-back__icon--left"><img src="./weird.svg" alt="" /></div>
+      <div class="card-back__field"></div>
+      <div class="card-back__medallion" aria-hidden="true">
+        <div class="card-back__icon card-back__icon--strength"></div>
+        <div class="card-back__icon card-back__icon--dexterity"></div>
+        <div class="card-back__icon card-back__icon--intelligence"></div>
+        <div class="card-back__icon card-back__icon--weird"></div>
+        <div class="card-back__center"></div>
       </div>
     </div>
   </div>
+  <script src="./suit_icons.js"></script>
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("export") === "1") {
+    for (const suit of ["strength", "dexterity", "intelligence", "weird"]) {
+      document.querySelector(`.card-back__icon--${suit}`).innerHTML = globalThis.TrickSuitIcons.svg(suit);
+    }
+    if (new URLSearchParams(window.location.search).get("export") === "1") {
       document.body.classList.add("export-page");
     }
   </script>

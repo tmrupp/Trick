@@ -68,7 +68,7 @@ On a **trick loss**, you may take your consolation, including when an ally won. 
 | --- | --- |
 | **Strength — Brace** | On your next play, add or subtract **your losing card's** printed value to or from the card you play, minimum 0. Choose which as you play the card. |
 | **Dexterity — Reposition** | You may ignore follow-suit on your next play, which **counts as being unable to follow**, so your personal trump can win the trick. |
-| **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. |
+| **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. If that draw reshuffles your deck, you may evolve. |
 | **Weird — Revelation** | Choose one: **ask the GM one question about the current situation and receive a brief, truthful answer**, or **put a status from discard on top of your deck; your next played card's suit becomes that status's suit instead of its own**. |
 
 Revelation may reveal something your character could not ordinarily know. Brace changes value, not suit priority. **Braces never stack**: you hold at most one, and a new Brace replaces any you are still holding.

@@ -1,0 +1,226 @@
+/* Item cards: a collector's catalogue entry. Sizes are for the 1050 x 1470 export;
+   card_base.css scales the whole card for previews. */
+
+.item-card {
+  --suit-ink: #1b1917;
+  --paper: color-mix(in srgb, var(--suit-ink) 5%, #faf8f3);
+  --rule-ink: #1b1917;
+  display: flex;
+  flex-direction: column;
+  padding: 57px 57px 50px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--paper);
+  color: #1b1917;
+  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+}
+
+/* printed frame rule */
+.item-card::before {
+  inset: 25px;
+  border: 2.3px solid color-mix(in srgb, var(--suit-ink) 70%, transparent);
+  background: none;
+  opacity: 1;
+}
+
+.item-card::after {
+  content: none;
+}
+
+.item-card .text-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.item-card .rules-text {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+  color: inherit;
+  font: 400 50px/1.2 Alegreya, Georgia, "Times New Roman", serif;
+}
+
+.item-card p {
+  margin: 0;
+}
+
+/* name block: kind and suit marks over a small-caps name */
+.item-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--suit-ink);
+  font: 700 30px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 3px;
+}
+
+.item-kind {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.item-eyebrow svg {
+  display: block;
+  width: 57px;
+  height: 57px;
+}
+
+.item-title {
+  margin: 4px 0 0;
+  font: 700 92px/0.95 "Cormorant Garamond", Garamond, Georgia, serif;
+  font-variant: small-caps;
+  letter-spacing: 2px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.item-form {
+  margin: 4px 10px 6px !important;
+  color: #3a3531;
+  font: italic 48px/1.22 Alegreya, Georgia, serif;
+  text-align: center;
+}
+
+/* ledger: slot names in a margin column */
+.item-slots {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  border-top: 2px solid color-mix(in srgb, var(--suit-ink) 50%, transparent);
+}
+
+.item-slot-label,
+.item-slot-text {
+  padding: 11px 0;
+  border-bottom: 1.3px solid color-mix(in srgb, var(--suit-ink) 28%, transparent);
+}
+
+.item-slot-label {
+  padding-right: 19px;
+  color: var(--suit-ink);
+  font: 700 29px/1.95 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 1.6px;
+  text-align: right;
+}
+
+.item-slot-text p + p {
+  margin-top: 12px;
+}
+
+.item-slot-text.item-slot--cost {
+  font-weight: 700;
+}
+
+.item-mark {
+  color: #2c2825;
+  font: italic 48px/1.22 Alegreya, Georgia, serif;
+  text-align: center;
+}
+
+/* the first Mark sits at the foot of the card under a small diamond ornament */
+.item-marks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.item-marks::before {
+  content: "";
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 0 auto 7px;
+  background: var(--suit-ink);
+  transform: rotate(45deg);
+  box-shadow:
+    34px -34px 0 -3.7px var(--suit-ink),
+    -34px 34px 0 -3.7px var(--suit-ink);
+}
+
+/* relics: aged paper, heavy double rule, name reversed out of a suit-ink band */
+.item-relic-card,
+.item-reveal-card {
+  --paper: color-mix(in srgb, var(--suit-ink) 10%, #f1ece1);
+}
+
+.item-relic-card {
+  padding: 48px 48px 44px;
+}
+
+.item-relic-card::before,
+.item-reveal-card::before {
+  inset: 19px;
+  border: 12px double var(--rule-ink);
+}
+
+.item-relic-card .item-head,
+.item-reveal-card .item-head {
+  padding: 25px 32px 29px;
+  border-radius: 5px;
+  background: var(--suit-ink);
+  color: var(--paper);
+  box-shadow:
+    inset 0 0 0 5px var(--suit-ink),
+    inset 0 0 0 7px color-mix(in srgb, var(--paper) 60%, transparent);
+}
+
+.item-relic-card .item-eyebrow,
+.item-reveal-card .item-eyebrow {
+  color: color-mix(in srgb, var(--paper) 85%, transparent);
+}
+
+.item-tab {
+  margin-top: 17px;
+  padding: 20px;
+  border-radius: 5px;
+  background: var(--suit-ink);
+  color: var(--paper);
+  font: 700 32px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 5px;
+  text-align: center;
+}
+
+/* reveal: the relic's hidden side, engraved hatch around a sealed entry */
+.item-reveal-card {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--suit-ink) 16%, transparent) 0 2.6px,
+      transparent 2.6px 17px
+    ),
+    var(--paper);
+}
+
+.item-reveal-card .rules-text {
+  min-height: 0;
+  margin-top: 24px;
+  padding: 21px 32px 34px;
+  border: 2px solid var(--suit-ink);
+  background: #fbf9f4;
+}
+
+.item-reveal-card .item-marks {
+  margin-top: 4px;
+}
+
+.item-reveal-card .item-marks::before {
+  content: none;
+}
+
+.item-reveal-card .item-mark {
+  text-align: left;
+}

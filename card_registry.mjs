@@ -9,8 +9,16 @@ function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+// Each standard-deck copy carries two jokers, which Trick uses as Blessed cards.
+export const blessedCards = [1, 2].map(copy => ({
+  id: `blessed-${copy}`,
+  label: "Joker — Blessed",
+  file: "blessed.html",
+  params: {}
+}));
+
 export function buildDeckCards() {
-  return suitCards.flatMap(({ suit, standardSuit, file, statusName, statusLabel, statusFile }) => {
+  return [...suitCards.flatMap(({ suit, standardSuit, file, statusName, statusLabel, statusFile }) => {
     const numberedCards = Array.from({ length: 10 }, (_, index) => ({
       id: `${suit}-${index + 1}`,
       label: `${index === 0 ? "Ace" : index + 1} of ${standardSuit} — ${capitalize(suit)}`,
@@ -27,5 +35,5 @@ export function buildDeckCards() {
         params: {}
       }))
     ];
-  });
+  }), ...blessedCards];
 }

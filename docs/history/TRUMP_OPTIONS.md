@@ -1,6 +1,6 @@
 # Historical trump proposals
 
-The current rule is a personal trump fixed by each participant's declared approach before drawing; see [RULES.md](RULES.md). The earlier shared-plurality rule and the alternatives below are superseded design notes.
+The current rule is a personal trump fixed by each participant's declared approach before drawing; see [RULES.md](../../RULES.md). The earlier shared-plurality rule and the alternatives below are superseded design notes.
 
 All three keep fixed goals, simultaneous followers, mandatory follow-suit when possible, and one point per trick. They change how the played cards are compared. The comparison applies equally to players and the world.
 

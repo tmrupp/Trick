@@ -12,8 +12,8 @@ globalThis.TrickCoreCards = {
   },
   intelligence: {
     suitLabel: "Diamonds — Intelligence", domain: "Diamonds / Consolation", title: "RECALCULATE",
-    lines: ["On a trick loss, discard one card from hand, including a status, then draw one. You need a card to discard.", "Skip after the final trick. Mid-check reshuffles give no evolution or free status removal."],
-    description: "Discard one card from hand, then draw one."
+    lines: ["On a trick loss, discard one card from hand, including a status, then draw one. You need a card to discard.", "If that draw reshuffles your deck, you may evolve first. Skip after the final trick."],
+    description: "Discard one card from hand, then draw one. A reshuffle from that draw allows evolution."
   },
   weird: {
     suitLabel: "Hearts — Weird", domain: "Hearts / Consolation", title: "REVELATION",
@@ -39,5 +39,10 @@ globalThis.TrickCoreCards = {
     suitLabel: "Hearts — Curse", domain: "Hearts / Status", title: "CURSE",
     lines: ["Your Curses share one supernatural compulsion, recorded with your first Curse. Each violation gains one Stress per Curse outside reserve.", "Count six minus the Curses in reserve. Remove Curses through evolution, never rest. Removing the last ends the compulsion."],
     description: "Curses share a compulsion. Each violation gains one Stress per Curse outside reserve. Remove through evolution, never rest."
+  },
+  blessed: {
+    suitLabel: "Joker — Blessed", domain: "Joker / Blessed", title: "BLESSED",
+    lines: ["Wins any trick it is played in, beating trump. It has no suit: it never follows suit and is always legal. Leading it sets no led suit. If two meet, the earliest wins.", "A played Blessed returns to reserve. Unplayed, it cleans up like an ordinary card. Between tricks you may give it to another player, then draw one; no advice goes with it."],
+    description: "Wins any trick it is played in. No suit, always legal, and returns to reserve once played. Granted by the GM for play at the table."
   }
 };

@@ -1,0 +1,213 @@
+/* Rules reference card and race cards in the catalogue style shared with the deck and items.
+   Sizes are for the 1050 x 1470 export; card_base.css scales cards for previews. */
+
+/* ---------- rules reference: a printed table sheet ---------- */
+.reference-card {
+  --ink: #1b1917;
+  --paper: color-mix(in srgb, var(--ink) 4%, #faf8f3);
+  display: flex;
+  flex-direction: column;
+  padding: 52px 60px 46px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+}
+
+.reference-card::before {
+  inset: 25px;
+  border: 2.3px solid color-mix(in srgb, var(--ink) 70%, transparent);
+  background: none;
+  opacity: 1;
+}
+
+.reference-card::after {
+  content: none;
+}
+
+.ref-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.ref-title {
+  font: 700 92px/0.9 "Cormorant Garamond", Garamond, Georgia, serif;
+  font-variant: small-caps;
+  letter-spacing: 3px;
+}
+
+.ref-sub {
+  margin-top: 4px;
+  color: color-mix(in srgb, var(--ink) 75%, transparent);
+  font: 700 25px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 3px;
+}
+
+.ref-marks {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 6px;
+}
+
+.ref-marks svg {
+  display: block;
+  width: 54px;
+  height: 54px;
+}
+
+.ref-body {
+  flex: 1 1 auto;
+  padding-top: 8px;
+  font: 400 26px/1.19 Alegreya, Georgia, "Times New Roman", serif;
+}
+
+.ref-section + .ref-section {
+  margin-top: 11px;
+}
+
+.ref-heading {
+  margin: 0 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1.3px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  font: 700 29px/1.1 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 1.5px;
+}
+
+.ref-line {
+  margin: 0 0 4px;
+  padding-left: 22px;
+  text-indent: -22px;
+}
+
+.ref-label {
+  color: var(--row-ink, var(--ink));
+  font: 700 26px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 0.5px;
+}
+
+.ref-note {
+  margin: 7px 0 0;
+  padding-top: 5px;
+  border-top: 1.3px dashed color-mix(in srgb, var(--ink) 30%, transparent);
+  color: #3a3531;
+  font-style: italic;
+}
+
+/* ---------- race cards: trinket paper, a medallion for the people's mark ---------- */
+.race-sheet {
+  --ink: color-mix(in srgb, var(--accent, #4a5a66) 78%, #1b1917);
+  --paper: color-mix(in srgb, var(--ink) 5%, #faf8f3);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 50px 60px 46px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--paper);
+  color: #1b1917;
+  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+}
+
+.race-sheet::before {
+  inset: 25px;
+  border: 2.3px solid color-mix(in srgb, var(--ink) 70%, transparent);
+  background: none;
+  opacity: 1;
+}
+
+.race-sheet::after {
+  content: none;
+}
+
+.race-medallion {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 218px;
+  height: 218px;
+  border: 10px double var(--ink);
+  border-radius: 50%;
+  color: var(--ink);
+}
+
+.race-medallion svg {
+  display: block;
+  width: 136px;
+  height: 136px;
+}
+
+.race-sheet .text-panel {
+  margin: 20px 0 0;
+  padding: 0 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.race-sheet .rules-text {
+  color: inherit;
+  font: 400 46px/1.22 Alegreya, Georgia, "Times New Roman", serif;
+  text-align: left;
+}
+
+.race-tags {
+  color: var(--ink);
+  font: 700 27px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 3px;
+  text-align: center;
+}
+
+.race-name {
+  margin: 8px 0 0;
+  font: 700 92px/0.95 "Cormorant Garamond", Garamond, Georgia, serif;
+  font-variant: small-caps;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.race-ability {
+  margin: 6px 0 0;
+  color: var(--ink);
+  font: 700 33px/1.1 "Alegreya SC", Alegreya, Georgia, serif;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.race-flavor {
+  margin: 14px 12px 12px;
+  color: #3a3531;
+  font: italic 42px/1.2 Alegreya, Georgia, serif;
+  text-align: center;
+}
+
+.race-rules {
+  border-top: 2px solid color-mix(in srgb, var(--ink) 50%, transparent);
+}
+
+.race-rules p {
+  margin: 0;
+  padding: 11px 0;
+  border-bottom: 1.3px solid color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+/* the shared timing card backs every people: heavier frame, aged paper */
+.race-sheet.race-timing {
+  --paper: color-mix(in srgb, var(--ink) 10%, #f1ece1);
+  padding: 46px 52px 42px;
+}
+
+.race-sheet.race-timing::before {
+  inset: 19px;
+  border: 12px double #1b1917;
+}
+
+.race-timing .race-rules p {
+  font-size: 42px;
+}

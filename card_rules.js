@@ -2,8 +2,8 @@
 globalThis.TrickCoreCards = {
   strength: {
     suitLabel: "Spades — Strength", domain: "Spades / Consolation", title: "BRACE",
-    lines: ["On a trick loss, you may add or subtract this card's printed value from your next play, minimum 0. Choose when committing, before reveal. A status modifies by 0.", "Keep this card in your played row until cleanup. Skip after the final trick; the effect expires at check end."],
-    description: "Add or subtract the losing card's printed value from your next play, minimum 0. Keep it in the played row until cleanup."
+    lines: ["On a trick loss, you may add or subtract this card's printed value from your next play, minimum 0. Choose which as you play the card.", "Braces never stack; a new one replaces any you hold. It changes value, not suit priority. Skip after the final trick."],
+    description: "Add or subtract the losing card's printed value on your next play, minimum 0, choosing as you play. Braces never stack."
   },
   dexterity: {
     suitLabel: "Clubs — Dexterity", domain: "Clubs / Consolation", title: "REPOSITION",

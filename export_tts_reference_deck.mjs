@@ -1,6 +1,7 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { writeFileRetry } from "./export_util.mjs";
 import { chromium } from "playwright";
 import { buildReferenceDeckCards, sharedTimingId } from "./reference_registry.mjs";
 
@@ -38,6 +39,7 @@ async function renderCardDataUrl(page, card) {
   await page.setViewportSize({ width: SOURCE_CARD_WIDTH, height: SOURCE_CARD_HEIGHT });
   await page.waitForLoadState("networkidle");
   await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete));
+  await page.evaluate(() => document.fonts.ready);
 
   const buffer = await page.screenshot({
     clip: { x: 0, y: 0, width: SOURCE_CARD_WIDTH, height: SOURCE_CARD_HEIGHT },
@@ -109,7 +111,7 @@ async function writeManifest() {
     }))
   };
 
-  await writeFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  await writeFileRetry(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 }
 
 async function writeReadme() {
@@ -149,7 +151,7 @@ async function writeReadme() {
     "Card order on the sheet is listed in `trick-reference-deck-manifest.json`."
   ].join("\n");
 
-  await writeFile(README_PATH, `${readme}\n`, "utf8");
+  await writeFileRetry(README_PATH, `${readme}\n`, "utf8");
 }
 
 async function main() {
@@ -172,10 +174,9 @@ async function main() {
     }
 
     await sheetPage.setContent(buildSheetHtml(cardDataUrls));
-    await sheetPage.locator("#sheet").screenshot({
-      path: FACE_SHEET_PATH,
+    await writeFileRetry(FACE_SHEET_PATH, await sheetPage.locator("#sheet").screenshot({
       omitBackground: true
-    });
+    }));
     console.log(`exported ${path.relative(__dirname, FACE_SHEET_PATH)}`);
 
     const backDataUrls = [];
@@ -191,10 +192,9 @@ async function main() {
     }
 
     await backPage.setContent(buildSheetHtml(backDataUrls));
-    await backPage.locator("#sheet").screenshot({
-      path: BACK_SHEET_PATH,
+    await writeFileRetry(BACK_SHEET_PATH, await backPage.locator("#sheet").screenshot({
       omitBackground: true
-    });
+    }));
     console.log(`exported ${path.relative(__dirname, BACK_SHEET_PATH)}`);
 
     await writeManifest();

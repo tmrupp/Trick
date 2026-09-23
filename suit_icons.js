@@ -31,8 +31,8 @@
   };
 
   const ITEM_MARKS = {
-    trinket: '<path d="M 19 25 C 19 75, 81 75, 81 25" /><path d="M 50 61 L 59 75 L 50 89 L 41 75 Z" />',
-    relic: '<path d="M 23 59 L 33 39 L 41 47 L 50 25 L 59 47 L 67 39 L 77 59 Q 77 70 50 70 Q 23 70 23 59 Z" />'
+    trinket: '<path d="M 22 10 C 28 26 40 32 50 32 C 60 32 72 26 78 10" /><path d="M 50 40 C 70 58 72 84 50 91 C 28 84 30 58 50 40 Z" /><line x1="50" y1="32" x2="50" y2="40" />',
+    relic: '<path d="M 16 74 L 16 30 L 34 50 L 50 20 L 66 50 L 84 30 L 84 74 Z" /><line x1="16" y1="62" x2="84" y2="62" />'
   };
 
   function svg(name, label) {

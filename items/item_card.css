@@ -3,7 +3,7 @@
 
 .item-card {
   --suit-ink: #1b1917;
-  --paper: color-mix(in srgb, var(--suit-ink) 5%, #faf8f3);
+  --paper: color-mix(in srgb, var(--suit-ink) 9%, #fbf9f4);
   --rule-ink: #1b1917;
   display: flex;
   flex-direction: column;

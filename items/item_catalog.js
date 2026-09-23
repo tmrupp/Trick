@@ -602,7 +602,6 @@ function buildItemConfig(entry) {
     cardClass: cardClass.join(" "),
     cssVars: suit.cssVars,
     value: "",
-    itemIconSvgPath: entry.kind === "trinket" ? "../trinklet.svg" : "../relic.svg",
     suitLabel: suit.suitLabel,
     domain: entry.domain,
     title: entry.title,

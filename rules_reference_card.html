@@ -4,8 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Rules Reference Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;1,400&family=Alegreya+SC:wght@700&family=Cormorant+Garamond:wght@700&display=block" />
 <script src="./rules_reference.js"></script>
+<script src="./suit_icons.js"></script>
 <link rel="stylesheet" href="./card_base.css" />
+<link rel="stylesheet" href="./reference_cards.css" />
 </head>
 <body>
   <div class="card-preview">
@@ -15,12 +20,7 @@
           <div class="ref-title" id="ref-title"></div>
           <div class="ref-sub" id="ref-sub"></div>
         </div>
-        <div class="ref-marks" aria-hidden="true">
-          <img src="./strength.svg" alt="" />
-          <img src="./dexterity.svg" alt="" />
-          <img src="./intelligence.svg" alt="" />
-          <img src="./weird.svg" alt="" />
-        </div>
+        <div class="ref-marks" id="ref-marks" aria-hidden="true"></div>
       </div>
       <div class="ref-body" id="ref-body"></div>
     </div>
@@ -30,6 +30,7 @@
       const params = new URLSearchParams(window.location.search);
       const requested = params.get("side") || "front";
       const data = globalThis.TrickRulesCard;
+      const icons = globalThis.TrickSuitIcons;
       const side = data.sides.find((entry) => entry.side === requested || entry.id === requested);
 
       if (!side) {
@@ -41,11 +42,12 @@
       }
 
       const root = document.getElementById("card-root");
-      root.style.setProperty("--accent", data.accent);
       root.classList.add(`reference-card--${side.side}`);
 
       document.getElementById("ref-title").textContent = side.title;
       document.getElementById("ref-sub").textContent = side.subtitle;
+      document.getElementById("ref-marks").innerHTML = ["strength", "dexterity", "intelligence", "weird"]
+        .map((suit) => `<span style="color:${icons.suits[suit].ink}">${icons.svg(suit)}</span>`).join("");
       document.title = `Trick rules reference — ${side.side}`;
 
       const escapeHtml = (value) => value
@@ -53,10 +55,13 @@
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;");
 
+      // Rows name a suit so their label prints in that suit's ink.
       document.getElementById("ref-body").innerHTML = side.sections.map((section) => {
         const lines = (section.lines || []).map((line) => `<p class="ref-line">${escapeHtml(line)}</p>`);
-        const rows = (section.rows || []).map((row) =>
-          `<p class="ref-line"><span class="ref-label">${escapeHtml(row.label)}</span> ${escapeHtml(row.text)}</p>`);
+        const rows = (section.rows || []).map((row) => {
+          const ink = row.suit ? ` style="--row-ink:${icons.suits[row.suit].ink}"` : "";
+          return `<p class="ref-line"><span class="ref-label"${ink}>${escapeHtml(row.label)}</span> ${escapeHtml(row.text)}</p>`;
+        });
         const note = section.note ? `<p class="ref-note">${escapeHtml(section.note)}</p>` : "";
 
         return `<section class="ref-section"><h2 class="ref-heading">${escapeHtml(section.heading)}</h2>${lines.join("")}${rows.join("")}${note}</section>`;

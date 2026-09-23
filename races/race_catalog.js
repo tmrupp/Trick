@@ -11,8 +11,8 @@ const RACE_ICONS = {
   "moon-eyed": `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M 10 50 C 28 24 72 24 90 50 C 72 76 28 76 10 50 Z" /><path d="M 50 34 C 40 44 42 56 50 64 C 58 56 60 44 50 34 Z" /></g></svg>`,
   // Ridge horns sweeping up from the brow.
   tarrans: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M 38 56 L 62 56 L 57 84 Q 50 91 43 84 Z" /><path d="M 38 60 L 20 67" /><path d="M 62 60 L 80 67" /><path d="M 40 56 C 32 42 26 30 34 18" /><path d="M 60 56 C 68 42 74 30 66 18" /></g></svg>`,
-  // A worn face with the seam that gives it away.
-  "hollow-skinned": `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M 50 10 C 67 10 79 28 79 50 C 79 74 66 90 50 90 C 34 90 21 74 21 50 C 21 28 33 10 50 10 Z" /><path d="M 32 43 Q 38 36 44 43" /><path d="M 56 43 Q 62 36 68 43" /><path d="M 50 55 L 43 65 L 55 75 L 47 88" /></g></svg>`,
+  // A worn face with hollow eyes, ripped open along the jaw where the hungry thing shows through.
+  "hollow-skinned": `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M 70 82 C 64 87 57 90 50 90 C 34 90 21 74 21 50 C 21 28 33 10 50 10 C 67 10 79 28 79 50 C 79 54 79 58 78 62" /><path d="M 78 62 L 70 66 L 75 71 L 66 76 L 70 82" /><circle cx="37" cy="42" r="6" /><circle cx="63" cy="42" r="6" /></g></svg>`,
   // One half drawn whole, one half only half there: mortal beside green spirit.
   rootborn: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M 50 12 A 38 38 0 0 1 50 88" /><path d="M 50 12 A 38 38 0 0 0 50 88" stroke-dasharray="11 12" /><path d="M 50 12 L 50 88" /></g></svg>`,
   // Banked ember over running water.
@@ -58,7 +58,7 @@ const RACE_ENTRIES = [
     flavor: "Wax-skinned folk with a candleflame behind each blind eye. They read warmth, draft, and nearness instead of light.",
     rules: [
       "You sense warmth, movement, nearness, and drafts even in complete darkness, but cannot perceive color, writing, or other purely visual detail.",
-      "When you must draw from an empty deck, after any evolution and before shuffling, you may return 1 Injury from discard to reserve. This is an ability exception; ordinary reshuffling removes nothing.",
+      "When you must draw from an empty deck, after any evolution and before shuffling, you may return 1 Injury from discard to reserve.",
       "Once per check, before a lead, you may discard 1 card from hand and draw 1."
     ],
     previewDescription: "Work an Injury out whenever your deck reshuffles, and trade one card for another mid-check."
@@ -85,7 +85,7 @@ const RACE_ENTRIES = [
     accent: "#9c4a3c",
     flavor: "They eat a person and wear the body, never the memories. The disguise is skin-deep; one tear spills the hungry thing beneath.",
     rules: [
-      "When you gain an Injury while another Injury is already in your discard, gain 1 Curse from reserve. A first Curse takes a compulsion about your hunger; later ones share it.",
+      "When you gain an Injury while another Injury is already in your discard, gain 1 Curse. A first Curse takes a compulsion about your hunger; later ones share it.",
       "While you carry a Curse, draw 2 extra cards after the deal if your goal was agreed to involve force.",
       "While wearing a borrowed body, you also gain that person's ability; agree what this means before drawing."
     ],

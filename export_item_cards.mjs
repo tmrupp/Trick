@@ -1,6 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { writeFileRetry } from "./export_util.mjs";
 import { chromium } from "playwright";
 import { buildItemDeckCards } from "./item_registry.mjs";
 
@@ -29,11 +30,10 @@ async function exportCard(page, fileName, outputPath, params = {}) {
   await page.waitForLoadState("networkidle");
   await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete));
   await page.evaluate(() => document.fonts.ready);
-  await page.screenshot({
-    path: outputPath,
+  await writeFileRetry(outputPath, await page.screenshot({
     clip: { x: 0, y: 0, width: CARD_WIDTH, height: CARD_HEIGHT },
     omitBackground: true
-  });
+  }));
 }
 
 async function main() {

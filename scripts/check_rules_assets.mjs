@@ -48,6 +48,7 @@ try{
   for(const side of rulesSides){
     await page.goto(url("rules_reference_card.html",{side:side.side,export:1}));
     await page.waitForFunction(()=>Array.from(document.images).every(i=>i.complete&&i.naturalWidth>0));
+    await page.evaluate(()=>document.fonts.ready);
     const bounds=await page.evaluate(()=>{
       const body=document.querySelector(".ref-body"),last=document.querySelector(".ref-section:last-child"),card=document.querySelector(".card");
       const l=last.getBoundingClientRect(),c=card.getBoundingClientRect();

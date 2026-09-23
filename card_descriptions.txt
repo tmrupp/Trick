@@ -2,8 +2,8 @@ CURRENT CARD TEXT — generated from card_rules.js
 Full procedures: RULES.md. Condensed guide: PLAYER_GUIDE.md.
 
 BRACE (Spades — Strength)
-On a trick loss, you may add or subtract this card's printed value from your next play, minimum 0. Choose when committing, before reveal. A status modifies by 0.
-Keep this card in your played row until cleanup. Skip after the final trick; the effect expires at check end.
+On a trick loss, you may add or subtract this card's printed value from your next play, minimum 0. Choose which as you play the card.
+Braces never stack; a new one replaces any you hold. It changes value, not suit priority. Skip after the final trick.
 
 REPOSITION (Clubs — Dexterity)
 On a trick loss, you may ignore follow-suit on your next play. Normal winning rules still apply.

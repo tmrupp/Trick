@@ -1,6 +1,7 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { writeFileRetry } from "./export_util.mjs";
 import { chromium } from "playwright";
 import { buildDeckCards, suitCards } from "./card_registry.mjs";
 
@@ -138,7 +139,7 @@ async function writeManifest() {
     }))
   };
 
-  await writeFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  await writeFileRetry(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 }
 
 async function writeReadme() {
@@ -165,7 +166,7 @@ async function writeReadme() {
     "Card order on the sheet is listed in `trick-custom-deck-manifest.json`."
   ].join("\n");
 
-  await writeFile(README_PATH, `${readme}\n`, "utf8");
+  await writeFileRetry(README_PATH, `${readme}\n`, "utf8");
 }
 
 async function main() {
@@ -188,10 +189,9 @@ async function main() {
     }
 
     await sheetPage.setContent(buildSheetHtml(cardDataUrls));
-    await sheetPage.locator("#sheet").screenshot({
-      path: FACE_SHEET_PATH,
+    await writeFileRetry(FACE_SHEET_PATH, await sheetPage.locator("#sheet").screenshot({
       omitBackground: true
-    });
+    }));
     console.log(`exported ${path.relative(__dirname, FACE_SHEET_PATH)}`);
 
     const backDataUrl = await renderCardDataUrl(renderPage, {
@@ -201,10 +201,9 @@ async function main() {
       params: {}
     });
     await backPage.setContent(buildSingleCardHtml(backDataUrl));
-    await backPage.locator("img").screenshot({
-      path: BACK_IMAGE_PATH,
+    await writeFileRetry(BACK_IMAGE_PATH, await backPage.locator("img").screenshot({
       omitBackground: true
-    });
+    }));
     console.log(`exported ${path.relative(__dirname, BACK_IMAGE_PATH)}`);
 
     await writeManifest();

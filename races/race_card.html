@@ -4,35 +4,56 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Race Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;1,400&family=Alegreya+SC:wght@700&family=Cormorant+Garamond:wght@700&display=block" />
 <link rel="stylesheet" href="../card_base.css" />
+<link rel="stylesheet" href="../reference_cards.css" />
 </head>
 <body>
   <div class="card-preview">
-    <div class="card" id="card-root">
-      <div class="card-header">
-        <div class="card-value" id="card-value"></div>
-        <div class="suit-icon" id="suit-icon" aria-label="Mark"></div>
-      </div>
+    <div class="card race-sheet" id="card-root">
+      <div class="race-medallion" id="race-mark"></div>
       <div class="text-panel">
-        <div class="domain-label" id="domain-label"></div>
-        <div class="divider"></div>
         <div class="rules-text" id="rules-text"></div>
       </div>
     </div>
   </div>
   <script src="./race_catalog.js"></script>
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const requestedId = params.get("id") || "varn";
-    const card = window.TrickRaceCatalog.getRaceCardById(requestedId);
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const requestedId = params.get("id") || "varn";
+      const card = window.TrickRaceCatalog.getRaceCardById(requestedId);
 
-    if (!card) {
-      throw new Error(`Unknown race card id: ${requestedId}`);
-    }
+      if (!card) {
+        throw new Error(`Unknown race card id: ${requestedId}`);
+      }
 
-    window.CARD_VARIANT_CONFIG = card.config;
-    document.title = `${card.name} card`;
+      if (params.get("export") === "1") {
+        document.body.classList.add("export-page");
+      }
+
+      const root = document.getElementById("card-root");
+      root.style.setProperty("--accent", card.accent);
+      if (card.id === window.TrickRaceCatalog.sharedTiming.id) {
+        root.classList.add("race-timing");
+      }
+
+      const mark = document.getElementById("race-mark");
+      mark.innerHTML = card.config.suitSvg;
+      mark.setAttribute("role", "img");
+      mark.setAttribute("aria-label", `${card.name} mark`);
+
+      document.getElementById("rules-text").innerHTML = `
+        <div class="race-tags">${card.tags.join(" · ")}</div>
+        <h1 class="race-name">${card.name}</h1>
+        <p class="race-ability">${card.abilityTitle}</p>
+        <p class="race-flavor">${card.flavor}</p>
+        <div class="race-rules">${card.rules.map((rule) => `<p>${rule}</p>`).join("")}</div>`;
+
+      document.title = `${card.name} card`;
+    }());
   </script>
-  <script src="../card_renderer.js"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 # Trick
 
-Start with the **[condensed player guide](PLAYER_GUIDE.md)** or its [printable browser version](player_guide.html). The complete rules are in **[RULES.md](RULES.md)** and [rules.html](rules.html).
+The rules are in **[RULES.md](RULES.md)**, the single source of truth, with a generated [browser version](rules.html). The two-sided [rules reference card](rules_reference_card.html) condenses them for the table.
 
-Trick is a game of simultaneous group checks using **two standard decks per player** and one for the GM. Four suits describe approaches; face cards are statuses. Before drawing, each player and the world declare an approach that fixes their personal trump for the whole check. Each player has one separate goal and scores only their own wins; cooperation happens through fiction and card play. Threats can force a goal, including survival for an endangered character. Highest personal trump wins, regardless of suit; otherwise highest led-suit card wins.
+Trick is a game of simultaneous group checks using **two standard decks per player** and one for the GM. Four suits describe approaches; face cards are statuses. Before drawing, each player and the world declare an approach that fixes their personal trump for the whole check. Each player has one separate goal and scores only their own wins; cooperation happens through fiction and card play. Threats can force a goal, including survival for an endangered character. Highest personal trump wins, regardless of suit; otherwise the highest card of the led suit wins.
 
-The repository also provides optional custom card art, setting items, and Tabletop Simulator exports. Current suits are Strength/Spades, Dexterity/Clubs, Intelligence/Diamonds, and Weird/Hearts; their statuses are Injury, Stumble, Stress, and Curse. Jokers are unused. Divine and Blessed are archived concepts.
+The repository also provides optional custom card art, setting items, and Tabletop Simulator exports. Current suits are Strength/Hearts, Dexterity/Spades, Intelligence/Diamonds, and Weird/Clubs; their statuses are Injury, Stumble, Stress, and Curse. The jokers are Blessed cards, which win any trick they are played in. Divine is an archived concept.
 
 The [card gallery](index.html) uses current shared card text. [Optional peoples](race_mechanics.html), [item conventions](items/README.md), and [Session 0 town questions](session0_town_questions.html) extend the core rules. Earlier audits and trump proposals are historical; see [docs/history](docs/history/README.md).
 
@@ -14,9 +14,9 @@ Two independent deck-building prototypes, **Joinery** and **Undertow**, are desc
 
 ## Updating references
 
-Edit `RULES.md` for complete procedures and `PLAYER_GUIDE.md` for the condensed guide. Keep the guide aligned when a rule changes. Edit `card_rules.js` for card summaries; it supplies every current suit/status card and the gallery. Edit `rules_reference.js` for the two-sided rules card and `races/race_catalog.js` for the peoples; the catalog also generates `race_mechanics.html`, so edit the catalog rather than that page.
+Edit `RULES.md` for every rule. Its Consolations and Statuses tables and its Blessed rule list are printed on the card faces: `npm run build:guides` regenerates `card_rules.js` from them, and `npm run check:assets` fails if that file is stale. The one hand-written summary is `rules_reference.js`, the two-sided rules card; update it whenever RULES.md changes. Edit `races/race_catalog.js` for the peoples; it also generates `race_mechanics.html`.
 
-Run `npm run build:guides` to regenerate the browser guides, the legacy reference URLs, the text rules reference, the peoples page, and card descriptions. The old `reference.html` URL now opens the player guide; `trick_taking_rpg_rules_v4.html` now contains the current complete rules. Their original versions are archived.
+Run `npm run build:guides` to regenerate `rules.html`, the text rules reference, the peoples page, `card_rules.js`, and card descriptions. The retired player guide's URLs, `player_guide.html` and `reference.html`, forward to `rules.html`; `trick_taking_rpg_rules_v4.html` also carries the current rules. Earlier versions are archived.
 
 Run `npm run check:assets` to check current card text for clipping, verify the 52-card export composition, and check links in the readable references. Inspection images and a report are written under `exports/qa/`.
 
@@ -112,15 +112,16 @@ This writes files under `exports/tts/reference/deck`, including:
 - `card_base.css`: shared card styling
 - `items/item_catalog.js`: single source of truth for item card definitions, gallery metadata, and export order
 - `items/item_card.html`: shared HTML shell for every trinket, relic, and reveal card
-- `card_rules.js`: shared current card text
+- `card_rules.js`: card text generated from the tables in `RULES.md`; do not edit by hand
 - `card_descriptions.txt`: generated card text reference
 - `races/race_catalog.js`: single source of truth for the peoples' abilities, card text, and generated `race_mechanics.html`
 - `races/race_card.html`: shared HTML shell for every people's card
 - `rules_reference.js` and `rules_reference_card.html`: text and shell for the two-sided rules card
 - `reference_registry.mjs`: reference deck export entry point backed by the race catalog and the rules card
 - `export_reference_cards.mjs`, `export_tts_reference_deck.mjs`: individual and combined reference card exports
-- `PLAYER_GUIDE.md`, `RULES.md`: player and full-rule sources
-- `scripts/build_guides.mjs`: regenerates readable HTML/text references
+- `RULES.md`: the single rules source
+- `scripts/rules_source.mjs`: reads the card-facing tables from `RULES.md`
+- `scripts/build_guides.mjs`: regenerates the rules pages, card text, and peoples page
 - `export_cards.mjs`: exports individual PNG cards with Playwright
 - `export_tts_custom_deck.mjs`: builds the TTS sheet, back, and manifest
 - `item_registry.mjs`: item deck export entry point backed by the shared item catalog

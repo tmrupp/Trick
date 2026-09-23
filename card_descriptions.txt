@@ -1,38 +1,31 @@
-CURRENT CARD TEXT — generated from card_rules.js
-Full procedures: RULES.md. Condensed guide: PLAYER_GUIDE.md.
+CURRENT CARD TEXT — generated from the tables in RULES.md
 
-BRACE (Spades — Strength)
-On a trick loss, you may add or subtract this card's printed value from your next play, minimum 0. Choose which as you play the card.
-Braces never stack; a new one replaces any you hold. It changes value, not suit priority. Skip after the final trick.
+BRACE (Hearts — Strength)
+On your next play, add or subtract your losing card's printed value to or from the card you play, minimum 0. Choose which as you play the card.
 
-REPOSITION (Clubs — Dexterity)
-On a trick loss, you may ignore follow-suit on your next play. Normal winning rules still apply.
-Skip after the final trick. Expires after your next play or at check end.
+REPOSITION (Spades — Dexterity)
+You may ignore follow-suit on your next play, which counts as being unable to follow, so your personal trump can win the trick.
 
 RECALCULATE (Diamonds — Intelligence)
-On a trick loss, discard one card from hand, including a status, then draw one. You need a card to discard.
-If that draw reshuffles your deck, you may evolve first. Skip after the final trick.
+Discard one card from hand, then draw one. You need a card to discard. If that draw reshuffles your deck, you may evolve.
 
-REVELATION (Hearts — Weird)
-On a trick loss, choose: ask the GM one question for a brief truthful answer; or put a status from discard atop your deck. Your next card takes that suit instead of its own.
-Use the replacement suit for follow-suit, leading, and trump. After the final trick, only the question is available.
+REVELATION (Clubs — Weird)
+Choose one: ask the GM one question about the current situation and receive a brief, truthful answer, or put a status from discard on top of your deck; your next played card's suit becomes that status's suit instead of its own.
 
-INJURY (Spades — Injury)
-Gain Injuries only at cleanup or between checks. Count Injuries in your top N discard cards at check start and whenever you gain one. Other changes wait for the next start scan.
-Two or more force your goal to survival: win that many tricks yourself or die. A gain-triggered survival check begins immediately, without rest.
+INJURY (Hearts — Injury)
+Two or more Injuries in your top N discard cards make survival your forced goal. Gain Injuries only at cleanup or between checks.
 
-STUMBLE (Clubs — Stumble)
-If anyone plays Stumble, the world leads the next trick, regardless of who won. Multiple Stumbles have the same effect as one.
-Follow normal play and scoring rules. Keep this card in your played row until cleanup, even on a win.
+STUMBLE (Spades — Stumble)
+If anyone plays Stumble, the world leads the next trick, regardless of who won.
 
 STRESS (Diamonds — Stress)
-Whenever you draw Stress, gain one Stress from reserve into discard, if available. This includes redraws and draws during play.
-Gaining Stress into discard is not drawing it. All face-card ranks of this suit are identical zero-value statuses.
+Whenever you draw Stress, gain one Stress into discard. This includes redraws and cards drawn during play.
 
-CURSE (Hearts — Curse)
-Your Curses share one supernatural compulsion, recorded with your first Curse. Each violation gains one Stress per Curse outside reserve.
-Count six minus the Curses in reserve. Remove Curses through evolution, never rest. Removing the last ends the compulsion.
+CURSE (Clubs — Curse)
+Your Curses share one supernatural compulsion. Each violation gains one Stress for every Curse not in your reserve. Remove Curses through evolution, never rest.
 
 BLESSED (Joker — Blessed)
-Wins any trick it is played in, beating trump. It has no suit: it never follows suit and is always legal. Leading it sets no led suit. If two meet, the earliest wins.
-A played Blessed returns to reserve. Unplayed, it cleans up like an ordinary card. Between tricks you may give it to another player, then draw one; no advice goes with it.
+Blessed wins any trick it is played in, beating trump. It has no suit: it never follows suit and is always legal to play.
+Leading Blessed sets no led suit; everyone else plays whatever they like.
+If two Blessed meet in one trick, the earliest played wins.
+A played Blessed returns to reserve, never reaching discard or a survival scan.

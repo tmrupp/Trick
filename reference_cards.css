@@ -7,16 +7,16 @@
   --paper: color-mix(in srgb, var(--ink) 4%, #faf8f3);
   display: flex;
   flex-direction: column;
-  padding: 52px 60px 46px;
+  padding: 59px 63px 55px;
   border: 0;
   border-radius: 13px;
   background: var(--paper);
   color: var(--ink);
-  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+  box-shadow: inset 0 0 0 var(--print-band) #fff, 0 12px 34px rgba(18, 24, 20, 0.22);
 }
 
 .reference-card::before {
-  inset: 25px;
+  inset: var(--print-band);
   border: 2.3px solid color-mix(in srgb, var(--ink) 70%, transparent);
   background: none;
   opacity: 1;
@@ -44,7 +44,7 @@
 .ref-sub {
   margin-top: 4px;
   color: color-mix(in srgb, var(--ink) 75%, transparent);
-  font: 700 25px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  font: 700 31px/1 "Alegreya SC", Alegreya, Georgia, serif;
   letter-spacing: 3px;
 }
 
@@ -62,37 +62,37 @@
 
 .ref-body {
   flex: 1 1 auto;
-  padding-top: 8px;
-  font: 400 26px/1.19 Alegreya, Georgia, "Times New Roman", serif;
+  padding-top: 10px;
+  font: 400 37px/1.16 Alegreya, Georgia, "Times New Roman", serif;
 }
 
 .ref-section + .ref-section {
-  margin-top: 11px;
+  margin-top: 18px;
 }
 
 .ref-heading {
-  margin: 0 0 6px;
-  padding-bottom: 3px;
+  margin: 0 0 7px;
+  padding-bottom: 4px;
   border-bottom: 1.3px solid color-mix(in srgb, var(--ink) 30%, transparent);
-  font: 700 29px/1.1 "Alegreya SC", Alegreya, Georgia, serif;
+  font: 700 40px/1.1 "Alegreya SC", Alegreya, Georgia, serif;
   letter-spacing: 1.5px;
 }
 
 .ref-line {
   margin: 0 0 4px;
-  padding-left: 22px;
-  text-indent: -22px;
+  padding-left: 30px;
+  text-indent: -30px;
 }
 
 .ref-label {
   color: var(--row-ink, var(--ink));
-  font: 700 26px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  font: 700 37px/1 "Alegreya SC", Alegreya, Georgia, serif;
   letter-spacing: 0.5px;
 }
 
 .ref-note {
-  margin: 7px 0 0;
-  padding-top: 5px;
+  margin: 10px 0 0;
+  padding-top: 8px;
   border-top: 1.3px dashed color-mix(in srgb, var(--ink) 30%, transparent);
   color: #3a3531;
   font-style: italic;
@@ -105,16 +105,16 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 50px 60px 46px;
+  padding: 59px 63px 55px;
   border: 0;
   border-radius: 13px;
   background: var(--paper);
   color: #1b1917;
-  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+  box-shadow: inset 0 0 0 var(--print-band) #fff, 0 12px 34px rgba(18, 24, 20, 0.22);
 }
 
 .race-sheet::before {
-  inset: 25px;
+  inset: var(--print-band);
   border: 2.3px solid color-mix(in srgb, var(--ink) 70%, transparent);
   background: none;
   opacity: 1;
@@ -153,7 +153,7 @@
 
 .race-sheet .rules-text {
   color: inherit;
-  font: 400 46px/1.22 Alegreya, Georgia, "Times New Roman", serif;
+  font: 400 47px/1.22 Alegreya, Georgia, "Times New Roman", serif;
   text-align: left;
 }
 
@@ -183,7 +183,7 @@
 .race-flavor {
   margin: 14px 12px 12px;
   color: #3a3531;
-  font: italic 42px/1.2 Alegreya, Georgia, serif;
+  font: italic 43px/1.2 Alegreya, Georgia, serif;
   text-align: center;
 }
 
@@ -200,11 +200,11 @@
 /* the shared timing card backs every people: heavier frame, aged paper */
 .race-sheet.race-timing {
   --paper: color-mix(in srgb, var(--ink) 10%, #f1ece1);
-  padding: 46px 52px 42px;
+  padding: 57px 59px 53px;
 }
 
 .race-sheet.race-timing::before {
-  inset: 19px;
+  inset: var(--print-band);
   border: 12px double #1b1917;
 }
 

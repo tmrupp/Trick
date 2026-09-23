@@ -1,0 +1,7 @@
+{
+  "_how": "Print exports/print/calibration-9cm.png exactly as you print cards, then read the grid (in page mm) at each edge of the blank card. cardOnPageMm is the card's box on the page; rotate says how the card lies on it. npm run export:print places every card there.",
+  "_measured": "2026-09-23 from a photo of the calibration print: the printer turns the page so the card's top sits along the page's left side, and scales it up about 5.5%.",
+  "pageMm": 90,
+  "rotate": "ccw",
+  "cardOnPageMm": { "left": 2.1, "right": 85.5, "top": 15.4, "bottom": 75.2 }
+}

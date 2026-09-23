@@ -166,7 +166,7 @@
   <main class="page">
     <h1>Trick Card Index</h1>
     <p class="intro">Trick uses two standard decks per player. These optional custom cards carry the same four suits and current rules.</p>
-    <p><a href="player_guide.html" style="color:var(--accent)">Player guide</a> · <a href="rules.html" style="color:var(--accent)">Full rules</a> · <a href="race_mechanics.html" style="color:var(--accent)">Optional peoples</a> · <a href="setting_races.html" style="color:var(--accent)">Setting notes</a></p>
+    <p><a href="rules.html" style="color:var(--accent)">Rules</a> · <a href="rules_reference_card.html" style="color:var(--accent)">Rules card</a> · <a href="race_mechanics.html" style="color:var(--accent)">Optional peoples</a> · <a href="setting_races.html" style="color:var(--accent)">Setting notes</a></p>
 
     <section class="section"><div class="section-header"><h2>Consolations</h2><div class="section-copy">On your trick loss; after the final trick, only Revelation's question</div></div><div class="grid" data-core-section="consolations"></div></section>
     <section class="section status"><div class="section-header"><h2>Statuses</h2><div class="section-copy">J, Q, K are zero-value statuses; six of each suit per player</div></div><div class="grid" data-core-section="statuses"></div></section>
@@ -246,7 +246,7 @@
     }
     document.querySelector("[data-rules-section]").innerHTML = globalThis.TrickRulesCard.sides.map(side => {
       const href = `./rules_reference_card.html?side=${side.side}`;
-      return renderCard({href, iframeSrc: href, title: `${side.title} ${side.side}`, eyebrow: side.subtitle, name: `Rules card — ${side.side}`, description: side.sections.map(s => s.heading).join(" · ")});
+      return renderCard({href, iframeSrc: href, title: `${side.title} ${side.side}`, eyebrow: side.subtitle, name: `Rules card ${side.side.replace("-", " ")}`, description: side.sections.map(s => s.heading).join(" · ")});
     }).join("\n");
 
     const raceSection = globalThis.TrickRaceCatalog.buildRaceIndexSection();

@@ -7,16 +7,16 @@
   --paper: color-mix(in srgb, var(--suit-ink) 9%, #fbf9f4);
   display: flex;
   flex-direction: column;
-  padding: 62px 66px 196px;
+  padding: 67px 67px 187px;
   border: 0;
   border-radius: 13px;
   background: var(--paper);
   color: #1b1917;
-  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+  box-shadow: inset 0 0 0 var(--print-band) #fff, 0 12px 34px rgba(18, 24, 20, 0.22);
 }
 
 .core-card::before {
-  inset: 25px;
+  inset: var(--print-band);
   border: 2.3px solid color-mix(in srgb, var(--suit-ink) 70%, transparent);
   background: none;
   opacity: 1;
@@ -66,9 +66,9 @@
 }
 
 .core-card .domain-label {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   color: var(--suit-ink);
-  font: 700 30px/1 "Alegreya SC", Alegreya, Georgia, serif;
+  font: 700 40px/1 "Alegreya SC", Alegreya, Georgia, serif;
   letter-spacing: 3px;
   text-transform: none;
   text-shadow: none;
@@ -100,8 +100,8 @@
 /* reversed corner index, as on a playing card */
 .core-index {
   position: absolute;
-  right: 66px;
-  bottom: 58px;
+  right: 67px;
+  bottom: 63px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -122,13 +122,13 @@
 .core-card.status-card,
 .core-card.blessed-card {
   --paper: color-mix(in srgb, var(--suit-ink) 10%, #f1ece1);
-  padding: 50px 50px 196px;
-  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+  padding: 59px 59px 187px;
+  box-shadow: inset 0 0 0 var(--print-band) #fff, 0 12px 34px rgba(18, 24, 20, 0.22);
 }
 
 .core-card.status-card::before,
 .core-card.blessed-card::before {
-  inset: 19px;
+  inset: var(--print-band);
   border: 12px double #1b1917;
   background: none;
 }
@@ -173,8 +173,8 @@
 
 .core-card.status-card .core-index,
 .core-card.blessed-card .core-index {
-  right: 60px;
-  bottom: 54px;
+  right: 63px;
+  bottom: 61px;
 }
 
 /* ---------- Blessed: a status-style card whose band carries only its mark ---------- */
@@ -196,11 +196,11 @@
   border: 0;
   border-radius: 13px;
   background: var(--paper);
-  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+  box-shadow: inset 0 0 0 var(--print-band) #fff, 0 12px 34px rgba(18, 24, 20, 0.22);
 }
 
 .card.card-back::before {
-  inset: 19px;
+  inset: var(--print-band);
   border: 12px double var(--ink);
   background: none;
   opacity: 1;
@@ -212,7 +212,7 @@
 
 .card-back__field {
   position: absolute;
-  inset: 62px;
+  inset: calc(var(--print-band) + 40px);
   border: 2.3px solid var(--ink);
   background:
     repeating-linear-gradient(45deg, color-mix(in srgb, var(--ink) 11%, transparent) 0 2.4px, transparent 2.4px 18px),

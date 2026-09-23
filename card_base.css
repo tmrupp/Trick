@@ -1,5 +1,7 @@
 :root {
   --preview-scale: 0.54;
+  /* White edge (2 mm) that absorbs the ~1 mm print drift measured with exports/print/calibration-9cm.png. */
+  --print-band: 33px;
   --surface-accent-top: 40%;
   --surface-accent-bottom: 20%;
   --card-bg-top: #ffffff;

@@ -4,14 +4,7 @@ Optional setting abilities for the six peoples of Black Valley. Use with [RULES.
 
 ## At the table
 
-- Agree abilities and any goal requirements **before drawing**.
-- Each player still has one separate goal and one declared approach fixing their personal trump. Wins are never pooled or transferred.
-- Use ability choices independently during resolution. No new negotiation once drawing begins.
-- Extra cards do not add tricks. Stress duplicates whenever drawn, including extra draws and redraws.
-- All card gains use your reserve and removals return there. Survival costs stay fixed once locked.
-- Discard extra cards with the leftovers in the ordinary cleanup order.
-
-That list is the `shared-timing` card, which doubles as the back of every people's card.
+Abilities follow [RULES.md](../RULES.md). The only table rules they add are on the `shared-timing` card in [race_catalog.js](race_catalog.js), which is also the back of every people's card: agree abilities before drawing, extra cards add no tricks, and extra draws are drawing.
 
 ## Card anatomy
 
@@ -25,7 +18,7 @@ That list is the `shared-timing` card, which doubles as the back of every people
 | `rules` | The ability, one paragraph per clause, in the same wording the page uses. |
 | `previewDescription` | One line for the gallery card. |
 
-Write rules text with clear timing anchors — `before drawing`, `when you must draw from an empty deck`, `after the deal`, `before a lead`, `after a trick`, `at cleanup`, `between checks` — and write statuses as `gain 1 Curse` or `draw 2 extra cards`. Do not repeat the shared timing on an individual card.
+Write rules text with clear timing anchors — `before drawing`, `when you must draw from an empty deck`, `after the deal`, `before a lead`, `after a trick`, `at cleanup`, `between checks` — and write statuses as `gain 1 Curse` or `draw 2 extra cards`, and a Curse that brings a taboo as `gain 1 Curse (compulsion: …)`. Do not repeat the shared timing on an individual card.
 
 ## Add or revise a people
 
@@ -44,4 +37,4 @@ npm run export:reference-cards
 npm run export:tts-reference-deck
 ```
 
-The first command writes individual images under `exports/tts/reference/fronts/` and `back/`. The second rebuilds the sheet, back sheet, manifest, and README under `exports/tts/reference/deck/`. Both cover the six peoples and the two-sided rules card; every people's back is the shared timing card.
+The first command writes individual images under `exports/tts/reference/fronts/` and `back/`. The second rebuilds the sheet, back sheet, manifest, and README under `exports/tts/reference/deck/`. Both cover the six peoples and the two rules cards; every people's back is the shared timing card.

@@ -6,7 +6,7 @@
     "back": "trick-reference-back-sheet.png",
     "width": 4,
     "height": 2,
-    "number": 7,
+    "number": 8,
     "sideways": false,
     "backIsHidden": false
   },
@@ -43,8 +43,13 @@
     },
     {
       "index": 7,
-      "id": "rules-card",
-      "label": "Rules Reference"
+      "id": "rules-1",
+      "label": "Rules Reference 1"
+    },
+    {
+      "index": 8,
+      "id": "rules-2",
+      "label": "Rules Reference 2"
     }
   ]
 }

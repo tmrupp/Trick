@@ -43,11 +43,11 @@ const RACE_ENTRIES = [
     accent: "#a8791f",
     flavor: "Small goblin-rat folk with neat hands, quick teeth, and no wasted words.",
     rules: [
-      "Any pact you make with a mortal magically binds you to its terms.",
-      "Before drawing, agree your bargain and the compulsion it would set if you have no Curse.",
-      "Once per check, before a lead, you may gain 1 Curse, shuffle and discard your hand, then draw the same number of cards. No renegotiation once you have seen your hand."
+      "Any pact you make with a mortal binds both of you to its terms.",
+      "Before drawing, name the bargain you would strike this check.",
+      "Once per check, before a lead, you may strike it: gain 1 Curse (compulsion: its terms), then shuffle and discard your hand and draw the same number of cards."
     ],
-    previewDescription: "A mortal pact binds you; a Curse buys a whole new hand on a bargain struck before the deal."
+    previewDescription: "Your pacts bind both sides; strike a named bargain for a Curse and a whole new hand."
   },
   {
     id: "moon-eyed",
@@ -55,13 +55,13 @@ const RACE_ENTRIES = [
     abilityTitle: "Wax resilience",
     tags: ["Wax Folk", "Night Keepers"],
     accent: "#6a7f9c",
-    flavor: "Wax-skinned folk with a candleflame behind each blind eye. They read warmth, draft, and nearness instead of light.",
+    flavor: "Wax-skinned folk with a candleflame behind each blind eye. What would kill others only softens them, and they set again.",
     rules: [
       "You sense warmth, movement, nearness, and drafts even in complete darkness, but cannot perceive color, writing, or other purely visual detail.",
       "When you must draw from an empty deck, after any evolution and before shuffling, you may return 1 Injury from discard to reserve.",
-      "Once per check, before a lead, you may discard 1 card from hand and draw 1."
+      "When the scene is dark, once per check before a lead, you may discard 1 card from hand and draw 1."
     ],
-    previewDescription: "Work an Injury out whenever your deck reshuffles, and trade one card for another mid-check."
+    previewDescription: "Work an Injury out whenever your deck reshuffles, and in the dark trade one card for another."
   },
   {
     id: "tarrans",
@@ -69,13 +69,14 @@ const RACE_ENTRIES = [
     abilityTitle: "Burden eater",
     tags: ["Ridge Herders", "Ichor Carriers"],
     accent: "#4f7a4a",
-    flavor: "Goatlike ridge-walkers who ferry flocks and raw ichor over roads no one else trusts. What they swallow darkens their horns in glassy rings.",
+    flavor: "Goatlike ridge-walkers who ferry flocks and raw ichor over roads no one else trusts.",
     rules: [
       "Whenever you draw a Curse, draw 1 extra card.",
+      "However many Curses are outside your reserve, each violation of your compulsion gains only 1 Stress.",
       "Steepness, loose stone, narrow footing, and another person's weight cannot make you lose your footing; magic or active interference still can.",
       "You can drink raw ichor without its ordinary craving. By taste, you know whether it has been diluted, poisoned, or altered. Each draught leaves a visible dark ring in your horns."
     ],
-    previewDescription: "Curses feed your hand; no ordinary burden breaks your footing, and raw ichor reveals itself by taste."
+    previewDescription: "Curses feed your hand but never spiral into craving; no ordinary burden breaks your footing, and raw ichor reveals itself by taste."
   },
   {
     id: "hollow-skinned",
@@ -85,11 +86,11 @@ const RACE_ENTRIES = [
     accent: "#9c4a3c",
     flavor: "They eat a person and wear the body, never the memories. The disguise is skin-deep; one tear spills the hungry thing beneath.",
     rules: [
-      "When you gain an Injury while another Injury is already in your discard, gain 1 Curse. A first Curse takes a compulsion about your hunger; later ones share it.",
-      "While you carry a Curse, draw 2 extra cards after the deal if your goal was agreed to involve force.",
-      "While wearing a borrowed body, you also gain that person's ability; agree what this means before drawing."
+      "When you gain an Injury while another Injury is already in your discard, gain 1 Curse (compulsion: you hunger for another vessel to inhabit).",
+      "While any Curse is outside your reserve, draw 2 extra cards after the deal when your approach is Strength.",
+      "While wearing a borrowed body, you also gain the ability of that person's people; agree what this means before drawing."
     ],
-    previewDescription: "Wounds feed the hunger: Injuries breed Curses, and Curses deal you more cards."
+    previewDescription: "Wounds feed the hunger for a new vessel: a second Injury breeds a Curse, and while cursed you draw two extra cards on Strength checks."
   },
   {
     id: "rootborn",
@@ -97,12 +98,12 @@ const RACE_ENTRIES = [
     abilityTitle: "Rebalancing growth",
     tags: ["Pact Children", "Green Kin"],
     accent: "#7a5aa8",
-    flavor: "Half mortal, half nature spirit: children of pacts with the living things of a place. The spirits of the dead are another order entirely, and no kin of theirs.",
+    flavor: "Half mortal, half nature spirit: children of the orchard, spring, or grove their family once made terms with.",
     rules: [
       "When you must draw from an empty deck, you may evolve up to twice before shuffling instead of once. Resolve each evolution separately.",
-      "After tending local flora, you may commune with it about what it has sensed nearby."
+      "After tending local flora, ask it one question about what it has sensed nearby; how well the place has been tended decides how truthfully it answers."
     ],
-    previewDescription: "Whenever your deck reshuffles, you may evolve twice instead of once."
+    previewDescription: "Whenever your deck reshuffles, you may evolve twice instead of once; tended places answer truly."
   },
   {
     id: "ashcrik",
@@ -126,13 +127,11 @@ const SHARED_TIMING = {
   abilityTitle: "Every people",
   tags: ["All Peoples"],
   accent: "#4a5a66",
-  flavor: "Use with the current rules. These setting abilities are optional additions, not part of the condensed player guide.",
+  flavor: "Use with the core rules. These setting abilities are optional additions.",
   rules: [
     "Agree abilities and any goal requirements before drawing.",
-    "Each player has a separate goal and declares an approach that fixes their personal trump. Wins are never pooled or transferred.",
-    "Use choices independently during resolution; no new negotiation.",
-    "Extra cards do not add tricks. Stress duplicates whenever drawn, including extra draws and redraws.",
-    "All card gains use your reserve, removals return there, and survival costs stay fixed. Follow the ordinary cleanup order for extra cards."
+    "Extra cards do not add tricks; discard them with the leftovers at cleanup.",
+    "Extra draws are drawing, so Stress duplicates on them too."
   ],
   previewDescription: "The timing every ability obeys, printed on the back of each people's card."
 };

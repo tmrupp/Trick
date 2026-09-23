@@ -18,132 +18,132 @@
     {
       "index": 1,
       "id": "strength-1",
-      "label": "Ace of Spades — Strength"
+      "label": "Ace of Hearts — Strength"
     },
     {
       "index": 2,
       "id": "strength-2",
-      "label": "2 of Spades — Strength"
+      "label": "2 of Hearts — Strength"
     },
     {
       "index": 3,
       "id": "strength-3",
-      "label": "3 of Spades — Strength"
+      "label": "3 of Hearts — Strength"
     },
     {
       "index": 4,
       "id": "strength-4",
-      "label": "4 of Spades — Strength"
+      "label": "4 of Hearts — Strength"
     },
     {
       "index": 5,
       "id": "strength-5",
-      "label": "5 of Spades — Strength"
+      "label": "5 of Hearts — Strength"
     },
     {
       "index": 6,
       "id": "strength-6",
-      "label": "6 of Spades — Strength"
+      "label": "6 of Hearts — Strength"
     },
     {
       "index": 7,
       "id": "strength-7",
-      "label": "7 of Spades — Strength"
+      "label": "7 of Hearts — Strength"
     },
     {
       "index": 8,
       "id": "strength-8",
-      "label": "8 of Spades — Strength"
+      "label": "8 of Hearts — Strength"
     },
     {
       "index": 9,
       "id": "strength-9",
-      "label": "9 of Spades — Strength"
+      "label": "9 of Hearts — Strength"
     },
     {
       "index": 10,
       "id": "strength-10",
-      "label": "10 of Spades — Strength"
+      "label": "10 of Hearts — Strength"
     },
     {
       "index": 11,
       "id": "injury-j",
-      "label": "J of Spades — Injury (0)"
+      "label": "J of Hearts — Injury (0)"
     },
     {
       "index": 12,
       "id": "injury-q",
-      "label": "Q of Spades — Injury (0)"
+      "label": "Q of Hearts — Injury (0)"
     },
     {
       "index": 13,
       "id": "injury-k",
-      "label": "K of Spades — Injury (0)"
+      "label": "K of Hearts — Injury (0)"
     },
     {
       "index": 14,
       "id": "dexterity-1",
-      "label": "Ace of Clubs — Dexterity"
+      "label": "Ace of Spades — Dexterity"
     },
     {
       "index": 15,
       "id": "dexterity-2",
-      "label": "2 of Clubs — Dexterity"
+      "label": "2 of Spades — Dexterity"
     },
     {
       "index": 16,
       "id": "dexterity-3",
-      "label": "3 of Clubs — Dexterity"
+      "label": "3 of Spades — Dexterity"
     },
     {
       "index": 17,
       "id": "dexterity-4",
-      "label": "4 of Clubs — Dexterity"
+      "label": "4 of Spades — Dexterity"
     },
     {
       "index": 18,
       "id": "dexterity-5",
-      "label": "5 of Clubs — Dexterity"
+      "label": "5 of Spades — Dexterity"
     },
     {
       "index": 19,
       "id": "dexterity-6",
-      "label": "6 of Clubs — Dexterity"
+      "label": "6 of Spades — Dexterity"
     },
     {
       "index": 20,
       "id": "dexterity-7",
-      "label": "7 of Clubs — Dexterity"
+      "label": "7 of Spades — Dexterity"
     },
     {
       "index": 21,
       "id": "dexterity-8",
-      "label": "8 of Clubs — Dexterity"
+      "label": "8 of Spades — Dexterity"
     },
     {
       "index": 22,
       "id": "dexterity-9",
-      "label": "9 of Clubs — Dexterity"
+      "label": "9 of Spades — Dexterity"
     },
     {
       "index": 23,
       "id": "dexterity-10",
-      "label": "10 of Clubs — Dexterity"
+      "label": "10 of Spades — Dexterity"
     },
     {
       "index": 24,
       "id": "dazed-j",
-      "label": "J of Clubs — Stumble (0)"
+      "label": "J of Spades — Stumble (0)"
     },
     {
       "index": 25,
       "id": "dazed-q",
-      "label": "Q of Clubs — Stumble (0)"
+      "label": "Q of Spades — Stumble (0)"
     },
     {
       "index": 26,
       "id": "dazed-k",
-      "label": "K of Clubs — Stumble (0)"
+      "label": "K of Spades — Stumble (0)"
     },
     {
       "index": 27,
@@ -213,67 +213,67 @@
     {
       "index": 40,
       "id": "weird-1",
-      "label": "Ace of Hearts — Weird"
+      "label": "Ace of Clubs — Weird"
     },
     {
       "index": 41,
       "id": "weird-2",
-      "label": "2 of Hearts — Weird"
+      "label": "2 of Clubs — Weird"
     },
     {
       "index": 42,
       "id": "weird-3",
-      "label": "3 of Hearts — Weird"
+      "label": "3 of Clubs — Weird"
     },
     {
       "index": 43,
       "id": "weird-4",
-      "label": "4 of Hearts — Weird"
+      "label": "4 of Clubs — Weird"
     },
     {
       "index": 44,
       "id": "weird-5",
-      "label": "5 of Hearts — Weird"
+      "label": "5 of Clubs — Weird"
     },
     {
       "index": 45,
       "id": "weird-6",
-      "label": "6 of Hearts — Weird"
+      "label": "6 of Clubs — Weird"
     },
     {
       "index": 46,
       "id": "weird-7",
-      "label": "7 of Hearts — Weird"
+      "label": "7 of Clubs — Weird"
     },
     {
       "index": 47,
       "id": "weird-8",
-      "label": "8 of Hearts — Weird"
+      "label": "8 of Clubs — Weird"
     },
     {
       "index": 48,
       "id": "weird-9",
-      "label": "9 of Hearts — Weird"
+      "label": "9 of Clubs — Weird"
     },
     {
       "index": 49,
       "id": "weird-10",
-      "label": "10 of Hearts — Weird"
+      "label": "10 of Clubs — Weird"
     },
     {
       "index": 50,
       "id": "curse-j",
-      "label": "J of Hearts — Curse (0)"
+      "label": "J of Clubs — Curse (0)"
     },
     {
       "index": 51,
       "id": "curse-q",
-      "label": "Q of Hearts — Curse (0)"
+      "label": "Q of Clubs — Curse (0)"
     },
     {
       "index": 52,
       "id": "curse-k",
-      "label": "K of Hearts — Curse (0)"
+      "label": "K of Clubs — Curse (0)"
     },
     {
       "index": 53,

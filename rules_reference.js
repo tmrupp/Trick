@@ -1,13 +1,14 @@
-// Text for the two-sided rules reference card. RULES.md is the full reference
-// and PLAYER_GUIDE.md the condensed one; this card carries only table procedure.
-// A row's suit prints its label in that suit's ink.
+// Text for the rules reference cards: the one hand-written summary of RULES.md.
+// RULES.md is the single source; update these cards whenever a rule there changes.
+// Two cards, four sides, printed at a readable size. A row's suit prints its label in that suit's ink.
 globalThis.TrickRulesCard = {
   "sides": [
     {
-      "id": "rules-front",
-      "side": "front",
+      "id": "rules-1-front",
+      "card": "rules-1",
+      "side": "1-front",
       "title": "Trick",
-      "subtitle": "Table reference · front",
+      "subtitle": "Table reference · 1 of 4",
       "sections": [
         {
           "heading": "Set the check",
@@ -20,78 +21,27 @@ globalThis.TrickRulesCard = {
             "The world leads first unless the GM says otherwise. Everyone draws N; deal the world face up in a fixed row."
           ],
           "note": "Cost: 1 narrow · 2 modest · 3 substantial · 5 ambitious. On failure, each exposed participant gains a fitting status."
-        },
+        }
+      ]
+    },
+    {
+      "id": "rules-1-back",
+      "card": "rules-1",
+      "side": "1-back",
+      "title": "Trick",
+      "subtitle": "Table reference · 2 of 4",
+      "sections": [
         {
           "heading": "Every trick",
           "lines": [
             "Play face up from the leader, clockwise, with the world at the GM’s seat. Follow the led suit if able.",
             "The world plays its leftmost legal card.",
             "A card is trump if it matches its owner’s trump suit and its owner could not follow.",
-            "Highest trump wins; with no trump, the highest card of any suit. Ties go to the led suit, then the earliest played.",
+            "Highest trump wins; with no trump, the highest card of the led suit. Ties go to the earliest played.",
             "The winner scores 1 trick for their own goal; world wins score nothing for players.",
             "The winner leads next, unless anyone played Stumble: then the world leads."
           ],
           "note": "Once drawing begins: no tactical talk, card advice, or signals. Narration, rules questions, and declarations are welcome."
-        },
-        {
-          "heading": "Consolations, on your trick loss",
-          "rows": [
-            {
-              "suit": "strength",
-              "label": "Spades — Brace",
-              "text": "On your next play, add or subtract the losing card’s printed value, minimum 0; choose as you play. Braces never stack."
-            },
-            {
-              "suit": "dexterity",
-              "label": "Clubs — Reposition",
-              "text": "Ignore follow-suit on your next play; it counts as unable to follow, so your trump can win."
-            },
-            {
-              "suit": "intelligence",
-              "label": "Diamonds — Recalculate",
-              "text": "Discard 1 card from hand, then draw 1. If that draw reshuffles your deck, you may evolve."
-            },
-            {
-              "suit": "weird",
-              "label": "Hearts — Revelation",
-              "text": "Ask the GM one question for a brief true answer, or put a status from discard atop your deck: on your next play, your whole hand takes its suit for following, leading, and trump."
-            }
-          ],
-          "note": "Use the losing card’s printed suit, even when an ally won. After the final trick, only Revelation’s question remains."
-        }
-      ]
-    },
-    {
-      "id": "rules-back",
-      "side": "back",
-      "title": "Trick",
-      "subtitle": "Table reference · back",
-      "sections": [
-        {
-          "heading": "Statuses: J, Q, K, value 0, six of each",
-          "rows": [
-            {
-              "suit": "strength",
-              "label": "Injury — Spades",
-              "text": "Gain only at cleanup or between checks, then scan for survival."
-            },
-            {
-              "suit": "dexterity",
-              "label": "Stumble — Clubs",
-              "text": "If anyone plays it, the world leads the next trick, whoever won."
-            },
-            {
-              "suit": "intelligence",
-              "label": "Stress — Diamonds",
-              "text": "Whenever you draw Stress, gain another into discard, including redraws and draws during play."
-            },
-            {
-              "suit": "weird",
-              "label": "Curse — Hearts",
-              "text": "Your Curses share one compulsion. Each violation gains 1 Stress per Curse outside reserve. Only evolution removes them."
-            }
-          ],
-          "note": "Gain statuses into discard. If none remain in reserve, gain no copy."
         },
         {
           "heading": "Blessed, your four jokers",
@@ -101,7 +51,77 @@ globalThis.TrickRulesCard = {
             "Played, it returns to reserve. Unplayed, it cleans up like any other card.",
             "Between tricks you may give yours to another player, then draw 1. That handover is the only signal allowed."
           ]
+        }
+      ]
+    },
+    {
+      "id": "rules-2-front",
+      "card": "rules-2",
+      "side": "2-front",
+      "title": "Trick",
+      "subtitle": "Table reference · 3 of 4",
+      "sections": [
+        {
+          "heading": "Consolations, on your trick loss",
+          "rows": [
+            {
+              "suit": "strength",
+              "label": "Hearts — Brace",
+              "text": "On your next play, add or subtract the losing card’s printed value, minimum 0; choose as you play. Braces never stack."
+            },
+            {
+              "suit": "dexterity",
+              "label": "Spades — Reposition",
+              "text": "Ignore follow-suit on your next play; it counts as unable to follow, so your trump can win."
+            },
+            {
+              "suit": "intelligence",
+              "label": "Diamonds — Recalculate",
+              "text": "Discard 1 card from hand, then draw 1. If that draw reshuffles your deck, you may evolve."
+            },
+            {
+              "suit": "weird",
+              "label": "Clubs — Revelation",
+              "text": "Ask the GM one question for a brief true answer, or put a status from discard atop your deck; your next play takes its suit for following, leading, and trump."
+            }
+          ],
+          "note": "Use the losing card’s printed suit, even if an ally won. After the final trick, only Revelation’s question."
         },
+        {
+          "heading": "Statuses: J, Q, K, value 0",
+          "rows": [
+            {
+              "suit": "strength",
+              "label": "Injury — Hearts",
+              "text": "Gain only at cleanup or between checks, then scan for survival."
+            },
+            {
+              "suit": "dexterity",
+              "label": "Stumble — Spades",
+              "text": "If anyone plays it, the world leads the next trick, whoever won."
+            },
+            {
+              "suit": "intelligence",
+              "label": "Stress — Diamonds",
+              "text": "Each time you draw Stress, gain another into discard, even on redraws and mid-check draws."
+            },
+            {
+              "suit": "weird",
+              "label": "Curse — Clubs",
+              "text": "Your Curses share one compulsion. Each violation gains 1 Stress per Curse outside reserve. Only evolution removes them."
+            }
+          ],
+          "note": "Gain statuses into discard; if none remain in reserve, gain none."
+        }
+      ]
+    },
+    {
+      "id": "rules-2-back",
+      "card": "rules-2",
+      "side": "2-back",
+      "title": "Trick",
+      "subtitle": "Table reference · 4 of 4",
+      "sections": [
         {
           "heading": "Reshuffle, evolution, rest",
           "lines": [

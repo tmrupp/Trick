@@ -170,4 +170,4 @@ The current `@media (max-width: 640px)` block only changes `--preview-scale` and
 
 The current suit and status cards use `.core-card` overrides near the end of `card_base.css`: 40px rule text, a 26px domain label, and a more compact text panel. Edit those selectors for current core cards; the generic selectors below remain the base/template styles. Items retain their separate `.item-card` styles.
 
-Current wording lives in `card_rules.js`, shared by the eight core cards and gallery. After changing text or sizing, run `npm run check:assets`, then regenerate the image exports. The check reports text clipping and saves inspection images in `exports/qa/`.
+Current wording lives in the tables of `RULES.md`; `npm run build:guides` generates `card_rules.js` from them for the core cards and gallery. After changing text or sizing, run `npm run check:assets`, then regenerate the image exports. The check reports text clipping and saves inspection images in `exports/qa/`.

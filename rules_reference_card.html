@@ -28,7 +28,7 @@
   <script>
     (function () {
       const params = new URLSearchParams(window.location.search);
-      const requested = params.get("side") || "front";
+      const requested = params.get("side") || "1-front";
       const data = globalThis.TrickRulesCard;
       const icons = globalThis.TrickSuitIcons;
       const side = data.sides.find((entry) => entry.side === requested || entry.id === requested);

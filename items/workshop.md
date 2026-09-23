@@ -26,7 +26,7 @@ The lens recovers a scene witnessed by a mirror in the room. Three uses: identif
 
 The destroyed mirror is the first repeat-use gate: one mirror produces one viewing, and another viewing needs another intact mirror that witnessed the relevant past. The scene also supplies one detail whose consequences still shape the present. Before drawing, the bearer inspects the top three world cards, sends one to the bottom, and preserves the order of the other two. This is informed intervention rather than prophecy—the character changes their plan because the recovered cause explains part of the approaching opposition. Ripped Page answers from a book and edits the bearer's deck; the lens consumes physical evidence, reconstructs an event, and alters the world row.
 
-Each use gains 1 Stress and 1 Curse, and adds `you may not use mirrors` to the shared Curse compulsion. That clause applies whether this is the bearer's first Curse or joins an existing one. Invoking the lens again therefore requires another qualifying mirror and violates the compulsion, gaining Stress for every Curse outside reserve. Removing the last Curse ends the mirror prohibition normally. The Mark makes the loss visible to the bearer: mirrors no longer show them the present.
+Each use gains 1 Stress and 1 Curse (compulsion: you may not use mirrors). Under the RULES.md compulsion rule the mirror taboo applies whether this is the bearer's first Curse or joins an existing one. Invoking the lens again therefore requires another qualifying mirror and violates the compulsion, gaining Stress for every Curse outside reserve. Removing the last Curse ends the mirror prohibition normally. The Mark makes the loss visible to the bearer: mirrors no longer show them the present.
 
 ### Sin Eater's Spoon — Weird
 
@@ -260,9 +260,9 @@ The coat no longer waits for survival. Whenever the wearer relies on Strength, i
 > *The cold stops reaching you, and so does everything else.*
 > Reveal its price.
 
-The recurring Price makes ordinary shelter hostile. The first Curse records a taboo against sleeping inside; later invocations add Curses to that same compulsion, increasing the Stress gained whenever the wearer accepts a roof. The outdoor Wake remains compatible with the taboo. If the wearer already has a Curse, the new Curse joins that existing compulsion instead, as the core rules require.
+The recurring Price makes ordinary shelter hostile. Under the RULES.md compulsion rule, a first Curse records the taboo against sleeping inside and a later one adds it as another term, so the roof is forbidden whatever the wearer carried before; each invocation also raises the Stress gained whenever the wearer accepts a roof. The outdoor Wake remains compatible with the taboo.
 
-> Price: At cleanup, gain 1 Curse. If you had none, record its compulsion: you may not sleep inside.
+> Price: At cleanup, gain 1 Curse (compulsion: you may not sleep inside).
 > Price: To remove the coat, gain 1 Injury for each Curse not in your reserve.
 > *The coat grows into you at the collar, cuffs, and every place your skin has broken.*
 > *Removing it tears away whatever has grown through the hide.*
@@ -502,4 +502,4 @@ All ten trinkets implemented, exported, overflow-checked. The shipped wording is
 | ripped-page | World-row manipulation dropped; now a GM question plus a top-3 peek | The set had no information item and the old Wake was arbitrary. Discarding is a deliberate trap — it loads the survival scan window |
 | whisper-jar | Curse dropped, Weird gate restored, cost 1 Stress | The gate was lost in consolidation. Balance now rests on the Wake |
 | scoped-rifle | −1 card → reveal a card, +5 on the final trick | The old version cost a whole trick for +2. Reward the wait; revealing is a real cost in a game built on silence |
-| borrowed-face | Takes a person's true feeling, GM names the suit; random omen gone | A mask showing true feeling explains why display counts for nothing. Statuses at printed value 0 become the strongest play — your damage is your true feeling |
+| borrowed-face | Takes a person's true feeling, GM names the suit; random omen gone | A mask showing true feeling explains why display counts for nothing. Statuses at printed value 0 become the strongest play — your damage is your true feeling. Since tricks without trump go to the led suit, the inverted trick is judged within that suit too |

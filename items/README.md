@@ -46,7 +46,7 @@ Use only these timing anchors: `before drawing`, `after the deal`, `before a lea
 
 Use exact gates: `When your approach is Strength,` or Dexterity, Intelligence, Weird; `When survival is your forced goal,`.
 
-Write statuses as `gain 1 Stress` or `gain 2 Injuries`; write items as `acquire 1 Iron Apple Seed`. Write changed values as `counts as 10` or `counts 2 higher`; `printed value` is always the unchanged number. Write `take … into hand` for any card moved to hand other than by drawing. Use the named game suits, and `ordinary card` when statuses are excluded. Do not repeat global rules on a card.
+Write statuses as `gain 1 Stress` or `gain 2 Injuries`, and a Curse that brings a taboo as `gain 1 Curse (compulsion: you may not …)`; write items as `acquire 1 Iron Apple Seed`. Write changed values as `counts as 10` or `counts 2 higher`; `printed value` is always the unchanged number. Write `take … into hand` for any card moved to hand other than by drawing. Use the named game suits, and `ordinary card` when statuses are excluded. Do not repeat global rules on a card.
 
 Keep fiction specific. A Wake demands an action, an Effect changes the situation, a Cost hurts now, a Price changes the character, and a Mark shows what remains.
 
@@ -67,4 +67,4 @@ npm run export:tts-item-deck
 
 The first command writes individual images under `exports/tts/items/fronts/` and `back/`. The second rebuilds the sheet, back, manifest, and README under `exports/tts/items/deck/`.
 
-[item_card.html](item_card.html) renders every card: [item_renderer.js](item_renderer.js) splits each card's lines into name, Form, slots, Marks, and the reveal band, and [item_card.css](item_card.css) styles them. The fonts load from Google Fonts, so previews and exports need a network connection. [item_catalog.js](item_catalog.js) drives the renderer, gallery, and exports.
+[item_card.html](item_card.html) renders every card: [item_renderer.js](item_renderer.js) splits each card's lines into name, Form, slots, Marks, and the reveal band, and [item_card.css](item_card.css) styles them. Trinkets share [item_back.html](item_back.html) as their back; each relic's back is its Price card. The fonts load from Google Fonts, so previews and exports need a network connection. [item_catalog.js](item_catalog.js) drives the renderer, gallery, and exports.

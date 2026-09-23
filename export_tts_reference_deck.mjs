@@ -115,17 +115,18 @@ async function writeManifest() {
 }
 
 async function writeReadme() {
-  const peoples = referenceCards.filter((card) => card.id !== "rules-card");
+  const peoples = referenceCards.filter((card) => !card.id.startsWith("rules-"));
+  const rulesCards = referenceCards.filter((card) => card.id.startsWith("rules-"));
   const readme = [
     "# Trick Reference Deck",
     "",
-    "Handout cards for the current [rules](../../../../RULES.md): one card per optional people and one",
-    "double-sided rules card. Read [peoples conventions](../../../../races/README.md) before use. This deck",
+    "Handout cards for the current [rules](../../../../RULES.md): one card per optional people and two",
+    "double-sided rules cards. Read [peoples conventions](../../../../races/README.md) before use. This deck",
     "is separate from the two standard decks per player, and none of it is needed for core play.",
     "",
     "Files in this folder:",
     `- \`trick-reference-face-sheet.png\`: front card sheet for the full ${referenceCards.length}-card reference deck.`,
-    `- \`trick-reference-back-sheet.png\`: back card sheet, the shared timing card behind each people and the rules card's second side.`,
+    `- \`trick-reference-back-sheet.png\`: back card sheet, the shared timing card behind each people and each rules card's second side.`,
     "- `trick-reference-deck-manifest.json`: exact Tabletop Simulator import settings and card order.",
     "",
     "Import in Tabletop Simulator:",
@@ -138,15 +139,15 @@ async function writeReadme() {
     `7. The generated face sheet is ${SHEET_WIDTH * OUTPUT_CARD_WIDTH}x${SHEET_HEIGHT * OUTPUT_CARD_HEIGHT}.`,
     "",
     `Every people's card carries the \`${timingId}\` card on its back, so the timing every ability obeys is always one flip away.`,
-    "Deal one people's card to each player and leave the rules card on the table.",
+    "Deal one people's card to each player and leave the rules cards on the table.",
     "",
     "## Printing",
     "",
     `The full-size images in \`../fronts\` and \`../back\` are ${SOURCE_CARD_WIDTH}x${SOURCE_CARD_HEIGHT}, the deck's 1:1.4 ratio.`,
-    "At 300 dpi that is 3.5 x 4.9 in. Print the rules card at that size or larger, since it carries the densest text in the set.",
+    "Print them at 63 x 88 mm (2.5 x 3.5 in, standard Magic card size), about 420 dpi. Every card keeps a 2 mm white edge to absorb about 1 mm of print drift; use npm run export:print for printer-placed pages.",
     "",
     ...peoples.map((card) => `- ${card.label}`),
-    "- Rules Reference, front and back",
+    ...rulesCards.map((card) => `- ${card.label}, front and back`),
     "",
     "Card order on the sheet is listed in `trick-reference-deck-manifest.json`."
   ].join("\n");

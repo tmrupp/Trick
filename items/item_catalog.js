@@ -238,7 +238,7 @@ const ITEM_ENTRIES = [
       "<em>A blank mask, smooth as a river stone, with no expression of its own.</em>",
       "Wake: Peer deeply into someone's eyes. The mask takes their true feeling and wears it; the GM names its suit.",
       "When: Your approach is Weird.",
-      "Effect: The first trick led in that suit inverts: lowest card wins, trump does not apply, ties go to the non-led suit then the latest played.",
+      "Effect: The first trick led in that suit inverts: the lowest card of that suit wins, trump does not apply, and ties go to the latest played.",
       "Cost: At cleanup, gain 1 Curse if that suit never led.",
       "<em>Take the mask off and it becomes difficult to hide whatever you truly feel.</em>"
     ],
@@ -286,7 +286,7 @@ const ITEM_ENTRIES = [
       "<em>A smoked-glass lens that makes a shard replay one scene its mirror witnessed in the room.</em>",
       "Wake: Shatter an intact mirror that stood in this room during the scene you seek, then hold the lens over its largest shard.",
       "Effect: The GM describes 1 minute from that earlier scene and names 1 detail that still shapes the present. Before drawing, look at the top 3 world cards, put 1 on the bottom of its deck, and return the others in the same order.",
-      "Cost: Gain 1 Stress and 1 Curse. Add to its compulsion: you may not use mirrors.",
+      "Cost: Gain 1 Stress and 1 Curse (compulsion: you may not use mirrors).",
       "<em>Mirrors no longer reflect the present to you, but an indiscernible past.</em>"
     ],
     previewDescription: "Destroy a mirror to recover a scene it witnessed, then use what you learn to alter the approaching world row."
@@ -362,7 +362,7 @@ const ITEM_ENTRIES = [
     suit: "strength",
     domain: "Reveal After Use",
     lines: [
-      "Price: At cleanup, gain 1 Curse. If you had none, record its compulsion: you may not sleep inside.",
+      "Price: At cleanup, gain 1 Curse (compulsion: you may not sleep inside).",
       "Price: To remove the coat, gain 1 Injury for each Curse not in your reserve.",
       "<em>The coat grows into you at the collar, cuffs, and every place your skin has broken.</em>",
       "<em>Removing it tears away whatever has grown through the hide.</em>"
@@ -647,7 +647,7 @@ function buildItemDeckCards() {
         kind,
         file,
         params,
-        backFile: priceCard ? ITEM_PAGE_PATH : "card_back.html",
+        backFile: priceCard ? ITEM_PAGE_PATH : "items/item_back.html",
         backParams: priceCard ? { id: priceCard.id } : {}
       };
     });

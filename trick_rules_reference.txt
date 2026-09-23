@@ -2,20 +2,20 @@ CURRENT RULES — generated from RULES.md
 
 # Trick
 
-For a condensed table reference, use the [player guide](PLAYER_GUIDE.md). Setting abilities and items are optional supplements.
+This file is the single source for the rules: the card faces print its tables, and the browser and text versions are generated from it. The two-sided [rules reference card](rules_reference_card.html) condenses it for the table. Setting abilities and items are optional supplements.
 
 ## Decks and suits
 
-Each player brings **two standard decks**, preferably with matching backs. The four jokers are **Blessed** cards and wait in reserve. Aces are worth 1; numbered cards keep their values. Jacks, Queens, and Kings are interchangeable zero-value statuses of their suit, giving **six of each status**. Keep unused cards in a personal reserve outside play.
+Each player brings **two standard decks**, preferably with matching backs. The four jokers are **Blessed** cards and wait in reserve. Aces are worth 1; numbered cards keep their values. Jacks, Queens, and Kings are interchangeable zero-value statuses of their suit, giving **six of each status**. Keep unused cards in a personal reserve outside play; every 10 starts there and is gained or evolved into like any other card.
 
 | Suit | Approaches | Status |
 | --- | --- | --- |
-| Strength — Spades | Force, endurance, intimidation | Injury |
-| Dexterity — Clubs | Evasion, deception, improvisation | Stumble |
+| Strength — Hearts | Force, endurance, intimidation | Injury |
+| Dexterity — Spades | Evasion, deception, improvisation | Stumble |
 | Intelligence — Diamonds | Analysis, persuasion, planning | Stress |
-| Weird — Hearts | Intuition, empathy, invocation | Curse |
+| Weird — Clubs | Intuition, empathy, invocation | Curse |
 
-Choose a **primary suit** and a different **secondary suit**. From **one deck**:
+Choose a **primary suit** and a different **secondary suit**. They set only your starting cards, never which approach you may declare. From **one deck**:
 
 1. Take **2, 4, 6, 8 of every suit**.
 2. Add **A, 5, 9 of your primary suit**.
@@ -52,7 +52,7 @@ On failure, each exposed participant normally gains an appropriate status; agree
 
 1. Everyone plays **face-up in turn order**, beginning with the leader and continuing clockwise, the world at the GM's seat. Each card stays visible as it lands, so later players see exactly what they must beat. **Follow the led suit if able.** If your hand is empty, sit out that trick; if you were to lead, the world leads instead. Hands run dry early only when an effect removes a card without replacing it.
 2. The world plays its leftmost legal card, following suit when possible. When leading or unable to follow, it plays its leftmost card.
-3. A card is trump if its suit matches **its owner's personal trump** and its owner **could not follow the led suit**. The **highest trump** takes the trick; with no trump played, the **highest card of any suit** takes it. Break a tie for highest by **led suit** first, then by the **earliest card played**. World wins score nothing for players.
+3. A card is trump if its suit matches **its owner's personal trump** and its owner **could not follow the led suit**. The **highest trump** takes the trick; with no trump played, the **highest card of the led suit** takes it. Break a tie by the **earliest card played**. World wins score nothing for players.
 4. Resolve after-play status effects, then optional consolations.
 5. The winner leads next, unless anyone played Stumble: then the world leads. Play all N tricks.
 
@@ -81,12 +81,12 @@ Statuses follow normal playing and winning rules unless stated below.
 
 | Status | Effect |
 | --- | --- |
-| **Injury — Strength** | Injuries in the discard window determine survival. |
+| **Injury — Strength** | Two or more Injuries in your top N discard cards make survival your forced goal. Gain Injuries only at cleanup or between checks. |
 | **Stumble — Dexterity** | If anyone plays Stumble, the world leads the next trick, regardless of who won. |
 | **Stress — Intelligence** | Whenever you draw Stress, gain one Stress into discard. This includes redraws and cards drawn during play. |
-| **Curse — Weird** | Your Curses share a supernatural compulsion, described below. Remove Curses through evolution, never rest. |
+| **Curse — Weird** | Your Curses share one supernatural compulsion. Each violation gains one Stress for every Curse not in your reserve. Remove Curses through evolution, never rest. |
 
-Record one supernatural compulsion with your first Curse; further Curses share it. **Each violation gains one Stress for every Curse not in your reserve** — six minus the number of Curses still sitting there. Removing your last Curse ends the compulsion.
+Record the compulsion with your first Curse; further Curses share it. An effect can name a compulsion, written **gain 1 Curse (compulsion: …)**: a first Curse records it, and a later Curse adds it as another term of the same compulsion. Count six minus the Curses still in your reserve. Removing your last Curse ends the whole compulsion.
 
 ## Blessed
 
@@ -94,12 +94,12 @@ Your four jokers are **Blessed** cards. Blessed is not a status: rest, evolution
 
 The GM grants a Blessed for play at the table rather than anything a character did — recapping the last session, sharp roleplaying, keeping the table going. A granted Blessed moves from reserve to the **top of your deck**, so you draw it on your next draw. Gain no copy if none remain in reserve.
 
-- **Blessed wins any trick it is played in**, beating trump and every other card. It has no suit, so it never follows suit and is always legal to play.
-- **Leading Blessed sets no led suit.** Everyone else plays whatever they like; Blessed still wins.
-- If two Blessed meet in one trick, the earliest played wins, as with any tie.
-- A played Blessed **returns to reserve** rather than joining your row, so it never reaches discard and never enters a survival scan.
-- An unplayed Blessed cleans up like an ordinary card: it goes to discard and cycles back around. Hold one by simply not playing it.
-- Brace expires unused on a Blessed, which has no value to change.
+- **Blessed wins any trick it is played in**, beating trump. It has no suit: it never follows suit and is always legal to play.
+- **Leading Blessed sets no led suit**; everyone else plays whatever they like.
+- If two Blessed meet in one trick, the earliest played wins.
+- A played Blessed **returns to reserve**, never reaching discard or a survival scan.
+
+An unplayed Blessed cleans up like an ordinary card: it goes to discard and cycles back around, so hold one by simply not playing it. Brace expires unused on a Blessed, which has no value to change.
 
 **Giving.** Between tricks you may give your Blessed to another player, who takes it into hand; then draw one card yourself. Handing it over is the one signal the no-coordination rule allows — no discussion, advice, or tactical talk accompanies it. The new holder plays, holds, and cleans it up exactly as if they had drawn it.
 

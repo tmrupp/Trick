@@ -1,8 +1,8 @@
 export const suitCards = [
-  { suit: "strength", standardSuit: "Spades", file: "strength.html", statusName: "injury", statusFile: "injury.html" },
-  { suit: "dexterity", standardSuit: "Clubs", file: "dexterity.html", statusName: "dazed", statusLabel: "Stumble", statusFile: "dazed.html" },
+  { suit: "strength", standardSuit: "Hearts", file: "strength.html", statusName: "injury", statusFile: "injury.html" },
+  { suit: "dexterity", standardSuit: "Spades", file: "dexterity.html", statusName: "dazed", statusLabel: "Stumble", statusFile: "dazed.html" },
   { suit: "intelligence", standardSuit: "Diamonds", file: "intelligence.html", statusName: "stress", statusFile: "stress.html" },
-  { suit: "weird", standardSuit: "Hearts", file: "weird.html", statusName: "curse", statusFile: "curse.html" }
+  { suit: "weird", standardSuit: "Clubs", file: "weird.html", statusName: "curse", statusFile: "curse.html" }
 ];
 
 function capitalize(value) {

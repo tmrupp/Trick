@@ -7,17 +7,17 @@
   --rule-ink: #1b1917;
   display: flex;
   flex-direction: column;
-  padding: 57px 57px 50px;
+  padding: 63px 63px 59px;
   border: 0;
   border-radius: 13px;
   background: var(--paper);
   color: #1b1917;
-  box-shadow: 0 12px 34px rgba(18, 24, 20, 0.22);
+  box-shadow: inset 0 0 0 var(--print-band) #fff, 0 12px 34px rgba(18, 24, 20, 0.22);
 }
 
 /* printed frame rule */
 .item-card::before {
-  inset: 25px;
+  inset: var(--print-band);
   border: 2.3px solid color-mix(in srgb, var(--suit-ink) 70%, transparent);
   background: none;
   opacity: 1;
@@ -44,7 +44,7 @@
   gap: 16px;
   min-height: 100%;
   color: inherit;
-  font: 400 50px/1.2 Alegreya, Georgia, "Times New Roman", serif;
+  font: 400 49px/1.2 Alegreya, Georgia, "Times New Roman", serif;
 }
 
 .item-card p {
@@ -81,7 +81,7 @@
 
 .item-title {
   margin: 4px 0 0;
-  font: 700 92px/0.95 "Cormorant Garamond", Garamond, Georgia, serif;
+  font: 700 90px/0.95 "Cormorant Garamond", Garamond, Georgia, serif;
   font-variant: small-caps;
   letter-spacing: 2px;
   text-align: center;
@@ -91,7 +91,7 @@
 .item-form {
   margin: 4px 10px 6px !important;
   color: #3a3531;
-  font: italic 48px/1.22 Alegreya, Georgia, serif;
+  font: italic 47px/1.22 Alegreya, Georgia, serif;
   text-align: center;
 }
 
@@ -126,7 +126,7 @@
 
 .item-mark {
   color: #2c2825;
-  font: italic 48px/1.22 Alegreya, Georgia, serif;
+  font: italic 47px/1.22 Alegreya, Georgia, serif;
   text-align: center;
 }
 
@@ -158,12 +158,12 @@
 }
 
 .item-relic-card {
-  padding: 48px 48px 44px;
+  padding: 57px 57px 53px;
 }
 
 .item-relic-card::before,
 .item-reveal-card::before {
-  inset: 19px;
+  inset: var(--print-band);
   border: 12px double var(--rule-ink);
 }
 

@@ -1,6 +1,6 @@
 # Item Guide
 
-Use with [RULES.md](../RULES.md). The live cards are in [item_catalog.js](item_catalog.js); unfinished designs belong in [workshop.md](workshop.md).
+Use with [RULES.md](../RULES.md). The live cards are in [item_catalog.js](item_catalog.js); unfinished designs belong in [workshop.md](workshop.md), and drafted cards awaiting approval in [drafts.md](drafts.md).
 
 ## At the table
 

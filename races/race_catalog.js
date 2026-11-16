@@ -87,10 +87,10 @@ const RACE_ENTRIES = [
     flavor: "They eat a person and wear the body, never the memories. The disguise is skin-deep; one tear spills the hungry thing beneath.",
     rules: [
       "When you gain an Injury while another Injury is already in your discard, gain 1 Curse (compulsion: you hunger for another vessel to inhabit).",
-      "While any Curse is outside your reserve, draw 2 extra cards after the deal when your approach is Strength.",
+      "While your compulsion includes that hunger, draw 2 extra cards after the deal when your approach is Strength.",
       "While wearing a borrowed body, you also gain the ability of that person's people; agree what this means before drawing."
     ],
-    previewDescription: "Wounds feed the hunger for a new vessel: a second Injury breeds a Curse, and while cursed you draw two extra cards on Strength checks."
+    previewDescription: "Wounds feed the hunger for a new vessel: a second Injury breeds a Curse, and while you hunger you draw two extra cards on Strength checks."
   },
   {
     id: "rootborn",

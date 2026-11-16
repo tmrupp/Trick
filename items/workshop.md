@@ -36,6 +36,12 @@ Between checks, the giver returns one chosen status from their discard to their 
 
 ---
 
+# New item drafts
+
+Six drafts for Intelligence, Weird, and Dexterity live in [drafts.md](drafts.md), each with its fictional use and the untouched lever it opens.
+
+---
+
 # Writing fictional uses
 
 **An item is a thing a character owns, not a move they make.** It spends most of its life in a pocket with no cards on the table, and that is where players reach for it first. The card has no room to list those uses, so the Form line must *generate* them: write the object's **job, not its appearance**. "A splitting wedge of black stone" is an appearance; "what it is driven into fails the moment it is trusted" is a job — and the job produces the fictional uses, the mechanic and the Marks alike.
@@ -448,7 +454,7 @@ One per suit, each opening space nothing touches. The existing ten cluster hard:
 
 Strength plants its feet and eats the blow; consolations reward losing. Makes losing a trick something you might choose, which nothing else does. "Different suits" is deliberate — Braces never stack. **Weakest on the three-use test:** outside a check it is only proof that four other people endured something. Solve that before it goes in.
 
-### Slip Knot — Dexterity · opens turn order
+### Slip Knot — Dexterity · opens turn order (set aside in drafts.md)
 
 > *A length of cord tied in a knot that holds against any pull but falls apart at a touch.*
 > Wake: Tie it around your wrist before drawing, and do not tighten it.
@@ -458,7 +464,7 @@ Strength plants its feet and eats the blow; consolations reward losing. Makes lo
 
 Seat position alone is worth **0.08 tricks** — not an item. The follow-suit rider is what makes it real, turning your trump live in a trick you chose. Overlaps Reposition, but that is only available when you lose; this is on demand.
 
-### Fair Copy — Intelligence · opens discard order, and the survival scan
+### Fair Copy — Intelligence · opens discard order, and the survival scan (set aside in drafts.md as the Fair-Copy Pen)
 
 > *A second copy of a document in a neater hand, with one detail quietly different.*
 > Wake: Copy out something true, and change one detail as you write.

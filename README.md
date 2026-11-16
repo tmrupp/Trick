@@ -1,8 +1,12 @@
-# Trick
+# TRICK
+
+**TRICK** stands for **Tabletop Roleplaying Interactive Card Kit**.
 
 The rules are in **[RULES.md](RULES.md)**, the single source of truth, with a generated [browser version](rules.html). The two-sided [rules reference card](rules_reference_card.html) condenses them for the table.
 
-Trick is a game of simultaneous group checks using **two standard decks per player** and one for the GM. Four suits describe approaches; face cards are statuses. Before drawing, each player and the world declare an approach that fixes their personal trump for the whole check. Each player has one separate goal and scores only their own wins; cooperation happens through fiction and card play. Threats can force a goal, including survival for an endangered character. Highest personal trump wins, regardless of suit; otherwise the highest card of the led suit wins.
+Checks use **Tally**: design notes and simulations are in [docs/alternatives/TALLY.md](docs/alternatives/TALLY.md), with a printable [playtest sheet](docs/alternatives/tally_sheet.pdf).
+
+TRICK is a game of simultaneous group checks using **two standard decks per player** and one for the GM. Four suits describe approaches; face cards are statuses. The world deals a face-up row, one card per trick, and leads each trick; everyone answers with a face-down card at once. The single highest card wins if it matches the world card's suit or its owner's trump, and its owner scores the world card's value. Each player aims to land exactly on a target: the further short, the worse the result, and going over is a bust. Losers take consolations; cooperation happens through fiction and card play.
 
 The repository also provides optional custom card art, setting items, and Tabletop Simulator exports. Current suits are Strength/Hearts, Dexterity/Spades, Intelligence/Diamonds, and Weird/Clubs; their statuses are Injury, Stumble, Stress, and Curse. The jokers are Blessed cards, which win any trick they are played in. Divine is an archived concept.
 

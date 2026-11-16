@@ -1,6 +1,8 @@
 # Tally: beat the world, land on the number
 
-A design sketch, not a rules change. It builds on the core of [SIMPLER_CHECKS.md](SIMPLER_CHECKS.md): the world always leads, and everyone answers at once.
+Tally is a check system for **TRICK** (Tabletop Roleplaying Interactive Card Kit). The item cards in [items/](../../items/README.md) follow it.
+
+Design notes and simulations for the check in [RULES.md](../../RULES.md). It builds on the core of [SIMPLER_CHECKS.md](SIMPLER_CHECKS.md): the world always leads, and everyone answers at once.
 
 **The world card is both the difficulty and the prize.** Only one player takes each trick: the single highest card on the table, if it is on-suit and beats the world card. That player scores **the world card's value**. Everyone else takes a consolation, all at the same time. You are trying to land your tally exactly on a target. Hitting it is a critical success. The further short you fall, the worse the result. Going over is a critical failure.
 

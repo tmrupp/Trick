@@ -1,22 +1,22 @@
 CURRENT CARD TEXT — generated from the tables in RULES.md
 
 BRACE (Hearts — Strength)
-On your next play, add or subtract your losing card's printed value to or from the card you play, minimum 0. Choose which as you play the card.
+Your next card counts this card's printed value higher for beating. It never changes what you score.
 
-REPOSITION (Spades — Dexterity)
-You may ignore follow-suit on your next play, which counts as being unable to follow, so your personal trump can win the trick.
+SLIP (Spades — Dexterity)
+Return this card to your hand. You lost the trick, but spent nothing.
 
 RECALCULATE (Diamonds — Intelligence)
-Discard one card from hand, then draw one. You need a card to discard. If that draw reshuffles your deck, you may evolve.
+Discard one card from hand, then draw one. You need a card to discard.
 
-REVELATION (Clubs — Weird)
-Choose one: ask the GM one question about the current situation and receive a brief, truthful answer, or put a status from discard on top of your deck; your next played card's suit becomes that status's suit instead of its own.
+MIRROR (Clubs — Weird)
+If your next card wins, the world card scores 11 minus its value.
 
 INJURY (Hearts — Injury)
 Two or more Injuries in your top N discard cards make survival your forced goal. Gain Injuries only at cleanup or between checks.
 
 STUMBLE (Spades — Stumble)
-If anyone plays Stumble, the world leads the next trick, regardless of who won.
+When you play Stumble, discard an ordinary card from your hand, your choice.
 
 STRESS (Diamonds — Stress)
 Whenever you draw Stress, gain one Stress into discard. This includes redraws and cards drawn during play.
@@ -25,7 +25,6 @@ CURSE (Clubs — Curse)
 Your Curses share one supernatural compulsion. Each violation gains one Stress for every Curse not in your reserve. Remove Curses through evolution, never rest.
 
 BLESSED (Joker — Blessed)
-Blessed wins any trick it is played in, beating trump. It has no suit: it never follows suit and is always legal to play.
-Leading Blessed sets no led suit; everyone else plays whatever they like.
-If two Blessed meet in one trick, the earliest played wins.
+Blessed always takes the trick it is played in and scores the world card. It has no suit.
+If two Blessed meet in one trick, they tie, and the world takes it.
 A played Blessed returns to reserve, never reaching discard or a survival scan.

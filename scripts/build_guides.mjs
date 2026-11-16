@@ -85,7 +85,7 @@ const redirect = `<!doctype html>
 <body><p>The rules live in <a href="rules.html">rules.html</a>, generated from RULES.md. The table summary is the <a href="rules_reference_card.html">rules reference card</a>.</p></body></html>
 `;
 for (const file of ["player_guide.html", "reference.html"]) await writeFile(path.join(root, file), redirect);
-for (const file of ["rules.html", "trick_taking_rpg_rules_v4.html"]) await writeFile(path.join(root, file), page("Trick — Rules", render(rules), "RULES.md", false));
+for (const file of ["rules.html", "trick_taking_rpg_rules_v4.html"]) await writeFile(path.join(root, file), page("TRICK — Rules", render(rules), "RULES.md", false));
 await writeFile(path.join(root, "trick_rules_reference.txt"), `CURRENT RULES — generated from RULES.md\n\n${rules}`);
 const descriptions = ["CURRENT CARD TEXT — generated from the tables in RULES.md", ""];
 for (const card of Object.values(cards)) descriptions.push(`${card.title} (${card.suitLabel})`, ...card.lines, "");

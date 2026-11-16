@@ -92,11 +92,11 @@ const ITEM_ENTRIES = [
     lines: [
       "<em>A small splitting wedge of black stone; what it is driven into fails the moment someone else trusts it.</em>",
       "Wake: Drive it by hand into something another will trust with their weight, and leave it there.",
-      "Effect: After the deal, wedge 1 world card. If it would win a trick, it wins nothing; decide the trick without it.",
+      "Effect: After the deal, wedge 1 world card. It cannot take its trick; the highest on-suit card played takes it instead, if any.",
       "Cost: For this check, your highest Strength card in hand counts as half its printed value, rounding down.",
       "<em>You test your weight on everything now.</em>"
     ],
-    previewDescription: "Wedge one world card: it holds until the world leans on it, then fails to take the trick."
+    previewDescription: "Wedge one world card: when the world leans on it, the trick falls to the best on-suit play instead."
   },
   {
     id: "grip-bone",
@@ -141,10 +141,10 @@ const ITEM_ENTRIES = [
       "<em>A blood-red thread that, when tugged, drags whatever it holds back to its anchor with the force of the tug.</em>",
       "Wake: Anchor one end to something that will not move, and tie the other around what you want returned.",
       "When: Your approach is Dexterity.",
-      "Effect: After the deal, set 1 card aside. Before a lead, tug the thread and take it back into hand. While set aside, it is not in your hand for any purpose, including following suit.",
+      "Effect: After the deal, set 1 card aside beside the world row. Before a trick, tug it back into hand; until played, it counts 1 higher for each trick it was away.",
       "<em>The thread leaves a raw red line on whatever it has held, deeper the farther it was dragged.</em>"
     ],
-    previewDescription: "Send a card away to open a void, then tug it back when the timing is right."
+    previewDescription: "Send a card down the row, then tug it back with force built from every trick it was gone."
   },
   {
     id: "crooked-key",
@@ -205,11 +205,11 @@ const ITEM_ENTRIES = [
       "<em>A jar filled with whispered secrets, whirring softly.</em>",
       "Wake: Whisper a true secret that has never been spoken aloud into the jar, then seal it.",
       "When: Your approach is Weird.",
-      "Effect: Before a lead, choose 1 unplayed world card. It counts as Stress for the rest of the check.",
+      "Effect: Before a trick, choose 1 unplayed world card. It counts 0 for beating, but whoever takes it scores its printed value.",
       "Cost: Gain 1 Stress. The secret is heard by everyone nearby, and the jar will not hold it twice.",
       "<em>You poke and prod others to fill the jar with their secrets.</em>"
     ],
-    previewDescription: "Silences the world's best card, paid for with a secret you cannot take back."
+    previewDescription: "Silences one world card so anyone can take its prize, paid for with a secret you cannot take back."
   },
   {
     id: "scoped-rifle",
@@ -238,8 +238,8 @@ const ITEM_ENTRIES = [
       "<em>A blank mask, smooth as a river stone, with no expression of its own.</em>",
       "Wake: Peer deeply into someone's eyes. The mask takes their true feeling and wears it; the GM names its suit.",
       "When: Your approach is Weird.",
-      "Effect: The first trick led in that suit inverts: the lowest card of that suit wins, trump does not apply, and ties go to the latest played.",
-      "Cost: At cleanup, gain 1 Curse if that suit never led.",
+      "Effect: The first trick whose world card is that suit inverts: the lowest card of that suit played wins if it is below the world card. Trump does not apply.",
+      "Cost: At cleanup, gain 1 Curse if no world card was that suit.",
       "<em>Take the mask off and it becomes difficult to hide whatever you truly feel.</em>"
     ],
     previewDescription: "Steal a true feeling from someone, and one trick runs backwards."
@@ -269,7 +269,7 @@ const ITEM_ENTRIES = [
     lines: [
       "<em>A brass cricket that chirps when staying where you are will bring you harm.</em>",
       "Wake: When it chirps, start moving.",
-      "Effect: Before a lead, ask what harm will reach you before the trick ends if you stay where you are. The GM answers briefly and truthfully. If the answer names a harm, you may put 1 card from hand on the bottom of your deck, then draw 1.",
+      "Effect: Before a trick, ask what harm will reach you before the trick ends if you stay where you are. The GM answers briefly and truthfully. If the answer names a harm, you may put 1 card from hand on the bottom of your deck, then draw 1.",
       "Cost: Gain 1 Stumble.",
       "<em>Every silence sounds like the pause before a warning.</em>"
     ],
@@ -285,7 +285,7 @@ const ITEM_ENTRIES = [
     lines: [
       "<em>A smoked-glass lens that makes a shard replay one scene its mirror witnessed in the room.</em>",
       "Wake: Shatter an intact mirror that stood in this room during the scene you seek, then hold the lens over its largest shard.",
-      "Effect: The GM describes 1 minute from that earlier scene and names 1 detail that still shapes the present. Before drawing, look at the top 3 world cards, put 1 on the bottom of its deck, and return the others in the same order.",
+      "Effect: The GM describes 1 minute from that earlier scene and names 1 detail that still shapes the present. After the deal, look at the top 3 cards of the world deck; you may swap 1 of them with 1 world card in the row.",
       "Cost: Gain 1 Stress and 1 Curse (compulsion: you may not use mirrors).",
       "<em>Mirrors no longer reflect the present to you, but an indiscernible past.</em>"
     ],
@@ -317,7 +317,7 @@ const ITEM_ENTRIES = [
       "<em>A petrified-wood sledge that crushes a skeleton into one bone pin.</em>",
       "Wake: Shatter a named headstone, exhume the corpse, and crush every bone.",
       "Effect: Drive the pin through 2 touching things; nothing can separate them.",
-      "If driven during a check, pin 1 ordinary card in hand face up after the deal. For that check only, it stays in hand, and once per trick you may play it, if legal, without moving it.",
+      "If driven during a check, pin 1 ordinary card in hand face up after the deal. For that check, each time you play it, it returns to your hand instead of giving a consolation.",
       "<em>The pin imbues the joining and the objects it pierces with a bound fate.</em>",
       "Reveal its price."
     ],
@@ -380,11 +380,11 @@ const ITEM_ENTRIES = [
       "<em>A brass bell-chain; anyone who hears it hears nothing else until it stops.</em>",
       "Wake: Ring it while people in earshot listen for something else.",
       "When: Your approach is Dexterity.",
-      "Effect: After any trick but the last, you may ring it. Before the next lead, everyone who hears it, you included, sets 1 card face down; an affected world sets its leftmost. Reveal each on its owner's turn; it is legal, and a follower counts as unable to follow. You may ring it again later.",
+      "Effect: After any trick but the last, you may ring it. In the next trick, everyone else who hears it plays a random card from hand. You may ring it again later.",
       "<em>One bell rings on, and you cannot find it.</em>",
       "Reveal its price."
     ],
-    previewDescription: "Makes everyone who hears it commit a card before the next lead, deaf to every other play."
+    previewDescription: "Deafens everyone in earshot for a trick: they play blind while you choose."
   },
   {
     id: "hushbell-chain-price",
@@ -441,7 +441,7 @@ const ITEM_ENTRIES = [
     lines: [
       "<em>A blackened brass lantern whose cold flame gives a captured spirit form.</em>",
       "Wake: With no cards tucked, catch a final breath in its chimney or coax in a lingering spirit. Tuck the top 7 world cards face up beneath it, outside the deck until invoked.",
-      "Effect: Before drawing, move the tucked cards into a dead-hand row. It sits after you, follows the world's rule, uses your personal trump, and scores its wins for your goal. It may lead. When empty, it sits out and the world leads in its place.",
+      "Effect: Before drawing, move the tucked cards into a face-up dead-hand row. Each trick it plays its leftmost card with everyone, using your trump; world cards it takes score for you. It takes no consolations.",
       "<em>The spirit stands beside you, aiding your work with the skills they carried in life.</em>",
       "Reveal its price."
     ],
@@ -503,11 +503,11 @@ const ITEM_ENTRIES = [
       "<em>A seamless linen blindfold dusted with pollen from no living flower.</em>",
       "Wake: Face a built barrier, put it on, and walk forward without reaching for it. Do not remove it until you mean to return.",
       "When: Your approach is Dexterity.",
-      "Effect: You may ignore follow-suit, counting as unable to follow. Your first off-suit win fulfills your goal; then sit out the rest. Competing goals resolve normally.",
+      "Effect: Your cards win whatever their suit. Your first win with a card in neither your trump nor the world card's suit lands you exactly on target; then sit out the rest.",
       "<em>Behind the cloth, the air is hot and wet, and the ground has never known a road.</em>",
       "Reveal its price."
     ],
-    previewDescription: "Walks around human barriers through an older world; an off-suit win fulfills your goal, then you step out of the check."
+    previewDescription: "Walks around human barriers through an older world; an off-suit win lands you exactly on target, then you step out of the check."
   },
   {
     id: "hollow-blindfold-price",
@@ -517,12 +517,12 @@ const ITEM_ENTRIES = [
     suit: "dexterity",
     domain: "Reveal After Use",
     lines: [
-      "Price: Your next check is a lone 7-trick Dexterity check against the world to remove the blindfold and return safely. Your goal costs 3. You return whether you succeed or fail.",
-      "Price: On failure, the GM chooses what fits your return: you appear partly inside something solid and gain 2 Injuries, or a creature follows you back.",
+      "Price: Your next check is a lone solo check against the world, approach Dexterity, target 6, to remove the blindfold and return safely. You return whatever the result.",
+      "Price: On a failure or bust, the GM chooses what fits your return: you appear partly inside something solid and gain 2 Injuries, or a creature follows you back.",
       "<em>The land is familiar, but no human hand has touched it.</em>",
       "<em>You sense that hungry beasts roam this place, and some are patient enough to follow you back.</em>"
     ],
-    previewDescription: "A lone 3-of-7 return through an untouched world, risking solid matter or a living follower."
+    previewDescription: "A lone return through an untouched world, risking solid matter or a living follower."
   },
   {
     id: "dying-ring",

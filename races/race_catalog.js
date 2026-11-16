@@ -45,7 +45,7 @@ const RACE_ENTRIES = [
     rules: [
       "Any pact you make with a mortal binds both of you to its terms.",
       "Before drawing, name the bargain you would strike this check.",
-      "Once per check, before a lead, you may strike it: gain 1 Curse (compulsion: its terms), then shuffle and discard your hand and draw the same number of cards."
+      "Once per check, before a trick, you may strike it: gain 1 Curse (compulsion: its terms), then shuffle and discard your hand and draw the same number of cards."
     ],
     previewDescription: "Your pacts bind both sides; strike a named bargain for a Curse and a whole new hand."
   },
@@ -59,7 +59,7 @@ const RACE_ENTRIES = [
     rules: [
       "You sense warmth, movement, nearness, and drafts even in complete darkness, but cannot perceive color, writing, or other purely visual detail.",
       "When you must draw from an empty deck, after any evolution and before shuffling, you may return 1 Injury from discard to reserve.",
-      "When the scene is dark, once per check before a lead, you may discard 1 card from hand and draw 1."
+      "When the scene is dark, once per check before a trick, you may discard 1 card from hand and draw 1."
     ],
     previewDescription: "Work an Injury out whenever your deck reshuffles, and in the dark trade one card for another."
   },

@@ -1,8 +1,8 @@
 CURRENT RULES — generated from RULES.md
 
-# Trick
+# TRICK
 
-This file is the single source for the rules: the card faces print its tables, and the browser and text versions are generated from it. The two-sided [rules reference card](rules_reference_card.html) condenses it for the table. Setting abilities and items are optional supplements.
+**TRICK** (Tabletop Roleplaying Interactive Card Kit) resolves uncertain moments with **Tally checks**. This file is the single source for the rules: the card faces print its tables, and the browser and text versions are generated from it. The two-sided [rules reference card](rules_reference_card.html) condenses it for the table, and the [playtest sheet](docs/alternatives/tally_sheet.pdf) puts a check on two pages. Design notes and simulations are in [TALLY.md](docs/alternatives/TALLY.md). Setting abilities and items are optional supplements.
 
 ## Decks and suits
 
@@ -27,66 +27,77 @@ The GM brings one standard deck and uses its A–10 cards for the world. Shuffle
 
 ## Shared rules
 
-- Each player has **one fixed goal and approach** per check. Each win scores one trick for your own goal, even after meeting its cost; never pool or transfer wins. Help each other through fiction and card play.
+- Each player has **one goal, one target, and one approach** per check. You score only your own tally; tallies are never pooled or transferred. Help each other through fiction and card play.
 - **Finish negotiation before drawing.** During play, choose independently: no tactical discussion, card advice, or signals. A card cannot be taken back once played. Narration, rules questions, and effect declarations are welcome, but cannot coordinate tactics.
-- **Printed suit** determines consolation; **printed value** powers Brace. Next-play effects expire after that play or at check end.
+- **Printed suit** determines consolation. A card's **value** decides only whether it wins; what you score is the world card you take.
 - Gained cards come from reserve; removed cards return there. Gained statuses enter discard immediately; gain no copy if none remain in reserve. **Gain Injuries only at cleanup or between checks**; Injury consequences arising during play wait for cleanup.
-- Keep played cards in a **row in play order until cleanup**, unless an effect removes them. Never rearrange discard; its top card is the most recently discarded.
+- Keep your played cards in a **row in play order until cleanup**, unless an effect removes them or returns them to hand. Keep the world cards you take face up in a separate **tally pile**. Never rearrange discard; its top card is the most recently discarded.
 
 ## Start a check
 
-1. Choose **N from 1–13 tricks** to fit the situation. Use **1 trick** for a quick check.
-2. Check each player's discard for survival before drawing or reshuffling.
-3. Agree goals, costs, failure consequences, and any incompatible goals or stalemates. Each player and the world declare an approach whose suit is their **personal trump**, fixed for the check. **An approach must fit the fiction**: being good at sneaking does not help once you have been spotted. The GM has final say on whether an approach applies and may rule out one the situation has closed off. The world is the first leader unless the GM specifies someone else.
-4. Each participant draws N cards. Deal the world's cards face-up in a fixed row. Resolve draw effects as cards are drawn.
+1. Check each player's discard for survival before drawing or reshuffling.
+2. Agree goals, **targets**, stakes, and any incompatible goals or stalemates. Each player declares an approach whose suit is their **trump**, fixed for the check. **An approach must fit the fiction**: being good at sneaking does not help once you have been spotted. The GM has final say on whether an approach applies and may rule out one the situation has closed off.
+3. Size the check, then deal the world **one card per trick, face up in a row**, from its shuffled A–10 deck. Everyone draws the same number. Resolve draw effects as cards are drawn.
 
-Cost guide: **1** for a narrow advantage, **2** for a modest outcome, **3** for a substantial outcome, **5** for an ambitious outcome. The whole table has only N tricks to divide among goals and the world.
+| Check | Tricks | Targets | Default |
+| --- | --- | --- | --- |
+| Standard | 3 per player, +1 | 3–20 | 10 |
+| Quick | 2 per player, +1 | 3–10 | 5 |
+| Solo | 6 | 3–10 | 6 |
 
-Sizing guide: a typical check runs **2p + 1 tricks for p players**, leaving each player room for a modest goal once the world takes its share. Go below that to squeeze the table, above it when goals are ambitious or numerous.
+The **target sets the difficulty**. Each player may have their own target if their tasks differ.
 
-On failure, each exposed participant normally gains an appropriate status; agree any different or additional consequences before dealing.
+| Target | Difficulty | Exact hit | 7 or more short |
+| --- | --- | --- | --- |
+| 3–6 | Easy | 24–41% | never |
+| 7–10 | Moderate | 16–35% | 7–16% |
+| 11–14 | Hard | 8–21% | 16–39% |
+| 15–17 | Very hard | 5–13% | 40–61% |
+| 18–20 | Extreme | 2–8% | 57–75% |
 
-**Forced goals.** An immediate threat can require your goal: if attacked, you must get through the attack safely. The GM sets the outcome, cost, and failure consequence; you choose the approach. Combine simultaneous threats into one goal. New threats during play resolve through agreed consequences or a forced goal in the next check.
+Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less.
+
+**Forced goals.** An immediate threat can require your goal: if attacked, you must get through the attack safely. The GM sets the outcome, target, and stakes; you choose the approach. Combine simultaneous threats into one goal. New threats during play resolve through agreed consequences or a forced goal in the next check.
 
 ## Play the tricks
 
-1. Everyone plays **face-up in turn order**, beginning with the leader and continuing clockwise, the world at the GM's seat. Each card stays visible as it lands, so later players see exactly what they must beat. **Follow the led suit if able.** If your hand is empty, sit out that trick; if you were to lead, the world leads instead. Hands run dry early only when an effect removes a card without replacing it.
-2. The world plays its leftmost legal card, following suit when possible. When leading or unable to follow, it plays its leftmost card.
-3. A card is trump if its suit matches **its owner's personal trump** and its owner **could not follow the led suit**. The **highest trump** takes the trick; with no trump played, the **highest card of the led suit** takes it. Break a tie by the **earliest card played**. World wins score nothing for players.
-4. Resolve after-play status effects, then optional consolations.
-5. The winner leads next, unless anyone played Stumble: then the world leads. Play all N tricks.
+1. **The world leads** the next card in its row.
+2. **Everyone chooses a card face down,** then all reveal together. If your hand is empty, sit out that trick.
+3. **Find the single highest card on the table,** counting the world card and any Brace. If it is a player's card, and in the world card's suit **or** its owner's trump, it **wins**: its owner takes the world card into their tally pile and **scores its value**.
+4. Otherwise **the world takes the trick**: the world card is highest, the highest card is off-suit, or the top cards tie. Discard that world card.
+5. **Everyone who did not win** takes their card's consolation, all at once, before the next trick. Then play the next trick, until the row is used up.
 
-The leader never plays trump, having chosen the suit themselves, so leading is a weaker seat than following. Being unable to follow is an opportunity, not a penalty: you may spend your trump to take the trick, or play a card of another suit to keep that trump for later.
+The winner has to beat everyone. **A high off-suit card cannot win, but it blocks:** nobody beats it, so the world takes the trick. **Winning is not optional:** if your card is highest and on-suit, you take the world card even if it busts you. To stay safe, play low, or let someone play over you.
 
-**Suit changes.** Revelation replaces the suit: for your next play, treat cards in hand as the chosen suit when checking follow-suit. Use that suit for leading and trump; consolation still uses the printed suit. Your whole hand takes that suit, so you follow the led suit if the chosen suit matches it and are unable to follow if it does not — choosing your own trump suit when the led suit differs lets you win the trick. Apply suit changes and Brace before comparing cards; your personal trump never changes.
-
-Narrate progress and setbacks within your approach; other suits can represent supporting actions.
+With the whole row visible, the real decision is **which world cards to go after**, and which to leave for allies. Narrate progress and setbacks within your approach; other suits can represent supporting actions.
 
 ## Consolations
 
-On a **trick loss**, you may take your consolation, including when an ally won. Resolve it independently while everyone else resolves theirs; finish before the next lead. After the final trick, only Revelation's question is available.
+On a **trick loss**, take your losing card's consolation, including when an ally won. Resolve it independently while everyone else resolves theirs; finish before the next trick. There are no consolations after the final trick.
 
 | Suit | Effect |
 | --- | --- |
-| **Strength — Brace** | On your next play, add or subtract **your losing card's** printed value to or from the card you play, minimum 0. Choose which as you play the card. |
-| **Dexterity — Reposition** | You may ignore follow-suit on your next play, which **counts as being unable to follow**, so your personal trump can win the trick. |
-| **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. If that draw reshuffles your deck, you may evolve. |
-| **Weird — Revelation** | Choose one: **ask the GM one question about the current situation and receive a brief, truthful answer**, or **put a status from discard on top of your deck; your next played card's suit becomes that status's suit instead of its own**. |
+| **Strength — Brace** | Your next card counts this card's printed value higher for beating. It never changes what you score. |
+| **Dexterity — Slip** | Return this card to your hand. You lost the trick, but spent nothing. |
+| **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. |
+| **Weird — Mirror** | If your next card wins, the world card scores 11 minus its value. |
 
-Revelation may reveal something your character could not ordinarily know. Brace changes value, not suit priority. **Braces never stack**: you hold at most one, and a new Brace replaces any you are still holding.
+Brace and Mirror last for your next play only: turn the losing card sideways as a reminder. Turn a Mirrored world card upside down in your tally pile so its changed score stays visible.
 
 ## Statuses
 
-Statuses follow normal playing and winning rules unless stated below.
+Statuses are ordinary cards worth 0. They follow every playing and winning rule, and their printed suit gives its consolation as usual: Injury Braces for 0, Stumble slips back to hand, Stress recalculates, and Curse Mirrors.
 
 | Status | Effect |
 | --- | --- |
 | **Injury — Strength** | Two or more Injuries in your top N discard cards make survival your forced goal. Gain Injuries only at cleanup or between checks. |
-| **Stumble — Dexterity** | If anyone plays Stumble, the world leads the next trick, regardless of who won. |
+| **Stumble — Dexterity** | When you play Stumble, discard an ordinary card from your hand, your choice. |
 | **Stress — Intelligence** | Whenever you draw Stress, gain one Stress into discard. This includes redraws and cards drawn during play. |
 | **Curse — Weird** | Your Curses share one supernatural compulsion. Each violation gains one Stress for every Curse not in your reserve. Remove Curses through evolution, never rest. |
 
 Record the compulsion with your first Curse; further Curses share it. An effect can name a compulsion, written **gain 1 Curse (compulsion: …)**: a first Curse records it, and a later Curse adds it as another term of the same compulsion. Count six minus the Curses still in your reserve. Removing your last Curse ends the whole compulsion.
+
+A Braced status can win: a 0 Braced by 6 beats a world 5, and you score the 5.
 
 ## Blessed
 
@@ -94,12 +105,11 @@ Your four jokers are **Blessed** cards. Blessed is not a status: rest, evolution
 
 The GM grants a Blessed for play at the table rather than anything a character did — recapping the last session, sharp roleplaying, keeping the table going. A granted Blessed moves from reserve to the **top of your deck**, so you draw it on your next draw. Gain no copy if none remain in reserve.
 
-- **Blessed wins any trick it is played in**, beating trump. It has no suit: it never follows suit and is always legal to play.
-- **Leading Blessed sets no led suit**; everyone else plays whatever they like.
-- If two Blessed meet in one trick, the earliest played wins.
+- **Blessed always takes the trick it is played in** and scores the world card. It has no suit.
+- If two Blessed meet in one trick, they tie, and the world takes it.
 - A played Blessed **returns to reserve**, never reaching discard or a survival scan.
 
-An unplayed Blessed cleans up like an ordinary card: it goes to discard and cycles back around, so hold one by simply not playing it. Brace expires unused on a Blessed, which has no value to change.
+An unplayed Blessed cleans up like an ordinary card: it goes to discard and cycles back around, so hold one by simply not playing it. A Blessed gives no consolation.
 
 **Giving.** Between tricks you may give your Blessed to another player, who takes it into hand; then draw one card yourself. Handing it over is the one signal the no-coordination rule allows — no discussion, advice, or tactical talk accompanies it. The new holder plays, holds, and cleans it up exactly as if they had drawn it.
 
@@ -118,25 +128,36 @@ At a GM-granted rest, remove any number of non-Curse statuses from discard. **Ho
 
 ## Resolve the check
 
-A goal succeeds when its score meets its cost. Several compatible goals may succeed. Among incompatible goals that meet their costs, the **greatest margin over cost** wins. A tie produces the agreed stalemate.
+Your **tally** is the total of the world cards in your tally pile, with Mirrored cards counting 11 minus their value.
+
+| Final tally | Result |
+| --- | --- |
+| Exactly the target | **Critical success.** You get it, and more. Return one non-Curse status from your discard to reserve. |
+| 1–3 short | **Success,** with a minor complication. |
+| 4–6 short | **Partial success,** with a serious complication. It may be a status. |
+| 7 or more short | **Failure.** Each exposed participant normally gains a fitting status. |
+| Over the target | **Bust: critical failure.** It goes wrong, loudly. Gain your trump suit's status. |
+
+A Curse gained on a bust names its compulsion after what went wrong. Agree any different or additional consequences before dealing. Among incompatible goals, the better result wins; on the same result, the tally closer to its target wins. A tie produces the agreed stalemate.
 
 Resolve goals and deaths, then clean up:
 
-1. Shuffle unplayed cards together and discard them.
-2. Discard your played row from earliest to latest, skipping cards already removed.
-3. Add consequence statuses on top, with **Injuries last**.
+1. Return world cards to the GM's deck.
+2. Shuffle unplayed cards together and discard them.
+3. Discard your played row from earliest to latest, skipping cards already removed.
+4. Add consequence statuses on top, with **Injuries last**.
 
 ## Survival
 
-For living characters, count **M Injuries** in the top **N** discard cards, or all cards if fewer exist. Below two, nothing happens. At **two or more**, survival becomes that player's forced goal, costing **M tricks**. It takes priority over other goals. **Failure means death.**
+For living characters, count **M Injuries** in the top **N** discard cards, where N is the check's number of tricks, or all cards if fewer exist. Below two, nothing happens. At **two or more**, survival becomes that player's forced goal, with **target 2 × M**. It takes priority over other goals. **A bust, or landing 7 or more short, means death;** any other result is survival, with that result's complications.
 
 | Scan trigger | N | Survival applies |
 | --- | --- | --- |
-| Check start, before drawing | Upcoming check's size | In this check |
-| Injury gained at cleanup or between checks | Most recently completed check's size | In an immediate check |
+| Check start, before drawing | Upcoming check's tricks | In this check |
+| Injury gained at cleanup or between checks | Most recently completed check's tricks | In an immediate check |
 
 Gain-triggered checks use the scan's N, with **no rest beforehand**. Lock M when it triggers; later card movement cannot change it. Use an already-recorded requirement without duplicating it.
 
 Only check starts and Injury gains trigger scans. Other discard changes, including cleanup, wait for the next start scan. Injuries outside discard do not count.
 
-Success leaves Injuries in place, so a later scan can require survival again. Rest may clear them before an ordinary check.
+Survival leaves Injuries in place, so a later scan can require survival again. Rest may clear them before an ordinary check.

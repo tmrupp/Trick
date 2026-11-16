@@ -5,17 +5,17 @@ Use with [RULES.md](../RULES.md). The live cards are in [item_catalog.js](item_c
 ## At the table
 
 - Before drawing, agree that the item applies, satisfy its **Wake**, and settle any bargain.
-- Unless stated otherwise, invoke an item once per check, before a lead.
+- Unless stated otherwise, invoke an item once per check, before a trick.
 - An item may change a card's suit. It never changes declared trump.
-- A value an item changes counts only when determining the trick winner. Printed value, Brace, and consolation never change.
+- A value an item changes counts only when determining the trick winner. Printed value, Brace, and consolation never change. A world card you take scores its printed value unless an item says otherwise.
 - Drawing means taking the top card of your draw pile. Taking a card into hand from anywhere else is not drawing, so Stress does not duplicate. Taking a card out of discard is not rearranging it. Extra cards do not add tricks.
 - Obey reserve limits and the thirteen-ordinary-card minimum. Discard extra or tucked cards with leftovers unless their effect names another destination.
 - Costs and revealed Prices apply whenever the power is used, including outside a check. Outside a check, resolve them immediately unless the text names a later consequence. Injury still triggers the normal survival procedure.
 - If a Cost needs a hand or trick result, make a check. Do not waive it.
 
-Carrying or inspecting an item does not invoke it, and fictional use grants no later card benefit. Each player still scores only their own goal.
+Carrying or inspecting an item does not invoke it, and fictional use grants no later card benefit. Each player still scores only their own tally.
 
-A personal card pool is the draw pile, hand, discard, played row, cards held by items, and reserve. Exchanging pools also transfers the Curse compulsion. If several effects alter the world row before play, resolve them in seating order from the first leader.
+A personal card pool is the draw pile, hand, discard, played row, cards held by items, and reserve. Exchanging pools also transfers the Curse compulsion. If several effects alter the world row before play, resolve them in seating order, starting to the GM's left.
 
 ## Card anatomy
 
@@ -42,7 +42,7 @@ Omit empty slots. Never write “None.”
 
 ## Wording
 
-Use only these timing anchors: `before drawing`, `after the deal`, `before a lead`, `after a trick`, `at cleanup`, `between checks`.
+Use only these timing anchors: `before drawing` (before the world row is dealt), `after the deal`, `before a trick` (before anyone chooses a card), `after a trick`, `at cleanup`, `between checks`.
 
 Use exact gates: `When your approach is Strength,` or Dexterity, Intelligence, Weird; `When survival is your forced goal,`.
 

@@ -1,11 +1,34 @@
-# TRICK game engine
+# TRICK, digital
 
-The rules of [RULES.md](../RULES.md) as code, for the phone-controlled version planned in [docs/digital/PLAN.md](../docs/digital/PLAN.md). This is phase 1: the engine, with no server or screens yet.
+The rules of [RULES.md](../RULES.md) as code, and a host server for playing them with phones, as planned in [docs/digital/PLAN.md](../docs/digital/PLAN.md). Phases 1 (the engine) and 2 (the server and lobby) are done; the screens are still bare.
 
 ```bash
-npm test             # rule tests, replay and card-conservation checks, and the parity test
+npm start            # host with a public link through a Cloudflare quick tunnel
+npm run start:local  # host on this computer only
+npm test             # engine rules, replay, card conservation, parity, and server tests
 npm run sim:engine   # bots play the default scene through the engine (add a number of checks)
 ```
+
+## Hosting a game
+
+1. **Install cloudflared once** for the public link: on Windows, `winget install --id Cloudflare.cloudflared`. Without it, `npm start` still runs, local only.
+2. **Run `npm start`.** It prints a private host page link (with an admin token) and a public `trycloudflare.com` link. The public link changes each time you start.
+3. **On the host page,** create a campaign or open a saved one. Each campaign shows its room code, a QR code and join link for players, a link to the table screen, and the secret GM link.
+4. **Players** scan the QR code or open the join link, enter a name, and create their character on their phone. A phone that sleeps or drops rejoins its seat automatically.
+5. **The GM** opens the GM link, on a phone or the laptop. They can play a character too, set the seating, run checks, add consequences, and remove a seat.
+
+Campaigns are saved in `game/saves/` (one file each, ignored by git) after every action, and replay exactly when reopened. Old join links keep working when the same campaign is opened again; the tunnel's address is new each time.
+
+**Keep two links private:** the host page link (it opens campaigns) and the GM link (it runs the game). The join link and room code are for players. Joins are rate-limited per address, rooms hold at most ten players, and the GM can remove a seat.
+
+## The server
+
+- `server/app.mjs` serves the pages, the admin API (`/api/*`, needs the `x-admin` token) and one WebSocket per screen at `/ws`.
+- `server/room.mjs` holds a campaign's state and seats, checks who may send each action, and sends each client only `viewFor()` its own role: players act only for their own character, and the GM may do anything.
+- `server/store.mjs` saves campaigns atomically. `server/tunnel.mjs` starts the quick tunnel.
+- `public/` holds the bare pages: `host.html`, `table.html` (the big screen), `play.html` (a phone) and `gm.html`.
+
+Messages are JSON: a client sends `hello` (`{ room, as: "player" | "gm" | "table", token, name, gmKey }`), then `action` (`{ seq, action }`) or `manage` (`{ seq, op: "remove", seatId }`). The server answers `welcome`, `view` (the room, the client's view and the latest events), `ok`, `rejected` (with a reason to show) or `error`.
 
 ## How it works
 
@@ -46,7 +69,7 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | `addConsequence { charId, suit, compulsion }`, `endCheck` | After the final trick | GM |
 | `gainStatus`, `curseViolation`, `rest`, `grantBlessed` | Between checks (`grantBlessed` any time) | GM |
 
-Checking who may send which action is the server's job (phase 2).
+The server checks who may send which action: see *The server* above.
 
 ## Rulings the engine makes
 

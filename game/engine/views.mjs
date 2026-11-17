@@ -61,7 +61,6 @@ function checkPublic(ck) {
 
 export function viewFor(state, who) {
   const view = {
-    seed: who.role === "gm" ? state.seed : undefined,
     seats: state.seats.slice(), gmSeat: state.gmSeat,
     characters: {},
     check: checkPublic(state.check),
@@ -75,7 +74,9 @@ export function viewFor(state, who) {
     if (who.role === "gm") {
       view.hands = Object.fromEntries(ck.participants.map((id) => [id, ck.players[id].hand.map(pub)]));
       view.locks = Object.fromEntries(Object.entries(ck.locks).map(([id, l]) => [id, { ...l }]));
-      view.pending = ck.pending.map((x) => ({ ...x }));
+      const active = ck.pending.find((y) => y.type === "peek");
+      view.pending = ck.pending.map((x) => (x === active ? { ...x, top: pub(ck.worldDeck[ck.worldDeck.length - 1]) } : { ...x }));
+      view.legal = Object.fromEntries(ck.participants.map((id) => [id, ck.phase === "play" ? legalCards(state, id) : []]));
     }
     if (who.role === "player" && ck.players[who.charId]) {
       const p = ck.players[who.charId];

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TRICK host</title>
+<link rel="stylesheet" href="/shared/style.css">
+</head>
+<body>
+<h1>TRICK host</h1>
+<p class="muted small">Keep this page's address private: it can open campaigns and shows the GM link.</p>
+<div id="error" class="panel" hidden></div>
+<div class="panel">
+  <h2>New campaign</h2>
+  <form id="create" class="row">
+    <input id="name" placeholder="Campaign name" required maxlength="60">
+    <button class="primary">Create and open</button>
+  </form>
+</div>
+<div id="open"></div>
+<h2>Saved campaigns</h2>
+<div id="saved" class="panel"></div>
+<script type="module">
+import { h, params } from "/shared/client.js";
+const admin = params.get("admin");
+const api = async (path, body) => {
+  const r = await fetch(path, { method: body ? "POST" : "GET", headers: { "x-admin": admin, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || "Request failed");
+  return data;
+};
+const err = document.getElementById("error");
+function render(info) {
+  err.hidden = true;
+  const open = document.getElementById("open");
+  open.replaceChildren(...info.rooms.map((r) => {
+    const join = `${info.publicUrl}/j/${r.code}`;
+    const gm = `${info.publicUrl}/gm?room=${r.code}&key=${encodeURIComponent(r.gmKey)}`;
+    return h("div", { class: "panel" },
+      h("h2", {}, r.name),
+      h("div", { class: "row" },
+        h("div", { class: "qr", id: `qr-${r.code}` }),
+        h("div", {},
+          h("div", { class: "muted small" }, "Room code"), h("div", { class: "code" }, r.code),
+          h("p", {}, "Players join at ", h("a", { href: join, target: "_blank" }, join)),
+          h("p", {}, h("a", { href: `/table?room=${r.code}`, target: "_blank" }, "Open the table screen"), " · ", h("a", { href: gm, target: "_blank" }, "Open the GM controls")),
+          h("p", { class: "muted small" }, "The GM link is secret: anyone with it runs the game."))),
+      h("h3", {}, "Seats"),
+      h("ul", {}, r.seats.length ? r.seats.map((s) => h("li", {}, h("span", { class: `status-dot${s.connected ? " on" : ""}` }), `${s.name}${s.role === "gm" ? " (GM)" : ""}${s.charId ? "" : " — no character yet"}`)) : h("li", { class: "muted" }, "Nobody has joined yet.")));
+  }));
+  for (const r of info.rooms) {
+    const join = `${info.publicUrl}/j/${r.code}`;
+    fetch(`/qr.svg?text=${encodeURIComponent(join)}`).then((x) => x.text()).then((svg) => { const el = document.getElementById(`qr-${r.code}`); if (el) el.innerHTML = svg; });
+  }
+  const openIds = new Set(info.rooms.map((r) => r.id));
+  const saved = document.getElementById("saved");
+  saved.replaceChildren(info.campaigns.length ? h("table", {}, h("tbody", {}, info.campaigns.map((c) =>
+    h("tr", {}, h("td", {}, h("strong", {}, c.name), h("div", { class: "muted small" }, c.characters.join(", ") || "No characters")),
+      h("td", { class: "muted small" }, new Date(c.updatedAt).toLocaleString()),
+      h("td", {}, openIds.has(c.id) ? h("span", { class: "muted" }, "Open") : h("button", { onclick: () => api("/api/open", { id: c.id }).then(render).catch(show) }, "Open")))))) : h("p", { class: "muted" }, "No saved campaigns yet."));
+}
+const show = (e) => { err.hidden = false; err.textContent = e.message; };
+document.getElementById("create").addEventListener("submit", (e) => {
+  e.preventDefault();
+  api("/api/campaigns", { name: document.getElementById("name").value }).then(render).catch(show);
+});
+const refresh = () => api("/api/info").then(render).catch(show);
+refresh();
+setInterval(refresh, 4000);
+</script>
+</body>
+</html>

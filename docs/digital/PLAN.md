@@ -125,7 +125,7 @@ Every view is complete, so a phone that reconnects just draws the latest one. Ev
 | Phase | Builds | Done when |
 | --- | --- | --- |
 | **1. Engine** *(done: [game/](../../game/README.md))* | Rules as pure functions, seeded RNG, action log, per-client views, bots, tests for every rule in RULES.md. | A whole check plays from a script with bots, and the parity test passes. |
-| **2. Server and lobby** | Rooms, join by QR or code, seats and order, reconnect tokens, per-client views, save and load. | Five phones join, one sleeps and returns to the same seat, and no client ever receives another's hand. |
+| **2. Server and lobby** *(done)* | Rooms, join by QR or code, seats and order, reconnect tokens, per-client views, save and load. | Five phones join, one sleeps and returns to the same seat, and no client ever receives another's hand. |
 | **3. A playable check** | Big screen, phone hand and GM controller for one check: setup, tricks, reveal, consolations, statuses, result. | A table of three plays a standard check start to finish with no rules lookups. |
 | **4. Between checks** | Cleanup, discard and reshuffle, evolution, rest, survival scans, Blessed, Curses, and a saved session. | A session of several checks, with Injuries and a survival check, resumes after the host restarts. |
 | **5. Playtest build** | Reveal animation and pacing, a "why did that happen" line for every trick, a rules sheet on the phone, accessibility. | Real playtests, which the simulations keep asking for. |

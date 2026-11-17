@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TRICK table</title>
+<link rel="stylesheet" href="/shared/style.css">
+</head>
+<body>
+<div class="row" style="justify-content: space-between">
+  <h1 id="title">TRICK</h1>
+  <div class="row"><span class="muted small">Join at</span><span id="joinlink" class="small"></span><span class="code" id="code"></span></div>
+</div>
+<div id="main"></div>
+<script type="module">
+import { connect, params, h, cardEl, describeTrick, RESULT, SUITS } from "/shared/client.js";
+const room = (params.get("room") || "").toUpperCase();
+document.getElementById("code").textContent = room;
+document.getElementById("joinlink").textContent = `${location.origin}/j/${room}`;
+const main = document.getElementById("main");
+connect({
+  room, as: "table",
+  onError: (e) => main.replaceChildren(h("div", { class: "panel" }, e)),
+  onView: ({ room: info, view }) => {
+    document.getElementById("title").textContent = info.name;
+    const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
+    const ck = view.check;
+    const parts = [];
+    parts.push(h("div", { class: "panel" }, h("h2", {}, "At the table"),
+      h("div", { class: "row" }, info.seats.map((s) => h("span", {}, h("span", { class: `status-dot${s.connected ? " on" : ""}` }), s.charId ? names[s.charId] : `${s.name}${s.role === "gm" ? " (GM)" : ""}`)))));
+    if (!ck || ck.phase === "closed") {
+      parts.push(h("div", { class: "panel" }, h("p", { class: "muted" }, "Waiting for the GM to start a check.")));
+      if (view.history.length) {
+        const last = view.history[view.history.length - 1];
+        parts.push(h("div", { class: "panel" }, h("h2", {}, "Last check"), h("ul", {}, Object.entries(last.results).map(([id, r]) => h("li", {}, `${names[id]}: ${RESULT[r.result]} (${r.tally} of ${r.target})`)))));
+      }
+    } else {
+      parts.push(h("div", { class: "panel" },
+        h("h2", {}, `${ck.kind[0].toUpperCase()}${ck.kind.slice(1)} check · ${ck.phase === "setup" ? "setting up" : ck.phase === "resolve" ? "resolved" : `trick ${Math.min(ck.trick + 1, ck.tricks)} of ${ck.tricks}`}`),
+        h("div", { class: "row world" }, ck.worldRow.map((c, i) => cardEl(c, { class: `card ${c.blessed ? "b" : SUITS[c.suit].cls}${i === ck.trick && ck.phase !== "resolve" ? " current" : ""}${i < ck.trick ? " past" : ""}` })))));
+      parts.push(h("div", { class: "panel" }, h("table", {}, h("thead", {}, h("tr", {}, ["Player", "Approach", "Tally", "Target", "Hand", ""].map((t) => h("th", {}, t)))),
+        h("tbody", {}, ck.participants.map((id) => {
+          const p = ck.players[id];
+          const flags = [p.locked ? "✓ locked" : "", p.brace ? `Brace +${p.brace}` : "", p.mirror ? "Mirror" : "", p.survival ? "SURVIVAL" : ""].filter(Boolean).join(" · ");
+          return h("tr", {}, h("td", {}, names[id]), h("td", {}, p.approach ? `${SUITS[p.approach].sym} ${p.approachText || SUITS[p.approach].name}${p.approved ? "" : " (awaiting GM)"}` : "—"),
+            h("td", {}, h("div", { class: "row" }, p.tally.map((t) => cardEl(t.card, { title: t.mirrored ? `Mirrored: scores ${t.score}` : "" })), h("strong", {}, ` = ${p.total}`))),
+            h("td", {}, p.target ?? "—"), h("td", {}, p.handCount), h("td", { class: "small" }, flags));
+        })))));
+      if (ck.waitingOn.length) parts.push(h("div", { class: "panel muted" }, `Waiting on: ${ck.waitingOn.map((w) => `${names[w.charId]} (${w.type})`).join(", ")}`));
+      if (ck.log.length) parts.push(h("div", { class: "panel log" }, [...ck.log].reverse().map((e) => h("div", {}, describeTrick(e, names)))));
+      if (ck.results) parts.push(h("div", { class: "panel" }, h("h2", {}, "Results"), h("ul", {}, Object.entries(ck.results).map(([id, r]) => h("li", {}, `${names[id]}: ${RESULT[r.result]} — ${r.tally} of ${r.target}${r.dies ? " — does not survive" : ""}`)))));
+    }
+    main.replaceChildren(...parts);
+  },
+});
+</script>
+</body>
+</html>

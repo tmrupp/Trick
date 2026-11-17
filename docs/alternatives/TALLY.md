@@ -36,15 +36,15 @@ Among incompatible goals, the better step wins. Within the same step, the tally 
 
 | Target | Difficulty | Exact hit | Failure: 7+ short | Bust |
 | --- | --- | --- | --- | --- |
-| 6–8 | Easy | 16–26% | 0–11% | 13–19% |
-| 9–11 | Moderate | 10–23% | 10–21% | 10–16% |
-| 12–14 | Hard | 7–15% | 20–40% | 8–11% |
-| 15–17 | Very hard | 4–12% | 36–59% | 5–7% |
-| 18–20 | Extreme | 2–8% | 51–75% | 2–5% |
+| 6–8 | Easy | 18–27% | 0–10% | 13–18% |
+| 9–11 | Moderate | 12–23% | 10–20% | 9–14% |
+| 12–14 | Hard | 8–16% | 22–39% | 7–10% |
+| 15–17 | Very hard | 4–11% | 39–59% | 4–6% |
+| 18–20 | Extreme | 2–7% | 55–74% | 2–4% |
 
-These use Wait as Dexterity's consolation. **6 is the lowest useful target:** below it, busts keep rising (to 21–34% at target 1) while success or better barely moves.
+These use Peek as Dexterity's consolation. **6 is the lowest useful target:** below it, busts keep rising (to 22–32% at target 1) while success or better barely moves.
 
-- **Busts are a low-target, small-table risk.** At target 6, 19% of results bust at 2 players and 14% at 5. At target 20, 2–4% do. Under the old Slip, busts stayed at 0–13%, because every returned Spade was a spare card that couldn't win.
+- **Busts are a low-target, small-table risk.** At target 6, 18% of results bust at 2 players and 14% at 5. At target 20, 2–3% do. Under the old Slip, busts stayed at 0–13%, because every returned Spade was a spare card that couldn't win.
 - **Larger tables hit more often.** At any given target, 5 players hit exactly about 10 points more often than 2.
 - **The difficulty climbs smoothly.** Each step up in target is a little harder than the last, with no cliff.
 - **Below 3, exact hits get harder again.** At targets 1 and 2 you must take exactly one low world card and then nothing else.
@@ -74,11 +74,11 @@ Your losing card's printed suit gives its consolation, statuses included. There 
 | Suit | Consolation |
 | --- | --- |
 | **Strength: Brace** | Your next card counts this card's value higher **for beating**. |
-| **Dexterity: Wait** | On your next trick, **choose your card after everyone else reveals**. Several Waiting players choose and reveal together. |
+| **Dexterity: Peek** | Look at the top card of the world deck. You may **swap it for the next world card**; the replaced card goes to the bottom of the world deck. Several Peeks resolve one at a time, clockwise from the GM. |
 | **Intelligence: Recalculate** | Discard one card from hand, then draw one. |
 | **Weird: Mirror** | If your next card wins, **the world card scores 11 minus its value.** |
 
-Brace, Wait and Mirror last for your next play only. Turn the losing card sideways as a reminder, and straighten it when you play.
+Brace and Mirror last for your next play only; Peek happens at once. Turn the losing card sideways as a reminder, and straighten it when you play.
 
 Each suit does one job:
 
@@ -89,12 +89,12 @@ Each suit does one job:
 
 **Losing on purpose** sets you up:
 - **A losing Strength card is a Brace:** next trick, reach for a bigger world card than your hand could otherwise take.
-- **A losing Dexterity card is a Wait:** next trick, you know exactly what you must beat, and whom you'd collide with.
+- **A losing Dexterity card is a Peek:** throw out a world card that would bust you or that nobody can use, or bring in one that fits.
 - **A losing Weird card is a Mirror:** a low world card coming up becomes a big score, or a big one a small, safe score.
 
 **Changes from the old consolations:**
 - **Brace** has no choice and can't stack.
-- **Reposition became Slip, then Wait.** Without follow-suit, Reposition overlapped Brace. Slip (return the card to hand) made losing free and kept spare cards in every hand, so it was replaced: see *Replacing Slip* in [TALLY_SIMULATIONS.md](TALLY_SIMULATIONS.md).
+- **Reposition became Slip, then Wait, then Peek.** Without follow-suit, Reposition overlapped Brace. Slip (return the card to hand) made losing free and kept spare cards in every hand, so it was replaced: see *Replacing Slip* in [TALLY_SIMULATIONS.md](TALLY_SIMULATIONS.md). Wait (choose after everyone else reveals) cut collisions but did nothing solo; Peek works at any table size and puts the world deck in play.
 - **Revelation becomes Mirror.** The question and the status-suit option are gone, and with them the whole *Suit changes* section.
 - **Recalculate** loses its reshuffle note, because evolution happens on any shuffle.
 
@@ -105,7 +105,8 @@ Each suit does one job:
 | **Weird** | **Mirror** *(recommended)* | The next world card you win scores 11 minus its value. | Plannable, double-edged. |
 | | **Shift** | If any losing card this trick is Weird, discard the next world card and flip a replacement. | Changes the whole table's next trick, at random. |
 | | **Echo** | If your next card wins, the world card scores double. | Big swings, real bust risk. |
-| **Dexterity** | **Wait** *(adopted)* | Choose your next card after everyone else reveals. | Cuts collisions between allies by about 30%; doesn't keep any cards. |
+| **Dexterity** | **Peek** *(adopted)* | Look at the world deck's top card; you may swap it for the next world card. | Helps at every table size, solo included; acts about once in three losses. |
+| | **Wait** *(replaced)* | Choose your next card after everyone else reveals. | Cuts collisions between allies by about 30%, but useless solo. |
 | | **Slip** *(replaced)* | Return this card to your hand. | Losing costs nothing; the spare cards hide most busts. |
 | | **Reposition** | Next card can win whatever its suit. | Familiar, but overlaps Brace. |
 | | **Feint** | Next card wins if it *equals* the world card, not only if it beats it. | Small; possibly too weak. |
@@ -122,9 +123,9 @@ Target 10, a standard check.
 - **The trick before it:** she loses with a Weird card, so her next win is Mirrored.
 - **On the 4♣:** her 5♣ wins, and the world card scores 11 − 4 = 7: **exactly 10**.
 
-**Ben** (Dexterity trump) is on 6 and needs 4. A 4♥ is coming up, and he fears Ana will take it by accident.
-- **The trick before it:** his 2♠ loses, so he Waits.
-- **On the 4♥:** Ana and Cara reveal first, and both played low, so his 7♠ takes the 4♥ alone: **exactly 10**. Had Ana played a 6♥ for it, he'd have played low instead and left it to her.
+**Ben** (Dexterity trump) is on 6 and needs 4. The next world card is a 9♦, which nobody can use without busting.
+- **This trick:** his 2♠ loses, so he Peeks: the world deck's top card is 4♠. He swaps it in, and the 9♦ goes to the bottom of the world deck.
+- **Next trick:** his 7♠ takes the 4♠: **exactly 10**.
 
 ## Statuses
 
@@ -133,7 +134,7 @@ Target 10, a standard check.
 | Status | When it loses | Its own rule |
 | --- | --- | --- |
 | **Injury, Strength** | Brace for 0, which does nothing. | Two or more Injuries in your recent discard make survival a forced goal. |
-| **Stumble, Dexterity** | Wait on your next trick. | **Price:** when you play Stumble, discard an ordinary card from hand, your choice. |
+| **Stumble, Dexterity** | Peek at the world deck. | **Price:** when you play Stumble, discard an ordinary card from hand, your choice. |
 | **Stress, Intelligence** | Recalculate. You may discard another status. | Whenever you draw Stress, gain another Stress into discard. |
 | **Curse, Weird** | Mirrors your next win. | Breaking the compulsion gains one Stress per Curse outside your reserve. |
 
@@ -142,7 +143,7 @@ Target 10, a standard check.
 
 ### Stumble
 
-Stumble does nothing while it sits in your hand; its rule triggers **only when you play it**. A Dexterity world card forces it out, and **Price** makes each of those plays cost an ordinary card. Under Slip, a losing Stumble went back to hand and could be forced out again and again; under Wait it is spent, so Price is paid about 0.4 times a check in a worn party, down from about once.
+Stumble does nothing while it sits in your hand; its rule triggers **only when you play it**. A Dexterity world card forces it out, and **Price** makes each of those plays cost an ordinary card. Under Slip, a losing Stumble went back to hand and could be forced out again and again; now it is spent, so Price is paid about 0.4 times a check in a worn party, down from about once.
 
 | Variant | When you play Stumble | Cost |
 | --- | --- | --- |
@@ -162,7 +163,7 @@ Rest and evolution still remove statuses as before. Curses still leave only thro
 ## How it fits the rest of Trick
 
 - **Blessed** always takes the trick and scores the world card. Two Blessed tie, so the world takes it.
-- **Survival** is a forced goal with target **3 per Injury** counted in the scan: 6 for two Injuries, 9 for three, 12 for four, 18 for six. A bust, or landing 7 or more short, is death: about 14%, 23%, 34%, 54% and 74% for two to six Injuries in simulation. At two Injuries the target is 6, so only a bust kills. Anything else is survival, at that step's cost.
+- **Survival** is a forced goal with target **3 per Injury** counted in the scan: 6 for two Injuries, 9 for three, 12 for four, 18 for six. A bust, or landing 7 or more short, is death: about 14%, 20%, 28%, 44% and 63% for two to six Injuries in simulation. At two Injuries the target is 6, so only a bust kills. Anything else is survival, at that step's cost.
 - **Evolution and rest** are unchanged.
 - **Deck building shifts to reach and suit.** High cards take big world cards; suit spread lets you be on-suit more often. Card values no longer need to add up to anything.
 
@@ -190,7 +191,7 @@ Scoring the winner's own card made a cliff at 11: one card can't score more than
 
 ## Simulation notes
 
-The current numbers, under Wait and every adopted rule, are in [TALLY_SIMULATIONS.md](TALLY_SIMULATIONS.md). These notes record how the check was sized, under the old Slip.
+The current numbers, under every adopted rule, are in [TALLY_SIMULATIONS.md](TALLY_SIMULATIONS.md). These notes record how the check was sized, under the old Slip.
 
 - **The bots** are grabby: each takes any win that doesn't bust it, and otherwise plays its lowest card. They don't anticipate one another. People planning around the visible row should hit exactly more often.
 - **The decks** are random 21-card decks from the A–10 cards of two standard decks, with trump set to the deck's biggest suit. Adding 0–4 random statuses moved results by 1–2 points.
@@ -206,8 +207,9 @@ The current numbers, under Wait and every adopted rule, are in [TALLY_SIMULATION
 ## Open questions
 
 - Does scoring only the world card make players feel their own cards matter enough?
-- Is Wait worth enough on its own? The Dexterity-trump player lags the others by 5–9 points of success or better in simulation, though bots use Wait less well than people will.
-- Solo checks bust 26–32% at targets 6–8, since Wait does nothing with no one else at the table. Does solo need its own Dexterity rule or larger targets?
+- Is Peek worth enough? The Dexterity-trump player still lags the others by a few points of success or better in simulation.
+- Solo checks still bust about a quarter of the time at targets 6–8. Do they need larger targets?
+- Peek changes the row for everyone. Does a swap that takes away a card an ally wanted feel like a collision of its own?
 - Is Price steep enough to stop Stumble being a free pass?
 - Are fiction-based criticals and busts consistent enough between GMs? Groups may want a short table of examples per approach.
 - Visible row or suspense: which feels better at the table?

@@ -6,7 +6,7 @@ CURRENT RULES — generated from RULES.md
 
 ## Decks and suits
 
-Each player brings **two standard decks**, preferably with matching backs. The four jokers are **Blessed** cards and wait in reserve. Aces are worth 1; numbered cards keep their values. Jacks, Queens, and Kings are interchangeable zero-value statuses of their suit, giving **six of each status**. Keep unused cards in a personal reserve outside play; every 10 starts there and is gained or evolved into like any other card.
+Each player brings **two standard decks**, preferably with matching backs. The four jokers are **Blessed** cards and wait in reserve. Aces are worth 1; numbered cards keep their values. Jacks, Queens, and Kings are interchangeable zero-value statuses of their suit, giving **six of each status**. Keep unused cards in a personal reserve outside play; they are gained or evolved into like any other card.
 
 | Suit | Approaches | Status |
 | --- | --- | --- |
@@ -17,11 +17,11 @@ Each player brings **two standard decks**, preferably with matching backs. The f
 
 Choose a **primary suit** and a different **secondary suit**. They set only your starting cards, never which approach you may declare. From **one deck**:
 
-1. Take **2, 4, 6, 8 of every suit**.
-2. Add **A, 5, 9 of your primary suit**.
-3. Add **3, 7 of your secondary suit**.
+1. Take **A, 2, 4, 5, 7, 8, 10 of your primary suit**: every value except 3, 6 and 9.
+2. Take **A, 3, 6, 9, 10 of your secondary suit**.
+3. Take **2, 3, 6, 9** of one other suit and **4, 5, 7, 8** of the last, your choice.
 
-Shuffle these **21 cards**: seven primary, six secondary, and four in each other suit, with no statuses. Keep at least **13 ordinary cards** after any removal.
+Shuffle these **20 cards**: two of each value from Ace to 10, with seven primary, five secondary, and four in each other suit, and no statuses. Keep at least **13 ordinary cards** after any removal.
 
 The GM brings one standard deck and uses its A–10 cards for the world. Shuffle it fresh for each check.
 
@@ -49,11 +49,11 @@ The **target sets the difficulty**. Each player may have their own target if the
 
 | Target | Difficulty | Exact hit | 7 or more short | Bust |
 | --- | --- | --- | --- | --- |
-| 6–8 | Easy | 16–26% | 0–11% | 13–19% |
-| 9–11 | Moderate | 10–23% | 10–21% | 10–16% |
-| 12–14 | Hard | 7–15% | 20–40% | 8–11% |
-| 15–17 | Very hard | 4–12% | 36–59% | 5–7% |
-| 18–20 | Extreme | 2–8% | 51–75% | 2–5% |
+| 6–8 | Easy | 18–27% | 0–10% | 13–18% |
+| 9–11 | Moderate | 12–23% | 10–20% | 9–14% |
+| 12–14 | Hard | 8–16% | 22–39% | 7–10% |
+| 15–17 | Very hard | 4–11% | 39–59% | 4–6% |
+| 18–20 | Extreme | 2–7% | 55–74% | 2–4% |
 
 Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
 
@@ -62,7 +62,7 @@ Odds are simulated for standard checks at 2–5 players; larger tables hit more 
 ## Play the tricks
 
 1. **The world leads** the next card in its row.
-2. **Everyone chooses a card face down,** then all reveal together. Anyone **Waiting** chooses after that reveal, then reveals; several Waiting players choose and reveal together. **If you hold a status in the world card's suit, you must play one.** If your hand is empty, sit out that trick.
+2. **Everyone chooses a card face down,** then all reveal together. **If you hold a status in the world card's suit, you must play one.** If your hand is empty, sit out that trick.
 3. **Find the single highest card on the table,** counting the world card and any Brace. If it is a player's card, and in the world card's suit **or** its owner's trump, it **wins**: its owner takes the world card into their tally pile and **scores its value**.
 4. **If players' cards tie for highest** above the world card and all are on-suit, rank them: a card in the world card's suit **and** its owner's trump beats one in the world card's suit only, which beats one in its owner's trump only. The single best-ranked card wins.
 5. Otherwise **the world takes the trick**: the world card is highest, the highest card is off-suit, or the tie stays level. Discard that world card.
@@ -79,15 +79,15 @@ On a **trick loss**, take your losing card's consolation, including when an ally
 | Suit | Effect |
 | --- | --- |
 | **Strength — Brace** | Your next card counts this card's printed value higher for beating. It never changes what you score. |
-| **Dexterity — Wait** | On your next trick, choose your card after everyone else has revealed theirs. |
+| **Dexterity — Peek** | Look at the top card of the world deck. You may swap it for the next world card in the row; the replaced card goes to the bottom of the world deck. |
 | **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. |
 | **Weird — Mirror** | If your next card wins, the world card scores 11 minus its value. |
 
-Brace, Wait, and Mirror last for your next play only: turn the losing card sideways as a reminder. Wait shows you the table, not other Waiting players' cards, and the no-coordination rule still applies. Turn a Mirrored world card upside down in your tally pile so its changed score stays visible.
+Brace and Mirror last for your next play only: turn the losing card sideways as a reminder. Peek happens at once. If several players Peek, resolve them one at a time, clockwise from the GM, each seeing the row as the last one left it. The card you Peek at stays secret unless you swap it in, and the no-coordination rule still applies. Turn a Mirrored world card upside down in your tally pile so its changed score stays visible.
 
 ## Statuses
 
-Statuses are ordinary cards worth 0. They follow every playing and winning rule, and their printed suit gives its consolation as usual: Injury Braces for 0, Stumble Waits, Stress recalculates, and Curse Mirrors.
+Statuses are ordinary cards worth 0. They follow every playing and winning rule, and their printed suit gives its consolation as usual: Injury Braces for 0, Stumble Peeks, Stress recalculates, and Curse Mirrors.
 
 **The situation finds your weakness:** whenever the world card's suit matches a status in your hand, you must play that status, your choice if you hold several. A Strength world card calls out your Injury, a Dexterity one your Stumble, and so on. Stumble's Price makes that call cost an ordinary card as well.
 

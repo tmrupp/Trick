@@ -34,7 +34,7 @@ globalThis.TrickRulesCard = {
         {
           "heading": "Every trick",
           "lines": [
-            "The world leads its next card. Everyone chooses a card face down, then all reveal together. Waiting players then choose and reveal.",
+            "The world leads its next card. Everyone chooses a card face down, then all reveal together.",
             "The single highest card on the table wins if it is a player's, in the world card's suit or its owner's trump. Count Brace.",
             "The winner scores the world card's value, not their own card's.",
             "Tied players: world card's suit and own trump beats world card's suit only, which beats trump only. Otherwise the world takes it: the world card is highest, the top card is off-suit, or the tie stays level.",
@@ -69,8 +69,8 @@ globalThis.TrickRulesCard = {
             },
             {
               "suit": "dexterity",
-              "label": "Spades — Wait",
-              "text": "On your next trick, choose your card after everyone else has revealed theirs."
+              "label": "Spades — Peek",
+              "text": "Look at the world deck’s top card. You may swap it for the next world card; the old one goes to the bottom."
             },
             {
               "suit": "intelligence",

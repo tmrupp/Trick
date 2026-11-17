@@ -12,11 +12,11 @@ globalThis.TrickCoreCards = {
   "dexterity": {
     "suitLabel": "Spades — Dexterity",
     "domain": "Spades / Consolation",
-    "title": "WAIT",
+    "title": "PEEK",
     "lines": [
-      "On your next trick, choose your card after everyone else has revealed theirs."
+      "Look at the top card of the world deck. You may swap it for the next world card in the row; the replaced card goes to the bottom of the world deck."
     ],
-    "description": "On your next trick, choose your card after everyone else has revealed theirs."
+    "description": "Look at the top card of the world deck. You may swap it for the next world card in the row; the replaced card goes to the bottom of the world deck."
   },
   "intelligence": {
     "suitLabel": "Diamonds — Intelligence",

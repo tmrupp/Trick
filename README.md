@@ -145,7 +145,7 @@ That one catalog now drives:
 
 ## Tabletop Simulator
 
-The generated TTS deck output is documented in [exports/tts/deck/README.md](exports/tts/deck/README.md). It is a 10 by 6 sheet containing **52 cards**: forty ordinary cards and three copies of each of the four statuses. Import twice per player. From one copy, take **2, 4, 6, 8 of every suit**, plus **A, 5, 9 of your primary** and **3, 7 of a different secondary**. This gives a 21-card starter distributed 7/6/4/4; the rest of that copy and the entire second copy form reserve. Use only A–10 from a separate copy for the world.
+The generated TTS deck output is documented in [exports/tts/deck/README.md](exports/tts/deck/README.md). It is a 10 by 6 sheet containing **52 cards**: forty ordinary cards and three copies of each of the four statuses. Import twice per player. From one copy, take **A, 2, 4, 5, 7, 8, 10 of your primary**, **A, 3, 6, 9, 10 of a different secondary**, and **2, 3, 6, 9** and **4, 5, 7, 8** of the other two suits. This gives a 20-card starter, two of each value, distributed 7/5/4/4; the rest of that copy and the entire second copy form reserve. Use only A–10 from a separate copy for the world.
 
 ## Notes
 

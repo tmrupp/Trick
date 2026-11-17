@@ -11,7 +11,9 @@
     "export:tts-item-deck": "node export_tts_item_deck.mjs",
     "export:reference-cards": "node export_reference_cards.mjs",
     "export:tts-reference-deck": "node export_tts_reference_deck.mjs",
-    "export:print": "node export_print_cards.mjs"
+    "export:print": "node export_print_cards.mjs",
+    "test": "node --test \"game/test/*.test.mjs\"",
+    "sim:engine": "node game/sim/engine_bots.mjs"
   },
   "dependencies": {
     "playwright": "^1.54.1"

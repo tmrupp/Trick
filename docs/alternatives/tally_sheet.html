@@ -158,10 +158,11 @@
     <div class="cols">
       <ol>
         <li><strong>The world leads</strong> the next card in its row.</li>
-        <li><strong>Everyone chooses a card face-down,</strong> then all reveal together. No talk about plays.</li>
+        <li><strong>Everyone chooses a card face-down,</strong> then all reveal together. No talk about plays. <strong>Hold a status in the world card's suit? Play it.</strong></li>
         <li><strong>Find the single highest card on the table,</strong> including the world card. Count any Brace.</li>
         <li>If that card is a player's, <strong>in the world card's suit or its owner's trump</strong>, it <strong>wins</strong>: its owner <strong>scores the world card's value</strong>.</li>
-        <li>Otherwise <strong>the world takes the trick</strong>: the world card is highest, the highest card is off-suit, or the top cards tie.</li>
+        <li><strong>Tied players?</strong> World card's suit <em>and</em> own trump beats world card's suit only, which beats trump only.</li>
+        <li>Otherwise <strong>the world takes the trick</strong>: the world card is highest, the highest card is off-suit, or the tie stays level.</li>
         <li><strong>Everyone who didn't win</strong> takes their card's consolation, all at once.</li>
       </ol>
       <div>
@@ -228,7 +229,7 @@
 
   <div>
     <h2>Statuses</h2>
-    <p><strong>Statuses are ordinary cards worth 0.</strong> They follow every rule, and their printed suit gives its consolation as usual.</p>
+    <p><strong>Statuses are ordinary cards worth 0.</strong> They follow every rule, and their printed suit gives its consolation as usual. <strong>If the world card's suit matches a status in your hand, you must play it.</strong></p>
     <table>
       <tr><th>Status</th><th>When it loses</th><th>Its own rule</th></tr>
       <tr><td class="st strength"><span class="mark sm" data-icon="strength"></span><span class="lbl">Injury</span></td><td>Brace for 0, which does nothing.</td><td>Two or more Injuries in your recent discard make <strong>survival</strong> a forced goal.</td></tr>
@@ -253,7 +254,7 @@
       <h2>Special cases</h2>
       <ul>
         <li class="blessed"><span style="color:var(--ink)"><span class="mark sm blessed" data-icon="blessed"></span><strong>Blessed</strong> (joker) always takes the trick and scores the world card. Two Blessed tie, so the world takes it. A played Blessed returns to reserve.</span></li>
-        <li><strong>Survival</strong> is a forced goal with target <strong>2 per Injury</strong> counted. A bust, or 7+ short, is death.</li>
+        <li><strong>Survival</strong> is a forced goal with target <strong>4 per Injury</strong> counted: 8 for two, 12 for three. A bust, or 7+ short, is death.</li>
         <li><strong>Incompatible goals:</strong> the better result wins; on the same step, the tally closer to its target. Equal results produce the agreed stalemate.</li>
         <li><strong>Empty hand:</strong> sit out the trick. <strong>Empty deck:</strong> shuffle your discard into a new one.</li>
       </ul>

@@ -37,7 +37,7 @@ globalThis.TrickRulesCard = {
             "The world leads its next card. Everyone chooses a card face down, then all reveal together.",
             "The single highest card on the table wins if it is a player's, in the world card's suit or its owner's trump. Count Brace.",
             "The winner scores the world card's value, not their own card's.",
-            "Otherwise the world takes it: the world card is highest, the top card is off-suit, or the top cards tie.",
+            "Tied players: world card's suit and own trump beats world card's suit only, which beats trump only. Otherwise the world takes it: the world card is highest, the top card is off-suit, or the tie stays level.",
             "Everyone else takes their card's consolation, all at once. Winning is not optional."
           ],
           "note": "Once drawing begins: no tactical talk, card advice, or signals. Narration, rules questions, and declarations are welcome."
@@ -109,7 +109,7 @@ globalThis.TrickRulesCard = {
               "text": "Your Curses share one compulsion. Each violation gains 1 Stress per Curse outside reserve. Only evolution removes them."
             }
           ],
-          "note": "Statuses play like cards worth 0 and give their suit’s consolation."
+          "note": "Statuses play like cards worth 0 and give their suit’s consolation. Hold one in the world card’s suit? You must play it."
         }
       ]
     },
@@ -133,7 +133,7 @@ globalThis.TrickRulesCard = {
           "lines": [
             "On an empty deck you may evolve once: return 1 of 2 matching statuses in discard to reserve, then gain or return an ordinary card of that suit. Shuffle discard.",
             "Rest removes any number of non-Curse statuses from discard.",
-            "M Injuries in your top N discard cards, M ≥ 2: survival is your goal, target 2 × M. A bust or 7+ short means death."
+            "M Injuries in your top N discard cards, M ≥ 2: survival is your goal, target 4 × M. A bust or 7+ short means death."
           ],
           "note": "N is the check’s number of tricks."
         }

@@ -56,7 +56,7 @@ Among incompatible goals, the better step wins. Within the same step, the tally 
 4. For each trick:
    1. **The world leads** its next card.
    2. **Everyone picks a card face-down,** then all reveal together. No tactical talk.
-   3. **Win:** find the **single highest card on the table**, counting the world card and any Brace. If it's a player's card, and in the world card's suit *or* its owner's trump, it wins. **Its owner scores the world card's value.** Otherwise **the world takes the trick**: the world card is highest, the highest card is off-suit, or the top cards tie.
+   3. **Win:** find the **single highest card on the table**, counting the world card and any Brace. If it's a player's card, and in the world card's suit *or* its owner's trump, it wins. **Its owner scores the world card's value.** If players tie for highest, a card in the world card's suit and its owner's trump beats one in the world card's suit only, which beats trump only. Otherwise **the world takes the trick**: the world card is highest, the highest card is off-suit, or the tie stays level.
    4. **Lose:** everyone else takes their card's **consolation**, all at once, before the next world card.
 
 The winner has to beat everyone. **A high off-suit card can't win, but it blocks:** nobody beats it, so the world takes the trick.
@@ -123,7 +123,7 @@ Target 10, a standard check.
 
 ## Statuses
 
-**Statuses are ordinary cards worth 0.** They follow every rule, and their printed suit gives its consolation as usual.
+**Statuses are ordinary cards worth 0.** They follow every rule, and their printed suit gives its consolation as usual. **If the world card's suit matches a status in your hand, you must play it**: the situation finds your weakness.
 
 | Status | When it loses | Its own rule |
 | --- | --- | --- |
@@ -157,7 +157,7 @@ Rest and evolution still remove statuses as before. Curses still leave only thro
 ## How it fits the rest of Trick
 
 - **Blessed** always takes the trick and scores the world card. Two Blessed tie, so the world takes it.
-- **Survival** is a forced goal with target **2 per Injury** counted in the scan: 4 for two Injuries, 6 for three. A bust, or landing 7 or more short, is death. Anything else is survival, at that step's cost.
+- **Survival** is a forced goal with target **4 per Injury** counted in the scan: 8 for two Injuries, 12 for three, 16 for four. A bust, or landing 7 or more short, is death: about 13%, 28% and 57% in simulation. Anything else is survival, at that step's cost.
 - **Evolution and rest** are unchanged.
 - **Deck building shifts to reach and suit.** High cards take big world cards; suit spread lets you be on-suit more often. Card values no longer need to add up to anything.
 

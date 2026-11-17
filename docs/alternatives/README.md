@@ -22,4 +22,6 @@ Both are unplaytested. The worked examples have been checked for arithmetic and 
 
 A later exploration, [SIMPLER_CHECKS.md](SIMPLER_CHECKS.md), simplifies Trick's own check (world always leads, simultaneous answers, no follow-suit or consolations) and sketches three further non-trick resolutions: Fronts, Showdown, and Counter.
 
+[TALLY_SIMULATIONS.md](TALLY_SIMULATIONS.md) runs twelve table situations through the current rules.
+
 [TALLY.md](TALLY.md) builds on that core: each check has a target number (exact is a critical success, short is mixed, over is a bust), the single highest card on the table wins if it is on-suit and beats the world card, scoring the world card's value; the further short of the target, the worse the result; everyone else takes a consolation simultaneously.

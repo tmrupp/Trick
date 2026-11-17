@@ -14,11 +14,11 @@ Persistent decks, statuses, evolution, survival and Blessed carry over from [RUL
 
 | Final tally | Result |
 | --- | --- |
-| **Exactly the target** | **Critical success.** You get it, and more. Return one non-Curse status from your discard to reserve. |
+| **Exactly the target** | **Critical success.** You get it, and more: the GM adds a benefit that fits the fiction. |
 | **1–3 short** | **Success, with a minor complication.** |
 | **4–6 short** | **Partial success, with a serious complication.** It may be a status. |
 | **7 or more short** | **Failure.** |
-| **Over the target** | **Bust: critical failure.** It goes wrong, loudly. Gain your trump suit's status. |
+| **Over the target** | **Bust: critical failure.** It goes wrong, loudly: the GM sets a consequence that fits the fiction, which may be a status. |
 
 The ladder runs in fixed steps of 3, so being short costs the same at any target. Low targets are forgiving: at target 3 or 6 you can't fall 7 short. High targets are where outright failure lives.
 
@@ -38,9 +38,9 @@ Among incompatible goals, the better step wins. Within the same step, the tally 
 | --- | --- | --- | --- | --- |
 | 6–8 | Easy | 16–26% | 0–11% | 13–19% |
 | 9–11 | Moderate | 10–23% | 10–21% | 10–16% |
-| 12–14 | Hard | 7–15% | 20–40% | 7–11% |
-| 15–17 | Very hard | 4–12% | 36–60% | 4–7% |
-| 18–20 | Extreme | 2–7% | 51–75% | 2–5% |
+| 12–14 | Hard | 7–15% | 20–40% | 8–11% |
+| 15–17 | Very hard | 4–12% | 36–59% | 5–7% |
+| 18–20 | Extreme | 2–8% | 51–75% | 2–5% |
 
 These use Wait as Dexterity's consolation. **6 is the lowest useful target:** below it, busts keep rising (to 21–34% at target 1) while success or better barely moves.
 
@@ -153,16 +153,16 @@ Stumble does nothing while it sits in your hand; its rule triggers **only when y
 
 ### Where statuses come from
 
-- **A bust gains your trump suit's status:** Strength gives Injury, Dexterity gives Stumble, Intelligence gives Stress, Weird gives Curse. A Curse from a bust names its compulsion after what went wrong.
+- **A bust's consequence may be a status,** chosen from the fiction rather than by your trump suit. A Curse from a bust names its compulsion after what went wrong.
 - **4–6 short:** the serious complication may be a status.
-- **A critical success sheds** a non-Curse status from discard to reserve.
+- **Criticals and busts are fiction-based.** They used to shed a non-Curse status and gain your trump's status. Tying them to the fiction keeps a Strength player's busts from always meaning Injury, and lets a critical pay off in the scene.
 
 Rest and evolution still remove statuses as before. Curses still leave only through evolution.
 
 ## How it fits the rest of Trick
 
 - **Blessed** always takes the trick and scores the world card. Two Blessed tie, so the world takes it.
-- **Survival** is a forced goal with target **3 per Injury** counted in the scan: 6 for two Injuries, 9 for three, 12 for four, 18 for six. A bust, or landing 7 or more short, is death: about 14%, 24%, 34%, 55% and 74% for two to six Injuries in simulation. At two Injuries the target is 6, so only a bust kills. Anything else is survival, at that step's cost.
+- **Survival** is a forced goal with target **3 per Injury** counted in the scan: 6 for two Injuries, 9 for three, 12 for four, 18 for six. A bust, or landing 7 or more short, is death: about 14%, 23%, 34%, 54% and 74% for two to six Injuries in simulation. At two Injuries the target is 6, so only a bust kills. Anything else is survival, at that step's cost.
 - **Evolution and rest** are unchanged.
 - **Deck building shifts to reach and suit.** High cards take big world cards; suit spread lets you be on-suit more often. Card values no longer need to add up to anything.
 
@@ -178,7 +178,7 @@ With one winner per trick, allies want the same world cards, and that brings bac
 
 ## How the scoring was chosen
 
-Scoring the winner's own card made a cliff at 11: one card can't score more than 10, so exact hits fell from 35% at target 10 to 7% at 11, then rose again. These alternatives were simulated (3 players, random decks):
+Scoring the winner's own card made a cliff at 11: one card can't score more than 10, so exact hits fell from 35% at target 10 to 7% at 11, then rose again. These alternatives were simulated (3 players, random decks, under the old Slip):
 
 | Scoring | Exact hit by target | Verdict |
 | --- | --- | --- |
@@ -189,6 +189,8 @@ Scoring the winner's own card made a cliff at 11: one card can't score more than
 | **World card only** *(adopted)* | 3–6: ~30%, then steadily down to 4% at 20 | **Smooth all the way** |
 
 ## Simulation notes
+
+The current numbers, under Wait and every adopted rule, are in [TALLY_SIMULATIONS.md](TALLY_SIMULATIONS.md). These notes record how the check was sized, under the old Slip.
 
 - **The bots** are grabby: each takes any win that doesn't bust it, and otherwise plays its lowest card. They don't anticipate one another. People planning around the visible row should hit exactly more often.
 - **The decks** are random 21-card decks from the A–10 cards of two standard decks, with trump set to the deck's biggest suit. Adding 0–4 random statuses moved results by 1–2 points.
@@ -205,7 +207,7 @@ Scoring the winner's own card made a cliff at 11: one card can't score more than
 
 - Does scoring only the world card make players feel their own cards matter enough?
 - Is Wait worth enough on its own? The Dexterity-trump player lags the others by 5–9 points of success or better in simulation, though bots use Wait less well than people will.
-- Solo checks bust 28–31% at targets 6–8, since Wait does nothing with no one else at the table. Does solo need its own Dexterity rule or larger targets?
+- Solo checks bust 26–32% at targets 6–8, since Wait does nothing with no one else at the table. Does solo need its own Dexterity rule or larger targets?
 - Is Price steep enough to stop Stumble being a free pass?
-- Does gaining your trump's status on a bust lean too hard on Injury for Strength players?
+- Are fiction-based criticals and busts consistent enough between GMs? Groups may want a short table of examples per approach.
 - Visible row or suspense: which feels better at the table?

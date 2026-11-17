@@ -1,279 +1,281 @@
 # Tally in simulated play
 
-Twelve table situations, plus survival variants, run through the current [RULES.md](../../RULES.md): 20,000 checks each. The simulator is [scripts/simulate_tally.mjs](../../scripts/simulate_tally.mjs):
+Thirteen table situations and five experiments, run under the current [RULES.md](../../RULES.md):
+- Wait is Dexterity's consolation;
+- ties go by suit, then trump;
+- a status in the world card's suit must be played;
+- survival targets 3 × Injuries.
+
+Each line is 20,000 checks. Two simulators produce the numbers:
 
 ```bash
 node scripts/simulate_tally.mjs 20000
+node scripts/simulate_targets.mjs 6000
 ```
 
-**The bots are simple.** Each takes a world card when it can beat it without busting, playing its lowest winning card. Otherwise it passes with the card it values least: Dexterity first (Slip returns it), then statuses, then Weird, Strength, Intelligence, and Stumble last. Cooperative bots in situation 2 also skip a world card that would land an ally exactly. No bot reads another player's hand or plans more than one trick ahead, so **compare situations with each other rather than treating any number as table odds.** People should land exactly more often.
+[`simulate_tally.mjs`](../../scripts/simulate_tally.mjs) runs the table situations and experiments with fresh starter decks. [`simulate_targets.mjs`](../../scripts/simulate_targets.mjs) runs every target from 1 to 20 with random 21-card decks, for the difficulty table in RULES.md.
 
-Unless stated, players use fresh 21-card starter decks whose primary suit is their trump.
+**The bots are simple.**
+- A bot takes a world card when it can beat it without busting, using its lowest winning card.
+- Otherwise it passes with the card it values least, in this order: statuses, then Dexterity and Weird, then Strength, then Intelligence, then Stumble last.
+- A Waiting bot sees the table first. It takes the world card if one of its cards wins outright and fits its target. Otherwise it plays a card that neither ties nor blocks an ally who is winning.
+- Cooperative bots in situation 2 also skip a world card that would land an ally exactly.
+
+No bot reads another player's hand or plans more than one trick ahead. So **compare situations with each other rather than treating any number as table odds.** People should land exactly more often.
+
+Earlier runs under the old Slip, and the experiments that led to the current rules, are in this file's history (commit `a6755b4` and before).
 
 ## Results
 
-Each row is one player. **Critical** is exactly on target; **success** is 1–3 short; **partial** is 4–6 short; **failure** is 7+ short; **bust** is over.
+Each row is one player:
+- **Critical** is exactly on target.
+- **Success** is 1–3 short.
+- **Partial** is 4–6 short.
+- **Failure** is 7 or more short.
+- **Bust** is over the target.
+
+Unless stated, players use fresh 21-card starter decks whose primary suit is their trump.
 
 ### 1. Default scene: 3 players, standard check (10 tricks), target 10
 
-| Player | Critical | Success | Partial | Failure | Bust | Tricks won |
-| --- | --- | --- | --- | --- | --- | --- |
-| Ana (Strength) | 22% | 45% | 20% | 13% | 0% | 1.6 |
-| Ben (Dexterity) | 14% | 44% | 25% | 17% | 1% | 1.4 |
-| Cara (Intelligence) | 14% | 38% | 25% | 22% | 2% | 1.5 |
+| Player | Critical | Success | Partial | Failure | Bust |
+| --- | --- | --- | --- | --- | --- |
+| Ana (Strength) | 17% | 41% | 20% | 12% | 10% |
+| Ben (Dexterity) | 12% | 35% | 24% | 19% | 9% |
+| Cara (Intelligence) | 12% | 33% | 22% | 16% | 17% |
 
-The world takes 55% of tricks. About two-thirds of results are a success or better, one in six is a failure, and busts are rare.
+The world takes 51% of tricks. About half of all results are success or better, and roughly 1 in 8 busts.
 
 ### 2. The same scene, with allies yielding
 
 | Player | Critical | Success | Partial | Failure | Bust |
 | --- | --- | --- | --- | --- | --- |
-| Ana (Strength) | **30%** | 38% | 18% | 14% | 0% |
-| Ben (Dexterity) | **20%** | 37% | 23% | 19% | 1% |
-| Cara (Intelligence) | **20%** | 31% | 22% | 24% | 2% |
+| Ana | 18% | 38% | 21% | 14% | 10% |
+| Ben | 14% | 33% | 24% | 21% | 9% |
+| Cara | 13% | 31% | 22% | 17% | 18% |
 
-**Losing to help works.** Passing on a world card that lands an ally exactly raises every player's critical rate by 6–8 points, at a cost of 1–2 points more failure each.
+Yielding adds only 1–2 points of critical. Under the old Slip it added 6–8. Wait already lets a player step aside once they've seen the table, so a blind yield adds little.
 
 ### 3. Mixed stakes: per-player targets in one check
 
-| Player | Target | Critical | Success | Partial | Failure |
-| --- | --- | --- | --- | --- | --- |
-| Ana: hold the door | 6 | 27% | 48% | 25% | 0% |
-| Ben: lift the keys | 10 | 14% | 45% | 23% | 18% |
-| Cara: talk down the sheriff | 16 | 5% | 19% | 20% | **55%** |
+| Player | Target | Critical | Success | Partial | Failure | Bust |
+| --- | --- | --- | --- | --- | --- | --- |
+| Ana: hold the door | 6 | 23% | 41% | 20% | 0% | 16% |
+| Ben: lift the keys | 10 | 12% | 36% | 22% | 20% | 9% |
+| Cara: talk down the sheriff | 16 | 5% | 19% | 20% | 51% | 6% |
 
-Separate targets work without any extra rule. The easy task can't fail. The very hard one usually does, even though Cara wins slightly more tricks than anyone (1.9).
+The target sets the difficulty as intended. An easy target can't fail outright, but it busts most.
 
 ### 4–5. A party of four, worn down or clean (13 tricks, target 10)
 
-Each worn deck carries an Injury, a Stumble and a Stress.
+| Player | Worn: critical | Worn: failure | Worn: bust | Clean: critical | Clean: failure | Clean: bust |
+| --- | --- | --- | --- | --- | --- | --- |
+| P1 (Strength) | 18% | 11% | 10% | 20% | 8% | 9% |
+| P2 (Dexterity) | 12% | 20% | 8% | 14% | 18% | 7% |
+| P3 (Intelligence) | 11% | 18% | 16% | 12% | 16% | 16% |
+| P4 (Weird) | 15% | 15% | 10% | 15% | 15% | 10% |
 
-| Player | Critical, worn | Critical, clean | Failure, worn | Failure, clean |
-| --- | --- | --- | --- | --- |
-| Strength | 25% | 27% | 12% | 8% |
-| Dexterity | 15% | 14% | 15% | 15% |
-| Intelligence | 15% | 15% | 23% | 21% |
-| Weird | 16% | 16% | 26% | 26% |
+In the worn party, each deck carries an Injury, a Stumble and a Stress. That costs 1–2 points of critical. Each player is forced to play a status about once a check, and pays Stumble's Price 0.4 times a check.
 
-**Statuses barely matter during a check.** A 0-value card is a ready-made pass, and the bots paid Stumble's Price only about once in 15 checks. Statuses still cost something between checks, through survival scans, Stress copying itself and the Curse compulsion, but at the table they are nearly free.
+### 6–7. Survival at target 3 × Injuries
 
-### 6–7. Survival under the original rule (target 2 × Injuries)
+| Survivor | Target | Critical | Success | Partial | Failure | Bust | Death |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Two Injuries | 6 | 22% | 41% | 23% | 0% | 13% | **13%** |
+| Three Injuries | 9 | 16% | 40% | 21% | 15% | 9% | **24%** |
 
-| Survivor | Target | Critical | Success | Partial | Death (failure or bust) |
-| --- | --- | --- | --- | --- | --- |
-| 2 Injuries | 4 | 29% | 46% | 25% | **0–1%** |
-| 3 Injuries | 6 | 26% | 48% | 26% | **0–1%** |
-
-**Survival has no teeth.** At targets of 4 or 6 you cannot fall 7 short, so only a bust kills, and the bots almost never bust.
+The survivor's two allies play their own target-10 goals. At target 6, falling 7 short is impossible, so only a bust kills. See *Survival* below for two to six Injuries.
 
 ### 8–10. Small tables, quick checks, solo
 
-| Situation | Tricks, target | Critical | Success | Partial | Failure | Bust |
+| Situation | Player | Critical | Success | Partial | Failure | Bust |
 | --- | --- | --- | --- | --- | --- | --- |
-| 2 players, standard | 7, 10 | 13–16% | 39–41% | 25–26% | 17–20% | 1–2% |
-| 3 players, quick | 7, 5 | 18–20% | 33–40% | 40–47% | 0% | 1–6% |
-| Solo | 6, 6 | 33% | 51% | 12% | 0% | 4% |
+| 8. Two players, 7 tricks, target 10 | Ana (Strength) | 13% | 36% | 24% | 18% | 9% |
+| | Ben (Dexterity) | 10% | 32% | 24% | 24% | 9% |
+| 9. Quick check, 3 players, 7 tricks, target 6 | Ana | 16% | 36% | 38% | 0% | 10% |
+| | Ben | 14% | 33% | 44% | 0% | 9% |
+| | Cara | 13% | 33% | 37% | 0% | 17% |
+| 10. Solo, 6 tricks, target 6 | Ana | 20% | 38% | 15% | 0% | **26%** |
 
-Quick checks never fail, but almost half their results are partial: few tricks each means landing far short is common. Solo checks are the kindest, because nobody competes for the world cards.
+- **Two players** is the hardest standard table: the fewest exact hits and the most failures.
+- **Quick checks are partial-heavy.** About 4 in 10 results land 4–6 short, and none can fail at target 6.
+- **Solo checks bust a quarter of the time.** Nobody else is at the table, so Wait does nothing. The world takes 72% of tricks, and late in the check every card left can be a forced win.
 
 ### 11. Opposed goals: two players, 7 tricks, both at target 10
 
-Ana's goal (keep the gate shut) wins 48%, Ben's (get it open) 41%, and 10% are stalemates. The split is close to even, with a small edge for the Strength player (see *Approach balance* below).
+Ana (Strength) wins **51%**, Ben (Dexterity) **42%**, and **7%** are a stalemate. Both players have the same target. The gap is Strength's edge (see Findings).
 
 ### 12. Late campaign: 3 players with drifted decks
 
-Decks of 21 random cards from A–10: critical 17–23%, failure 11–14%, bust 1–3%. These are **slightly better than starter decks**, because the 10s and odd values help both winning and landing exactly. Campaign drift won't break the targets.
+These decks are 21 random cards from A–10 instead of the starter. Critical is 12–17%, failure 13–16% and bust 8–19%, close to situation 1. Starter-deck results should hold as decks drift.
 
 ### 13. Hidden world values
 
-As situation 1, but each world card's value stays hidden until everyone reveals; the bots guess 5.5.
+In this variant, each world card's suit shows but its value stays hidden until everyone reveals.
 
 | Player | Critical | Success | Partial | Failure | Bust |
 | --- | --- | --- | --- | --- | --- |
-| Ana (Strength) | 8% | 37% | 33% | 17% | **4%** |
-| Ben (Dexterity) | 6% | 36% | 36% | 15% | **7%** |
-| Cara (Intelligence) | 6% | 31% | 34% | 23% | **6%** |
+| Ana | 9% | 36% | 26% | 15% | 14% |
+| Ben | 7% | 31% | 27% | 21% | 13% |
+| Cara | 8% | 28% | 24% | 20% | 20% |
 
-Hiding the value turns busting into a real risk, at the cost of most critical successes.
+Hiding the values halves exact hits, and busts rise to 13–20%. It works as a dial for tense scenes, not a default.
 
 ## Findings
 
-1. **The core works.** At the default target, about two-thirds of results are a success or better, one in five is a partial, one in six is a failure, and roughly one in six lands exactly. That holds from 2 to 4 players and as decks drift.
-2. **Cooperation pays.** Yielding a world card to an ally who needs exactly that value is the strongest play pattern the simulation found: 6–8 points more critical successes for everyone.
-3. **Busting almost never happens.** The world card is visible before anyone plays, so a careful player only busts when every card in hand would win. Bust, the critical failure, is about 1% of results. If it should be a real threat, the hidden-value variant (situation 13) brings it to 4–7%.
-4. **Survival is toothless at target 2 × Injuries.** Deaths are 0–1%. Raising the target makes failure possible, and it escalates:
+1. **Checks are hard but readable.** At the default target in a three-player check:
+   - about half of results are success or better;
+   - 12–17% are exact;
+   - 9–17% bust.
 
-   Death rates (bust or 7+ short) for each candidate rule, by Injuries counted (M):
+   Larger tables do better: at 5 players, 21% are exact and 11% bust.
+2. **Strength looks strongest.** Strength players land exactly 17–21% of the time against 10–15% for the others, and win the opposed check 51% to 42%. Brace's reach is worth more than the other consolations once Slip's spare cards are gone.
+3. **Dexterity players fall short most:** 18–24% failure. Wait spends the card and only pays off on the next trick: about 0.6 waited wins a check for a Dexterity player.
+4. **Intelligence players bust most (16–17%).** Part of this is the bot: Recalculate drops its lowest card, so the hand fills with high cards that win when it doesn't want to. People may handle that better.
+5. **Accidents are constant.** Hands are hidden and nobody talks, so 88–97% of checks see at least one player lose a world card they went for. Per player per check:
+   - Ana loses about 1 world card to an ally who played higher;
+   - she loses 0.5 to a tie;
+   - she loses 0.2 to an off-suit block;
+   - and she has 0.1–0.2 forced wins she didn't want.
 
-   | Injuries | 2 × M | 2 × M + 4 | 3 × M | 4 × M |
-   | --- | --- | --- | --- | --- |
-   | 2 | 0% (target 4) | 13% (8) | 0% (6) | 13% (8) |
-   | 3 | 0% (6) | 18% (10) | 16% (9) | 28% (12) |
-   | 4 | 16% (8) | 30% (12) | 30% (12) | **57%** (16) |
+   Forced wins are the main source of busts.
+6. **The tie-break matters.** In a three-player check, players tie for the top card about 1.4 times a check, and 0.9 of those ties are all on-suit. Suit-then-trump settles about two-thirds of the on-suit ones (68% at 3 players, 72% at 4).
+7. **Statuses cost something mainly because they must be played.** Held statuses barely matter. Forced play costs about 2 points of critical (see *Statuses*).
+8. **Busts are part of the game now.** Under the old Slip, every returned Spade was a spare card that couldn't win, so busts were 0–7% at the default target. Under Wait they are 9–17%, which makes overreaching a real risk.
 
-   - **2 × M + 4** is dangerous from the first scan and climbs gently.
-   - **3 × M** is safe at two Injuries, then matches 2 × M + 4. It gives one free warning before the danger starts.
-   - **4 × M** starts like 2 × M + 4, but at four Injuries death is more likely than not. RULES.md used it until Wait replaced Slip; see *Survival under Wait* below.
-5. **Statuses cost almost nothing during a check.** The deck-clogging pressure has moved entirely between checks. If statuses should bite at the table, give the in-check penalty to more than Stumble. One option: a status played while you are below your target gives no consolation.
-6. **Approach balance: Strength looks strongest.** Strength-trump players land exactly 22–30% of the time, against 14–20% for the others, in every situation. Brace is the only consolation that directly helps you win. Watch this in playtests before changing it; part of it may be how the bots pass.
-7. **Quick checks are partial-heavy.** With about 0.8 wins each, 40–47% of results land 4–6 short. If that feels mushy, use target 4 for quick checks or give them more tricks.
-8. **Very hard targets fail more than half the time** (target 16: 55% failure), which matches their label. Above 15, the target says "this probably goes wrong", and the table should agree before choosing it.
+## Tie-breaks
 
-9. **Collisions are constant; accidental wins are rare.** With hidden hands and no talk, players go for the same world card all the time. In the default scene, each player per check is, on average:
-   - **outbid by an ally** 1.2–1.9 times, going for a card someone else then takes;
-   - **tied away** 1.2–1.5 times, matching an ally's value so the world takes it;
-   - **blocked** 0.3–0.4 times, when a passing ally's high off-suit card stops their win.
+How each tie-break rule changes the averages. Each line is 20,000 checks at target 10.
 
-   Nearly every check (97%) has at least one. **Taking a trick you didn't want is rare** (0.01–0.08 per check). It happens only when every card in hand would win, and then it usually busts you. With hidden world values it rises to 0.12 per check.
+| Tie rule | 3 players: critical | Failure | Bust | 4 players: critical | Failure | Bust |
+| --- | --- | --- | --- | --- | --- | --- |
+| The world takes every tie | 13% | 21% | 10% | 13% | 22% | 9% |
+| The only tied card in the world card's suit | 13% | 17% | 11% | 14% | 17% | 10% |
+| **Suit, then trump** *(adopted)* | **14%** | **16%** | 12% | **16%** | **15%** | 10% |
+| The neediest player | 13% | 18% | 11% | 14% | 19% | 9% |
+| The lowest tally | 13% | 18% | 11% | 14% | 19% | 9% |
+| The highest tally | 14% | 19% | 11% | 15% | 19% | 10% |
 
-   Ties are common because the starter decks repeat 2, 4, 6, 8 in every suit. Two tie-breaks were tested, averaged across players:
-
-   | Tie between players goes to… | Critical, 3 / 4 players | Failure, 3 / 4 players | Failure for the target-16 player (mixed stakes) |
-   | --- | --- | --- | --- |
-   | The world (current rule) | 17% / 19% | 17% / 18% | 54% |
-   | The lowest tally | 18% / 20% | 11% / 10% | 49% |
-   | The highest tally | **23% / 27%** | 12% / 11% | 41% |
-   | Whoever is furthest from their target | 18% / 20% | 11% / 10% | **26%** |
-   | **The only tied card in the world card's suit** | 20% / 23% | 12% / 10% | 44% |
-   | The world card's suit, then the lowest tally | 21% / 24% | **9% / 6%** | 41% |
-
-   - **Every tie-break cuts failure by about a third.** What they differ on is who they help.
-   - **Highest tally** produces the most exact hits, because players near their target close out. It's a momentum rule: whoever is ahead stays ahead.
-   - **Lowest tally** is a catch-up rule. With different targets it helps the wrong player, since easy-target players naturally have low tallies.
-   - **Furthest from target** is the only one that rescues a very hard goal, because it reads the target, not just the tally.
-   - **The suit rule** sits in the middle and is the only one decided purely by the cards on the table. Adding *lowest tally* as a second step, for when the suit rule can't separate the tied cards, gives the lowest failure of all with equal targets.
-
-   **How often the suit rule can decide.** Ties between players happen 0.7 times per check with 2 players, 1.9 with 3 and 3.2 with 4: about one trick in five. Of those ties:
-
-   | Tie type | Share of ties | Suit rule |
-   | --- | --- | --- |
-   | Exactly one tied card in the world card's suit | 34–40% | That card wins |
-   | Both or all in the world card's suit | 29–46% | World takes it |
-   | Neither in the world card's suit (both on through trump) | 9–14% | World takes it |
-   | An off-suit card in the tie (a block) | 12–17% | World takes it |
-
-   "Both match" is the most common case. Players often beat the world card with its own suit, and every starter deck holds the same 2, 4, 6 and 8 of each suit.
-
-   **A card-only fallback: suit, then trump.** Rank the tied cards by what they match. A card in the world card's suit **and** its owner's trump beats one in the world card's suit only, which beats one that is only trump. This settles 56–65% of ties instead of 34–40%. It gives the best results of every rule tested (3 / 4 players: critical 22% / 27%, failure 9% / 6%) without anyone comparing tallies. It is decided by the cards on the table, with no tally comparison, and it reads well in the fiction: answering the situation beats pressing your own approach. If both tied cards, or neither, match the world card's suit, the world still takes it.
-
-## Slip and Stumble experiments
-
-These runs use the adopted suit-then-trump tie-break: 3 players, target 10, 20,000 checks each.
-
-| Dexterity's consolation | Critical | Failure | Bust | Critical, Strength / Dexterity / Intelligence |
-| --- | --- | --- | --- | --- |
-| **Slip: return the card to hand (current)** | 22% | 9% | 1% | 25% / 20% / 20% |
-| Return, and the next world card counts 1 lower for beating | **24%** | **6%** | 2% | 27% / 22% / 23% |
-| Return, but not your own trump suit | 16% | 15% | 5% | 21% / 12% / 15% |
-| Return, once per check | 16% | 16% | 5% | 21% / 14% / 13% |
-| Next world card −1 for beating, for everyone (stacking) | 14% | 15% | **13%** | 18% / 13% / 12% |
-| Next world card −2, for everyone (no stacking) | 15% | 14% | **14%** | 19% / 14% / 12% |
-| Nothing at all | 13% | 19% | 11% | 17% / 11% / 10% |
-
-- **Slip's return does the heavy lifting.** It gives every player a card that can always lose. Once you're on target, you need cards that can't win, because winning isn't optional. Without the return, players run out of them, and 0.1–0.2 forced wins per player per check turn into busts.
-- **The world penalty barely helps.** −1 or −2, stacking or not, scores within a point or two of giving Dexterity nothing at all. Most failures come from landing short or long, not from failing to beat the world card. A lower world card also makes more of your cards accidental winners.
-- **Return plus −1 is the only change that makes checks easier,** if that's the goal.
-- **Limiting the return** (not your trump, or once per check) loses about 6 points of critical, and hits Dexterity players hardest.
-
-**Stumble** was tested with each Slip in a 4-player party where every deck carries an Injury, a Stumble and a Stress:
-
-| Stumble's rule | With Slip returning | With a −1 world Slip |
-| --- | --- | --- |
-| Price: discard an ordinary card when played | no effect | no effect |
-| Trip: next world card +2 for beating, instead of its consolation | no effect | no effect |
-| **Grab: if nobody wins the trick, a played Stumble takes the world card** | no effect | **busts 11% → 15%** |
-| No rule | — | — |
-
-Stumble matters only when safe passes are scarce. With the current Slip, players almost never need to play it. Without the return, *Grab* is the only rule that bites, because it makes Stumble unsafe as a pass: you stumble into the world card at the worst moment.
-
-### Must play a matching status
-
-**Variant rule:** if you hold a status in the world card's suit, you must play it that trick. A Strength world card calls out your Injury, a Dexterity one your Stumble, and so on. These runs use 4 players, target 10, the current Slip and the suit-then-trump tie-break:
-
-| Party | Critical | Failure | Forced status plays per player per check | Stumble's Price paid per check |
-| --- | --- | --- | --- | --- |
-| Clean | 27% | 6% | — | — |
-| Worn (Injury, Stumble, Stress) | 25% | 8% | — | 0.04 |
-| Worn, must play matching status | 22% | 9% | 1.9 | **1.0** |
-| Heavily worn (2 Injuries, Stumble, Stress, Curse) | 24% | 10% | — | 0.04 |
-| Heavily worn, must play matching status | 20% | 12% | 2.8 | **1.1** |
-
-- **Statuses start to cost something during a check.** Without the rule, three statuses cost 2 points of critical. With it, they cost 5, and a heavily worn deck costs 7.
-- **It gives Stumble teeth without changing Stumble.** A losing Stumble still slips back to your hand, but every Dexterity world card forces it out again. So Price goes from almost never paid to about once a check.
-- **It reads well in the fiction:** the situation finds your weakness. It costs one glance per trick, at a card you already know you hold.
+**Suit, then trump** works as follows. A tied card in the world card's suit **and** its owner's trump beats one in the world card's suit only, which beats one that is only trump. It gives the fewest failures of any rule tested. It is decided by the cards on the table, so nobody compares tallies, and it reads well in the fiction: answering the situation beats pressing your own approach. Every rule that gives the trick to some player beats letting the world take ties.
 
 ## Replacing Slip
 
-Slip makes losing free: a losing Spade goes back to your hand, so a Spade can try for any world card without risk. These runs test replacements under the adopted rules: suit-then-trump ties, and a status in the world card's suit must be played. Only the current Slip keeps Stumble's loop. With every other rule, a losing Stumble takes the new consolation and goes to discard. Each line is 20,000 checks.
+Slip returned a losing Dexterity card to hand, so losing was free. These runs compare Slip with its replacements. Only Slip keeps Stumble's loop. Under every other rule, a losing Stumble takes the new consolation and goes to discard.
 
 **The candidates**, each taken on a trick loss with a Dexterity card:
-
-- **Wait:** on your next trick, choose and reveal after everyone else. Several Waiting players reveal together.
-- **Duck:** return the card to your hand only if its printed value was lower than the world card's. Statuses never return.
-- **Pull:** if your next card wins, you may refuse the world card; it is discarded.
+- **Slip** (the old rule): return the card to your hand.
+- **Wait** *(adopted)*: on your next trick, choose and reveal after everyone else.
+- **Duck:** return the card only if its printed value was lower than the world card's.
+- **Pull:** if your next card wins, you may refuse the world card.
 - **Feint:** your next card counts as the world card's suit for winning.
-- **+1 / +2:** draw one or two more cards than the check has tricks. Leftover cards discard at cleanup as usual.
+- **+1 / +2:** draw one or two more cards than the check has tricks.
 
 **3 players, target 10:**
 
 | Dexterity's consolation | Critical | Failure | Bust | Ally collisions per player per check | Success or better: Dexterity player / others |
 | --- | --- | --- | --- | --- | --- |
-| **Slip (current)** | 22% | 9% | 1% | 1.1 | 68% / 71% |
-| Nothing at all | 14% | 17% | 12% | 1.1 | 46% / 51% |
-| Wait | 14% | 16% | 12% | **0.77** | 47% / 52% |
-| Duck | 19% | 12% | 2% | 1.1 | 59% / 67% |
+| Slip (old) | 22% | 9% | 1% | 1.1 | 69% / 70% |
+| Nothing at all | 13% | 17% | 12% | 1.1 | 46% / 51% |
+| **Wait** *(adopted)* | 14% | 15% | 12% | **0.8** | 48% / 52% |
+| Duck | 19% | 12% | 2% | 1.1 | 58% / 67% |
 | Pull | 14% | 17% | 11% | 1.1 | 46% / 52% |
-| Feint | 14% | 14% | 14% | 1.3 | 50% / 52% |
-| Nothing, +2 cards | 18% | 12% | 3% | 1.3 | 57% / 66% |
-| Wait, +1 card | 17% | 13% | 6% | 0.83 | 55% / 61% |
-| **Wait, +2 cards** | 19% | 11% | 3% | **0.85** | 59% / 67% |
-| Duck, +1 card | 22% | 10% | 1% | 1.1 | 63% / 72% |
+| Feint | 15% | 14% | 15% | 1.3 | 51% / 52% |
+| Nothing, +2 cards | 18% | 12% | 3% | 1.3 | 58% / 66% |
+| Wait, +1 card | 17% | 12% | 5% | 0.8 | 55% / 62% |
+| Wait, +2 cards | 19% | 11% | 3% | 0.8 | 61% / 66% |
+| Duck, +1 card | 21% | 10% | 1% | 1.2 | 63% / 71% |
 
-**4 players, target 10:**
+"Ally collisions" counts the times a player went for a world card and lost it to an ally's tie or block.
 
-| Dexterity's consolation | Critical | Failure | Bust | Ally collisions |
+- **Slip's power was spare cards, not Dexterity.** The Dexterity player did no better than the others under Slip. Every deck holds Spades, and each one that came back was a card that could always lose. Every rule that keeps no card scores about the same as giving Dexterity nothing.
+- **Wait is the only rule that cuts collisions,** by about 30%. The bot uses it only to take a world card cleanly or stay out of the way, so people will likely get more from it.
+- **Extra starting cards would restore the spare cards** and bring busts back to 3%. They weren't adopted: the harder checks under plain Wait were judged better for the game.
+- **Duck** is the closest drop-in for Slip, but it hits Dexterity players hardest.
+- **Pull almost never triggers** when it would help. **Feint raises busts,** because more of your cards become accidental winners.
+
+## Statuses
+
+**Forced play.** These runs use 4 players at target 10:
+- a worn deck carries an Injury, a Stumble and a Stress;
+- a heavily worn deck carries two Injuries, a Stumble, a Stress and a Curse.
+
+| Party | Critical | Failure | Bust | Forced status plays per player per check | Stumble's Price paid per check |
+| --- | --- | --- | --- | --- | --- |
+| Clean | 16% | 15% | 10% | — | — |
+| Worn, statuses held freely | 16% | 15% | 9% | — | 0.1 |
+| **Worn, matching status must be played** | 14% | 17% | 11% | 1.0 | 0.4 |
+| Heavily worn, held freely | 16% | 15% | 9% | — | 0.1 |
+| **Heavily worn, must be played** | 14% | 17% | 11% | 1.6 | 0.4 |
+
+- **Held freely, statuses cost almost nothing during a check.** They make good passes once you're on target.
+- **Forced play costs about 2 points of critical** and adds a point or two of failure and busts. The situation finds your weakness at the worst moment.
+
+**Stumble's own rule,** tested in the worn party:
+
+| Stumble's rule | Critical | Failure | Bust |
+| --- | --- | --- | --- |
+| **Price:** discard an ordinary card when played *(adopted)* | 14% | 16% | 11% |
+| Trip: the next world card counts 2 higher for beating | 14% | 18% | 9% |
+| Grab: if nobody wins the trick, a played Stumble takes the world card | 14% | 16% | **14%** |
+| No rule | 15% | 15% | 10% |
+
+Without the loop, Stumble is forced out about once per Dexterity world card and then it's spent. So Price is paid only 0.4 times a check, and the four rules land within a point or two of each other. Grab is the only one with a clear effect: it adds busts.
+
+## Survival
+
+Each cell is the chance of death: a bust, or 7 or more short. The survivor plays alongside two allies at target 10, in a 10-trick check.
+
+| Injuries | **3 × M** *(adopted)* | 4 × M − 2 | 4 × M | 4 × M under the old Slip |
 | --- | --- | --- | --- | --- |
-| **Slip (current)** | 27% | 6% | 0% | 1.6 |
-| Wait | 16% | 15% | 10% | 1.2 |
-| **Wait, +2 cards** | 20% | 11% | 3% | 1.3 |
-| Duck | 24% | 9% | 1% | 1.6 |
-| Duck, +1 card | 25% | 7% | 1% | 1.6 |
-
-"Ally collisions" counts the times a player went for a world card and lost it to a tie or a block.
-
-- **Slip's power is slack, not Dexterity.** The player whose trump is Dexterity does no better than the others under Slip (68% against 71%). Every deck holds Spades, and each one that comes back to hand is a spare card for the end of the check. Every rule that keeps no card scores about the same as giving Dexterity nothing: 14% critical and 11–14% busts. Nearly all of those busts come from forced wins, when every card left in hand would win.
-- **Extra starting cards restore most of that slack.** Two extra cards bring busts back to 3% with any consolation.
-- **Wait does what it was meant to.** It cuts ally collisions by about 30%, the only rule tested that does. Each player gets 0.4–0.5 waited wins per check. The bot uses Wait only to take a world card cleanly and to stay out of an ally's way. People will also use it to set up allies and dodge ties, so these numbers likely understate it.
-- **Duck is the closest drop-in.** With one extra card it matches Slip almost exactly. But it keeps Slip's return, only narrower, and it hits Dexterity players hardest. Their high Spades, which go for world cards, no longer come back.
-- **Pull and Feint don't work.** Pull almost never lands: you rarely hold it at the moment a forced win would bust you. Feint makes more of your cards accidental winners, so it raises busts.
-- **Without the loop, Stumble's Price falls from about once a check to 0.4** in a worn party. Stumble is still forced out by Dexterity world cards, but only once.
-- **The Dexterity player lags under every replacement,** by 5–9 points of success or better, against 3 under Slip. Watch this in playtest.
-
-**First proposal:** Wait, with everyone drawing two more cards than the check has tricks. Checks become a little harder than now (critical 19–20% against 22–27%), with busts at 3%. If that's too hard, lower targets by a point or two. Drawing extra cards also cycles decks about 20% faster, so evolution and Stress draws come around sooner.
-
-## Survival under Wait
-
-Wait made busts common, so the survival target was re-tested. Each cell is the chance of death (a bust, or 7 or more short), from 40,000 checks: the survivor plus two allies at target 10, a 10-trick check, the suit-then-trump tie-break and forced statuses.
-
-| Injuries | **3 × M** *(adopted)* | 4 × M − 2 | 4 × M | 4 × M, old Slip |
-| --- | --- | --- | --- | --- |
-| 2 | **14%** (target 6) | 14% (6) | 22% (8) | 7% (8) |
-| 3 | **24%** (9) | 25% (10) | 32% (12) | 21% (12) |
-| 4 | **34%** (12) | 46% (14) | 58% (16) | 48% (16) |
-| 5 | **55%** (15) | 72% (18) | 81% (20) | 74% (20) |
+| 2 | **14%** (target 6) | 14% (6) | 22% (8) | 8% (8) |
+| 3 | **23%** (9) | 24% (10) | 32% (12) | 21% (12) |
+| 4 | **34%** (12) | 46% (14) | 60% (16) | 48% (16) |
+| 5 | **54%** (15) | 72% (18) | 81% (20) | 75% (20) |
 | 6 | **74%** (18) | 89% (22) | 94% (24) | 91% (24) |
 
-- **3 × M climbs smoothly** and is the only rule tested whose targets stay inside 6–20 through six Injuries.
+- **3 × M climbs smoothly,** and it is the only rule tested whose targets stay inside 6–20 through six Injuries.
 - **At two Injuries the target is 6,** where landing 7 short is impossible: death comes only from overreaching.
-- **From four Injuries on, death is almost all failure** (7 or more short), not busts.
+- **From four Injuries on, almost every death is a failure** (7 or more short), not a bust.
+
+## Choosing a target
+
+From [`simulate_targets.mjs`](../../scripts/simulate_targets.mjs): random 21-card decks, with trump set to each deck's biggest suit. Ranges cover 2–5 players; larger tables hit more often and bust less.
+
+**Standard checks** (3 tricks per player, +1):
+
+| Target | Difficulty | Exact hit | 7 or more short | Bust | Under the old Slip: exact / bust |
+| --- | --- | --- | --- | --- | --- |
+| 1–5 | *(too low)* | 17–29% | 0% | 15–34% | 24–44% / 1–12% |
+| 6–8 | Easy | 17–26% | 0–11% | 13–19% | 22–41% / 1–8% |
+| 9–11 | Moderate | 10–23% | 10–21% | 10–16% | 13–36% / 1–7% |
+| 12–14 | Hard | 7–15% | 20–40% | 8–11% | 8–24% / 1–5% |
+| 15–17 | Very hard | 4–12% | 36–59% | 5–7% | 5–17% / 1–4% |
+| 18–20 | Extreme | 2–8% | 51–75% | 2–5% | 2–11% / 0–2% |
+
+Below 6, busts climb (34% at target 1 with 2 players), while success or better doesn't get any likelier. That is why RULES.md starts targets at 6.
+
+**Quick checks** (2 tricks per player, +1) and **solo checks** (6 tricks), under Wait:
+
+| Target | Quick: exact | Quick: 7+ short | Quick: bust | Solo: exact | Solo: 7+ short | Solo: bust |
+| --- | --- | --- | --- | --- | --- | --- |
+| 6–8 | 11–17% | 0–25% | 9–14% | 18–21% | 0–4% | 28–32% |
+| 9–10 | 8–15% | 23–33% | 8–10% | 15–17% | 6–9% | 22–25% |
+| 11–12 | 4–8% | 32–47% | 5–7% | 12–13% | 12–17% | 18–20% |
 
 ## Suggested next steps
 
-- **Adopted:** survival target 3 × M (RULES.md), replacing 4 × M once Wait made busts common. See *Survival under Wait*.
-- **Adopted:** the suit-then-trump tie-break (RULES.md).
-- **Adopted:** Stumble keeps Price, and a status in the world card's suit must be played (RULES.md).
-- **Adopted:** Wait replaces Slip, with **no extra cards**, and Stumble's loop is gone (RULES.md). Checks are harder and busts more common, a trade judged worth making.
-- **Adopted:** the lowest standard target is 6; quick and solo checks use 6–12. Below 6, busts rise without making success likelier.
-- Watch solo checks: with no one else at the table, Wait does nothing, and 28–31% of solo checks bust at targets 6–8.
-- Playtest with real people to see whether yielding happens naturally, and whether Strength's edge is real.
-- Decide whether busts should matter. If they should, try the hidden-value variant for tense scenes.
+- **Adopted** (RULES.md):
+  - the suit-then-trump tie-break;
+  - forced statuses, with Stumble keeping Price;
+  - Wait, with no extra cards;
+  - targets from 6;
+  - survival at 3 × M;
+  - fiction-based critical and bust results.
+- **Playtest with real people.** Check whether:
+  - collisions feel fair;
+  - Wait is fun to use;
+  - working out the exact total at the end of a check drags;
+  - busts at 13–19% feel right on easy targets.
+- **Watch Strength's edge.** Strength players land 5–8 points more exact hits than the others. If playtests agree, Brace may need a limit.
+- **Solo checks** bust 26–32% at targets 6–8. They need their own Dexterity rule, larger targets, or acceptance as harsh.
+- **Decide whether busts should matter more.** If so, try the hidden-value variant for tense scenes.

@@ -49,9 +49,9 @@ The **target sets the difficulty**. Each player may have their own target if the
 | --- | --- | --- | --- | --- |
 | 6–8 | Easy | 16–26% | 0–11% | 13–19% |
 | 9–11 | Moderate | 10–23% | 10–21% | 10–16% |
-| 12–14 | Hard | 7–15% | 20–40% | 7–11% |
-| 15–17 | Very hard | 4–12% | 36–60% | 4–7% |
-| 18–20 | Extreme | 2–7% | 51–75% | 2–5% |
+| 12–14 | Hard | 7–15% | 20–40% | 8–11% |
+| 15–17 | Very hard | 4–12% | 36–59% | 5–7% |
+| 18–20 | Extreme | 2–8% | 51–75% | 2–5% |
 
 Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
 
@@ -133,13 +133,13 @@ Your **tally** is the total of the world cards in your tally pile, with Mirrored
 
 | Final tally | Result |
 | --- | --- |
-| Exactly the target | **Critical success.** You get it, and more. Return one non-Curse status from your discard to reserve. |
+| Exactly the target | **Critical success.** You get it, and more: the GM adds a benefit that fits the fiction. |
 | 1–3 short | **Success,** with a minor complication. |
 | 4–6 short | **Partial success,** with a serious complication. It may be a status. |
 | 7 or more short | **Failure.** Each exposed participant normally gains a fitting status. |
-| Over the target | **Bust: critical failure.** It goes wrong, loudly. Gain your trump suit's status. |
+| Over the target | **Bust: critical failure.** It goes wrong, loudly: the GM sets a consequence that fits the fiction, which may be a status. |
 
-A Curse gained on a bust names its compulsion after what went wrong. Agree any different or additional consequences before dealing. Among incompatible goals, the better result wins; on the same result, the tally closer to its target wins. A tie produces the agreed stalemate.
+A critical's benefit and a bust's consequence come from what you were doing and how: a Strength bust might break something or someone, a Weird critical might reveal more than you asked. A Curse gained on a bust names its compulsion after what went wrong. Agree any different or additional consequences before dealing. Among incompatible goals, the better result wins; on the same result, the tally closer to its target wins. A tie produces the agreed stalemate.
 
 Resolve goals and deaths, then clean up:
 

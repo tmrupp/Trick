@@ -1,4 +1,4 @@
-// Monte Carlo simulation of Tally checks (RULES.md) for concrete table situations.
+// Monte Carlo simulation of Tally checks (RULES.md) for concrete table situations, under the adopted rules by default.
 // Usage: node scripts/simulate_tally.mjs [trials] [name filter regex]   (default 20000 per situation, all situations)
 // Bots are simple and do not read each other, so treat results as relative, not as table odds.
 const TRIALS = Number(process.argv[2]) || 20000;
@@ -94,7 +94,12 @@ function chooseSeen(p, w, plays, wb, spec) {
   return { ...winners[0], want: false, forced: true };
 }
 
-function runCheck(spec) {
+// The adopted rules (RULES.md): suit-then-trump ties, forced statuses, Wait. A spec overrides any of them:
+// tieBreak "none" means the world takes every tie; dex "return" is the old Slip; mustStatus false lets statuses be held.
+const RULES_DEFAULTS = { tieBreak: "suit+trump", mustStatus: true, dex: "wait" };
+
+function runCheck(rawSpec) {
+  const spec = { ...RULES_DEFAULTS, ...rawSpec };
   const N = spec.tricks;
   const players = spec.players.map((ps) => {
     const deck = shuffle(ps.deck());
@@ -194,27 +199,17 @@ function runCheck(spec) {
       else if (win) x.p.outbid++;
       else x.p.blocked++;
     }
-    let dexLosers = 0;
     for (const x of plays) {
       if (x === win || last) { x.p.discard.push(x.c); continue; }
       const p = x.p;
       if (x.c.s === "S") { p.brace = x.c.v; p.discard.push(x.c); }
-      else if (x.c.s === "D" && spec.dex) { // Dexterity replacement experiment
+      else if (x.c.s === "D") { // Dexterity: Wait (adopted), or a candidate under test
         p.dexUses++;
         const keep = spec.dex === "return" || (spec.dex === "return-noloop" && !x.c.st) || (spec.dex === "duck" && !x.c.st && x.c.v < w.v);
         if (keep) p.hand.push(x.c); else p.discard.push(x.c);
         if (spec.dex === "wait") p.wait = true;
         if (spec.dex === "pull") p.pull = true;
         if (spec.dex === "feint") p.feint = true;
-      }
-      else if (x.c.s === "D") {
-        if (spec.slipMode === "notrump" && x.c.s === p.trump && !x.c.st) p.discard.push(x.c); // variant: your own trump does not slip
-        else if (spec.slipMode === "once" && p.slipped) p.discard.push(x.c); // variant: one Slip per check
-        else if (!spec.slip) { p.hand.push(x.c); p.slipped = true; } // Slip: return it to hand
-        else { // Slip variants: the next world card counts lower for beating, for everyone
-          if (spec.slipReturn) p.hand.push(x.c); else p.discard.push(x.c);
-          if (!(x.c.st && spec.stumble === "trip")) dexLosers++;
-        }
       }
       else if (x.c.s === "W") { p.mirror = true; p.discard.push(x.c); }
       else { // Recalculate: drop a status if held, else the lowest card; draw one
@@ -227,10 +222,6 @@ function runCheck(spec) {
           if (drawn.st && drawn.s === "I") p.stress++;
         }
       }
-    }
-    if (spec.slip) {
-      const [, n, once] = spec.slip.match(/^w(\d)(once)?$/);
-      nextMod -= once ? (dexLosers ? Number(n) : 0) : Number(n) * dexLosers;
     }
   });
   return { players, worldTakes };
@@ -285,105 +276,81 @@ const P = (label, trump, secondary, target, extra = {}) => ({
 });
 const three = (target, extra = {}) => [P("Ana (Strength)", "S", "D", target, extra), P("Ben (Dexterity)", "D", "I", target, extra), P("Cara (Intelligence)", "I", "W", target, extra)];
 
+const NAME = { S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" };
+const party = (extra = {}) => ["S", "D", "I", "W"].map((t, i) => P(`P${i + 1} (${NAME[t]})`, t, SUITS[(i + 1) % 4], 10, extra));
+const mixed = () => [P("Ana: hold the door (easy)", "S", "D", 6), P("Ben: lift the keys (moderate)", "D", "I", 10), P("Cara: talk down the sheriff (very hard)", "I", "W", 16)];
+const TIES = () => ({ tricks: 0, oneMatches: 0, neither: 0, both: 0, offSuit: 0, threeWay: 0, suitTrumpResolves: 0 });
+const WORN = ["S", "D", "I"];
+const HEAVY = ["S", "S", "D", "I", "W"];
+
+// Every situation runs under the adopted rules unless it says otherwise (see RULES_DEFAULTS).
 const situations = [
-  situation("1. Default scene", { tricks: 10, players: three(10) },
+  // Part 1: table situations.
+  situation("1. Default scene", { tricks: 10, tieStats: TIES(), players: three(10) },
     "3 players, fresh starter decks, standard check, everyone at the default target of 10."),
   situation("2. The same scene, yielding to allies", { tricks: 10, players: three(10, { policy: "yield" }) },
     "As 1, but each bot skips a world card that would land an ally exactly, unless it lands them exactly too."),
-  situation("3. Mixed stakes", { tricks: 10, players: [P("Ana: hold the door (easy)", "S", "D", 6), P("Ben: lift the keys (moderate)", "D", "I", 10), P("Cara: talk down the sheriff (very hard)", "I", "W", 16)] },
+  situation("3. Mixed stakes", { tricks: 10, players: mixed() },
     "Per-player targets in one check: 6, 10 and 16."),
-  situation("4. A worn-down party", { tricks: 13, players: ["S", "D", "I", "W"].map((t, i) => P(`Player ${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10, { statuses: ["S", "D", "I"] })) },
+  situation("4. A worn-down party", { tricks: 13, players: party({ statuses: WORN }) },
     "4 players, each starter deck carrying an Injury, a Stumble and a Stress, target 10."),
-  situation("5. A clean party of four", { tricks: 13, players: ["S", "D", "I", "W"].map((t, i) => P(`Player ${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10)) },
+  situation("5. A clean party of four", { tricks: 13, tieStats: TIES(), players: party() },
     "Scene 4 without statuses, for comparison."),
-  situation("6. Survival at two Injuries", { tricks: 10, players: [P("Ana: survive (2 Injuries, target 4)", "S", "D", 4, { statuses: ["S", "S"] }), P("Ben", "D", "I", 10), P("Cara", "I", "W", 10)] },
-    "Ana's scan found 2 Injuries: survival is her forced goal at target 4. A bust or 7+ short is death."),
-  situation("7. Survival at three Injuries", { tricks: 10, players: [P("Ana: survive (3 Injuries, target 6)", "S", "D", 6, { statuses: ["S", "S", "S"] }), P("Ben", "D", "I", 10), P("Cara", "I", "W", 10)] },
-    "As 6 with 3 Injuries: target 6."),
-  situation("8. Two players", { tricks: 7, tieStats: { tricks: 0, oneMatches: 0, neither: 0, both: 0, offSuit: 0, threeWay: 0, suitTrumpResolves: 0 }, players: [P("Ana (Strength)", "S", "D", 10), P("Ben (Dexterity)", "D", "I", 10)] },
+  situation("6. Survival at two Injuries", { tricks: 10, players: [P("Ana: survive (2 Injuries, target 6)", "S", "D", 6, { statuses: ["S", "S"] }), P("Ben", "D", "I", 10), P("Cara", "I", "W", 10)] },
+    "Ana's scan found 2 Injuries: survival is her forced goal at target 6. A bust or 7+ short is death."),
+  situation("7. Survival at three Injuries", { tricks: 10, players: [P("Ana: survive (3 Injuries, target 9)", "S", "D", 9, { statuses: ["S", "S", "S"] }), P("Ben", "D", "I", 10), P("Cara", "I", "W", 10)] },
+    "As 6 with 3 Injuries: target 9."),
+  situation("8. Two players", { tricks: 7, tieStats: TIES(), players: [P("Ana (Strength)", "S", "D", 10), P("Ben (Dexterity)", "D", "I", 10)] },
     "A standard 2-player check: 7 tricks, target 10."),
-  situation("9. Quick check, three players", { tricks: 7, players: three(5) },
-    "2 tricks per player + 1, target 5."),
+  situation("9. Quick check, three players", { tricks: 7, players: three(6) },
+    "2 tricks per player + 1, target 6."),
   situation("10. Solo", { tricks: 6, players: [P("Ana alone (Strength)", "S", "D", 6)] },
     "One player, 6 tricks, target 6."),
   situation("11. Opposed goals", { tricks: 7, opposed: true, players: [P("Ana: keep the gate shut", "S", "D", 10), P("Ben: get the gate open", "D", "I", 10)] },
     "Two players with incompatible goals in a 2-player check, both at target 10. The better result wins, then the closer tally."),
   situation("12. Late campaign", { tricks: 10, players: [0, 1, 2].map((i) => ({ label: `Evolved deck ${i + 1}`, trump: SUITS[i], target: 10, policy: "grab", deck: evolvedDeck })) },
     "3 players whose decks have drifted far from the starter: 21 random cards from A–10."),
-  situation("1b. Default scene, ties to the neediest", { tricks: 10, tieBreak: "need", players: three(10) },
-    "As 1, but a tie between players goes to whoever is furthest from their target."),
-  situation("5b. Party of four, ties to the neediest", { tricks: 13, tieBreak: "need", players: ["S", "D", "I", "W"].map((t, i) => P(`Player ${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10)) },
-    "As 5, with the same tie-break."),
-  situation("1c. Default scene, ties to the world card's suit", { tricks: 10, tieBreak: "suit", tieStats: { tricks: 0, oneMatches: 0, neither: 0, both: 0, offSuit: 0, threeWay: 0, suitTrumpResolves: 0 }, players: three(10) },
-    "As 1, but a tie between players goes to the only tied card in the world card's suit."),
-  situation("5c. Party of four, ties to the world card's suit", { tricks: 13, tieBreak: "suit", tieStats: { tricks: 0, oneMatches: 0, neither: 0, both: 0, offSuit: 0, threeWay: 0, suitTrumpResolves: 0 }, players: ["S", "D", "I", "W"].map((t, i) => P(`Player ${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10)) },
-    "As 5, with the same tie-break."),
-  situation("1-low. Default scene, ties to the lowest tally", { tricks: 10, tieBreak: "low", players: three(10) }, "Tie-break variant."),
-  situation("5-low. Party of four, ties to the lowest tally", { tricks: 13, tieBreak: "low", players: ["S", "D", "I", "W"].map((t, i) => P(`Player ${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10)) }, "Tie-break variant."),
-  situation("3-low. Mixed stakes, ties to the lowest tally", { tricks: 10, tieBreak: "low", players: [P("Ana: hold the door (easy)", "S", "D", 6), P("Ben: lift the keys (moderate)", "D", "I", 10), P("Cara: talk down the sheriff (very hard)", "I", "W", 16)] }, "Tie-break variant."),
-  situation("1-high. Default scene, ties to the highest tally", { tricks: 10, tieBreak: "high", players: three(10) }, "Tie-break variant."),
-  situation("5-high. Party of four, ties to the highest tally", { tricks: 13, tieBreak: "high", players: ["S", "D", "I", "W"].map((t, i) => P(`Player ${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10)) }, "Tie-break variant."),
-  situation("3-high. Mixed stakes, ties to the highest tally", { tricks: 10, tieBreak: "high", players: [P("Ana: hold the door (easy)", "S", "D", 6), P("Ben: lift the keys (moderate)", "D", "I", 10), P("Cara: talk down the sheriff (very hard)", "I", "W", 16)] }, "Tie-break variant."),
-  situation("1-suit+low. Default scene, ties to the world card's suit, then lowest tally", { tricks: 10, tieBreak: "suit+low", players: three(10) }, "Tie-break variant."),
-  situation("5-suit+low. Party of four, ties to the world card's suit, then lowest tally", { tricks: 13, tieBreak: "suit+low", players: ["S", "D", "I", "W"].map((t, i) => P(`Player ${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10)) }, "Tie-break variant."),
-  situation("3-suit+low. Mixed stakes, ties to the world card's suit, then lowest tally", { tricks: 10, tieBreak: "suit+low", players: [P("Ana: hold the door (easy)", "S", "D", 6), P("Ben: lift the keys (moderate)", "D", "I", 10), P("Cara: talk down the sheriff (very hard)", "I", "W", 16)] }, "Tie-break variant."),
-  situation("3-need. Mixed stakes, ties to the neediest", { tricks: 10, tieBreak: "need", players: [P("Ana: hold the door (easy)", "S", "D", 6), P("Ben: lift the keys (moderate)", "D", "I", 10), P("Cara: talk down the sheriff (very hard)", "I", "W", 16)] }, "Tie-break variant."),
-  situation("3-suit. Mixed stakes, ties to the world card's suit", { tricks: 10, tieBreak: "suit", tieStats: { tricks: 0, oneMatches: 0, neither: 0, both: 0, offSuit: 0, threeWay: 0, suitTrumpResolves: 0 }, players: [P("Ana: hold the door (easy)", "S", "D", 6), P("Ben: lift the keys (moderate)", "D", "I", 10), P("Cara: talk down the sheriff (very hard)", "I", "W", 16)] }, "Tie-break variant."),
-  situation("1-suit+trump. Default scene, ties by suit then trump", { tricks: 10, tieBreak: "suit+trump", players: three(10) }, "Tie-break variant."),
-  situation("5-suit+trump. Party of four, ties by suit then trump", { tricks: 13, tieBreak: "suit+trump", players: ["S", "D", "I", "W"].map((t, i) => P(`Player ${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10)) }, "Tie-break variant."),
+  situation("13. Hidden world value", { tricks: 10, hidden: true, players: three(10) },
+    "As 1, but each world card's value stays hidden until everyone reveals; players see only how many tricks remain."),
+
+  // Part 2: tie-breaks between players.
+  ...[["none", "world takes"], ["suit", "world card's suit"], ["suit+trump", "suit, then trump"], ["need", "neediest"], ["low", "lowest tally"], ["high", "highest tally"]].flatMap(([tieBreak, label]) => [
+    situation(`Ties ${label}: 3 players`, { tricks: 10, tieBreak, players: three(10) }, "Tie-break experiment."),
+    situation(`Ties ${label}: 4 players`, { tricks: 13, tieBreak, players: party() }, "Tie-break experiment."),
+    situation(`Ties ${label}: mixed stakes`, { tricks: 10, tieBreak, players: mixed() }, "Tie-break experiment."),
+  ]),
+
+  // Part 3: Dexterity's consolation. Outside "return", a losing Stumble takes the consolation and goes to discard: no loop.
   ...(() => {
-    const party = (extra = {}) => ["S", "D", "I", "W"].map((t, i) => P(`P${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10, extra));
-    const out = [];
-    out.push(situation("Slip none (Dexterity gives nothing): 3 players", { tricks: 10, tieBreak: "suit+trump", slip: "w0", players: three(10) }, "Slip experiment."));
-    out.push(situation("Slip return, but not your own trump: 3 players", { tricks: 10, tieBreak: "suit+trump", slipMode: "notrump", players: three(10) }, "Slip experiment."));
-    out.push(situation("Slip return, once per check: 3 players", { tricks: 10, tieBreak: "suit+trump", slipMode: "once", players: three(10) }, "Slip experiment."));
-    out.push(situation("Slip return and −1: 3 players", { tricks: 10, tieBreak: "suit+trump", slip: "w1", slipReturn: true, players: three(10) }, "Slip experiment."));
-    for (const slip of [undefined, "w1", "w1once", "w2", "w2once"]) {
-      const label = slip ? slip.replace("w", "−").replace("once", " (no stacking)") : "return to hand (current)";
-      out.push(situation(`Slip ${label}: 3 players`, { tricks: 10, tieBreak: "suit+trump", slip, players: three(10) }, "Slip experiment."));
-      out.push(situation(`Slip ${label}: 4 players`, { tricks: 13, tieBreak: "suit+trump", slip, players: party() }, "Slip experiment."));
-    }
-    const heavy = ["S", "S", "D", "I", "W"];
-    for (const [name, statuses] of [["clean", []], ["worn (Injury, Stumble, Stress)", ["S", "D", "I"]], ["heavily worn (2 Injuries, Stumble, Stress, Curse)", heavy]]) {
-      for (const mustStatus of [false, true]) {
-        out.push(situation(`Statuses ${name}${mustStatus ? ", must play matching status" : ""}`, { tricks: 13, tieBreak: "suit+trump", mustStatus, players: party({ statuses }) }, "Forced-status experiment."));
-      }
-    }
-    for (const slip of [undefined, "w1", "w2once"]) for (const stumble of ["price", "trip", "grab", "none"]) {
-      out.push(situation(`Stumble ${stumble}, slip ${slip || "return"}: worn party`, { tricks: 13, tieBreak: "suit+trump", slip, stumble, players: party({ statuses: ["S", "D", "I"] }) }, "Stumble experiment."));
-    }
-    return out;
-  })(),
-  ...(() => {
-    // Dexterity replacement experiment: every candidate under the adopted rules (suit-then-trump ties, forced statuses).
-    // Outside "return", a losing Stumble takes the new consolation and goes to discard: no loop.
-    const party = (extra = {}) => ["S", "D", "I", "W"].map((t, i) => P(`P${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10, extra));
     const scenes = [
       ["3 players", 10, () => three(10)],
       ["4 players", 13, () => party()],
-      ["worn party", 13, () => party({ statuses: ["S", "D", "I"] })],
+      ["worn party", 13, () => party({ statuses: WORN })],
       ["mixed stakes", 10, () => [P("Ana (6)", "S", "D", 6), P("Ben (10)", "D", "I", 10), P("Cara (16)", "I", "W", 16)]],
       ["2 players", 7, () => [P("Ana (Strength)", "S", "D", 10), P("Ben (Dexterity)", "D", "I", 10)]],
-      ["quick 3 players", 7, () => three(5)],
+      ["quick 3 players", 7, () => three(6)],
     ];
     const out = [];
     for (const dex of ["return", "return-noloop", "none", "wait", "duck", "pull", "feint"]) for (const [scene, tricks, players] of scenes) {
-      out.push(situation(`Dex ${dex}: ${scene}`, { tricks, tieBreak: "suit+trump", mustStatus: true, dex, players: players() }, "Dexterity replacement experiment."));
+      out.push(situation(`Dex ${dex}: ${scene}`, { tricks, dex, players: players() }, "Dexterity consolation experiment."));
     }
     // Without Slip's return, hands have no slack; test drawing extra cards at the start to restore it.
     for (const dex of ["none", "wait", "duck"]) for (const extraDraw of [1, 2]) for (const [scene, tricks, players] of scenes) {
-      out.push(situation(`Dex ${dex}+${extraDraw}: ${scene}`, { tricks, tieBreak: "suit+trump", mustStatus: true, dex, extraDraw, players: players() }, "Dexterity replacement experiment, extra starting cards."));
+      out.push(situation(`Dex ${dex}+${extraDraw}: ${scene}`, { tricks, dex, extraDraw, players: players() }, "Dexterity consolation experiment, extra starting cards."));
     }
     return out;
   })(),
-  // Survival rules under the adopted rules (suit-then-trump ties, forced statuses), Wait against the old Slip.
+
+  // Part 4: statuses. Forced play on and off; Stumble's own rule.
+  ...[["clean", []], ["worn", WORN], ["heavily worn", HEAVY]].flatMap(([name, statuses]) => [false, true].map((mustStatus) =>
+    situation(`Statuses ${name}${mustStatus ? ", forced" : ", not forced"}`, { tricks: 13, mustStatus, players: party({ statuses }) }, "Forced-status experiment."))),
+  ...["price", "trip", "grab", "none"].map((stumble) =>
+    situation(`Stumble ${stumble}: worn party`, { tricks: 13, stumble, players: party({ statuses: WORN }) }, "Stumble experiment.")),
+
+  // Part 5: survival targets, with the old Slip for comparison.
   ...[["3M", (m) => 3 * m, "wait"], ["4M", (m) => 4 * m, "wait"], ["4M − 2", (m) => 4 * m - 2, "wait"], ["4M, old Slip", (m) => 4 * m, "return"]].flatMap(([rule, target, dex]) =>
-    [2, 3, 4, 5, 6].map((m) => situation(`Survival ${rule}: ${m} Injuries, target ${target(m)}`, { tricks: 10, tieBreak: "suit+trump", mustStatus: true, dex, players: [P(`Survivor (${m} Injuries)`, "S", "D", target(m), { statuses: Array(m).fill("S") }), P("Ally", "D", "I", 10), P("Ally", "I", "W", 10)] },
+    [2, 3, 4, 5, 6].map((m) => situation(`Survival ${rule}: ${m} Injuries, target ${target(m)}`, { tricks: 10, dex, players: [P(`Survivor (${m} Injuries)`, "S", "D", target(m), { statuses: Array(m).fill("S") }), P("Ally", "D", "I", 10), P("Ally", "I", "W", 10)] },
       `Death on a bust or 7+ short. Rule ${rule}, target ${target(m)}.`))),
-  situation("13. Hidden world value", { tricks: 10, hidden: true, players: three(10) },
-    "As 1, but each world card's value stays hidden until everyone reveals; players see only how many tricks remain."),
-  ...[2, 3, 4].flatMap((m) => [2 * m, 2 * m + 4, 3 * m, 4 * m].map((target) => situation(`Survival rule: ${m} Injuries, target ${target}`, { tricks: 10, players: [P(`Survivor (${m} Injuries)`, "S", "D", target, { statuses: Array(m).fill("S") }), P("Ally", "D", "I", 10), P("Ally", "I", "W", 10)] },
-    `Death on a bust or 7+ short. Target ${target}.`))),
 ];
 
 console.log(JSON.stringify({ trials: TRIALS, situations: situations.filter(Boolean) }, null, 2));

@@ -123,7 +123,7 @@ globalThis.TrickRulesCard = {
         {
           "heading": "Resolve against the target",
           "lines": [
-            "Exact: critical success; shed a non-Curse status. 1–3 short: success, minor complication. 4–6 short: partial, serious complication. 7+ short: failure. Over: bust, gain your trump’s status.",
+            "Exact: critical success, plus a benefit from the fiction. 1–3 short: success, minor complication. 4–6 short: partial, serious complication. 7+ short: failure. Over: bust, a loud consequence from the fiction.",
             "Incompatible goals: the better result wins, then the tally closer to its target.",
             "Clean up: return world cards, discard unplayed cards, then your played row, then consequences with Injuries last."
           ]

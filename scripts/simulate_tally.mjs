@@ -1,7 +1,8 @@
 // Monte Carlo simulation of Tally checks (RULES.md) for concrete table situations.
-// Usage: node scripts/simulate_tally.mjs [trials]   (default 20000 per situation)
+// Usage: node scripts/simulate_tally.mjs [trials] [name filter regex]   (default 20000 per situation, all situations)
 // Bots are simple and do not read each other, so treat results as relative, not as table odds.
 const TRIALS = Number(process.argv[2]) || 20000;
+const ONLY = process.argv[3] ? new RegExp(process.argv[3]) : null;
 const SUITS = ["S", "D", "I", "W"]; // Strength, Dexterity, Intelligence, Weird
 const STATUS = { S: "Injury", D: "Stumble", I: "Stress", W: "Curse" };
 
@@ -37,16 +38,25 @@ function result(tally, target) {
 const RANK = { critical: 4, success: 3, partial: 2, failure: 1, bust: 0 };
 
 // Which losing card to spend when passing: Slip returns Dexterity, statuses are free, Stumble costs a card.
-const PASS_ORDER = (c) => (c.st && c.s === "D" ? 6 : c.s === "D" ? 0 : c.st ? 1 : c.s === "W" ? 2 : c.s === "S" ? 3 : 4);
+// With a Dexterity consolation that keeps no card (spec.dex), a losing Spade ranks with Weird instead.
+const passOrder = (c, spec, w) => {
+  if (c.st) return c.s === "D" ? 6 : 1;
+  if (c.s === "D") {
+    if (!spec.dex || spec.dex === "return" || spec.dex === "return-noloop") return 0;
+    if (spec.dex === "duck") return c.v < w.v ? 0 : 3;
+    return 2;
+  }
+  return c.s === "W" ? 2 : c.s === "S" ? 3 : 4;
+};
 
-function choose(p, w, table, hidden, wb = w.v) {
+function choose(p, w, table, hidden, wb = w.v, spec = {}) {
   const need = p.target - p.tally;
   const wv = hidden ? 5.5 : wb; // the value to beat; with a hidden world value, bots guess the average
   const pv = hidden ? 5.5 : w.v; // the value it scores
   const prize = p.mirror ? 11 - pv : pv;
   const opts = p.hand.map((c) => {
     const bv = c.v + p.brace;
-    const on = c.s === p.trump || c.s === w.s;
+    const on = c.s === p.trump || c.s === w.s || p.feint;
     return { c, bv, beats: on && bv > wv };
   });
   const beaters = opts.filter((o) => o.beats).sort((a, b) => a.bv - b.bv);
@@ -56,17 +66,41 @@ function choose(p, w, table, hidden, wb = w.v) {
     if (table.some((q) => q !== p && q.target - q.tally === w.v)) want = false;
   }
   if (want) return { ...beaters[beaters.length > 1 && beaters[0].bv - wv < 2 ? 1 : 0], want: true };
-  const losers = opts.filter((o) => !o.beats).sort((a, b) => PASS_ORDER(a.c) - PASS_ORDER(b.c) || a.c.v - b.c.v);
+  const losers = opts.filter((o) => !o.beats).sort((a, b) => passOrder(a.c, spec, w) - passOrder(b.c, spec, w) || a.c.v - b.c.v);
   if (losers.length) return { ...losers[0], want: false };
   return { ...beaters[0], want: false, forced: true }; // every card in hand would win
+}
+
+// Wait: this player chooses after seeing everyone else's revealed cards.
+// Take the world card outright if it fits; otherwise lose without stealing or blocking an ally's win.
+function chooseSeen(p, w, plays, wb, spec) {
+  const need = p.target - p.tally;
+  const prize = p.mirror ? 11 - w.v : w.v;
+  const top = Math.max(wb, ...plays.map((x) => x.bv));
+  const atTop = plays.filter((x) => x.bv === top);
+  const allyWinning = top > wb && atTop.length === 1 && (atTop[0].c.s === atTop[0].p.trump || atTop[0].c.s === w.s || atTop[0].feint);
+  const opts = p.hand.map((c) => {
+    const bv = c.v + p.brace;
+    const on = c.s === p.trump || c.s === w.s || p.feint;
+    return { c, bv, wins: on && bv > top };
+  });
+  const winners = opts.filter((o) => o.wins).sort((a, b) => a.bv - b.bv);
+  if (winners.length && prize <= need) return { ...winners[0], want: true };
+  const order = (a, b) => passOrder(a.c, spec, w) - passOrder(b.c, spec, w) || a.c.v - b.c.v;
+  const safe = opts.filter((o) => !o.wins && !(allyWinning && o.bv >= top)).sort(order);
+  if (safe.length) return { ...safe[0], want: false };
+  const losers = opts.filter((o) => !o.wins).sort(order);
+  if (losers.length) return { ...losers[0], want: false };
+  return { ...winners[0], want: false, forced: true };
 }
 
 function runCheck(spec) {
   const N = spec.tricks;
   const players = spec.players.map((ps) => {
     const deck = shuffle(ps.deck());
-    return { ...ps, deck, hand: deck.splice(0, N), discard: [], tally: 0, brace: 0, mirror: false, wins: 0, stress: 0, stumblePrice: 0,
-      forcedWins: 0, forcedOver: 0, outbid: 0, tied: 0, blocked: 0 };
+    return { ...ps, deck, hand: deck.splice(0, N + (spec.extraDraw || 0)), discard: [], tally: 0, brace: 0, mirror: false, wins: 0, stress: 0, stumblePrice: 0,
+      forcedWins: 0, forcedOver: 0, outbid: 0, tied: 0, blocked: 0,
+      wait: false, pull: false, feint: false, dexUses: 0, dexPays: 0 };
   });
   const row = worldRow(N);
   let worldTakes = 0, nextMod = 0;
@@ -75,11 +109,16 @@ function runCheck(spec) {
     const wb = Math.max(0, w.v + nextMod); // the world card's value for beating this trick
     nextMod = 0;
     const plays = [];
-    for (const p of players) {
-      if (!p.hand.length) continue;
+    const order = [...players.filter((p) => !p.wait), ...players.filter((p) => p.wait)];
+    const revealed = []; // what Waiting players see: everyone who did not Wait
+    for (const p of order) {
+      if (!p.hand.length) { p.wait = false; continue; }
       // Variant: a status in the world card's suit must be played.
       const owed = spec.mustStatus ? p.hand.find((c) => c.st && c.s === w.s) : null;
-      const o = owed ? { c: owed, bv: owed.v + p.brace, want: false, forcedStatus: true } : choose(p, w, players, spec.hidden, wb);
+      const o = owed ? { c: owed, bv: owed.v + p.brace, want: false, forcedStatus: true }
+        : p.wait ? chooseSeen(p, w, revealed, wb, spec) : choose(p, w, players, spec.hidden, wb, spec);
+      const waited = p.wait, pulling = p.pull, feinting = p.feint;
+      p.wait = false; p.pull = false; p.feint = false;
       if (owed) p.forcedStatus = (p.forcedStatus || 0) + 1;
       p.hand.splice(p.hand.indexOf(o.c), 1);
       const mirrored = p.mirror;
@@ -89,11 +128,13 @@ function runCheck(spec) {
         const ords = p.hand.filter((c) => !c.st).sort((a, b) => a.v - b.v);
         if (ords.length) { p.hand.splice(p.hand.indexOf(ords[0]), 1); p.discard.push(ords[0]); p.stumblePrice++; }
       }
-      plays.push({ p, c: o.c, bv: o.bv, mirrored, want: o.want, forced: o.forced });
+      const play = { p, c: o.c, bv: o.bv, mirrored, want: o.want, forced: o.forced, waited, pulling, feint: feinting };
+      plays.push(play);
+      if (!waited) revealed.push(play);
     }
     const top = Math.max(wb, ...plays.map((x) => x.bv));
     const atTop = plays.filter((x) => x.bv === top);
-    const onSuit = (x) => x.c.s === x.p.trump || x.c.s === w.s;
+    const onSuit = (x) => x.c.s === x.p.trump || x.c.s === w.s || x.feint;
     // Classify ties between players at the top, for the suit tie-break discussion.
     if (spec.tieStats && top > wb && atTop.length > 1) {
       const t = spec.tieStats; t.tricks++;
@@ -123,7 +164,7 @@ function runCheck(spec) {
     }
     // Variant: rank tied cards by what they match: world suit and own trump > world suit only > own trump only.
     if (!win && spec.tieBreak === "suit+trump" && top > wb && atTop.length > 1 && atTop.every(onSuit)) {
-      const score = (x) => (x.c.s === w.s ? 2 : 0) + (x.c.s === x.p.trump ? 1 : 0);
+      const score = (x) => (x.c.s === w.s || x.feint ? 2 : 0) + (x.c.s === x.p.trump ? 1 : 0);
       const sc = atTop.map(score); const best = Math.max(...sc);
       if (sc.filter((v) => v === best).length === 1) win = atTop[sc.indexOf(best)];
     }
@@ -137,7 +178,12 @@ function runCheck(spec) {
       const st = plays.filter((x) => x.c.st && x.c.s === "D");
       if (st.length === 1) { win = st[0]; win.p.stumbleTakes = (win.p.stumbleTakes || 0) + 1; }
     }
+    // Pull: a winner may refuse the world card; the bot refuses one that would bust it.
+    if (win && win.pulling && win.p.tally + (win.mirrored ? 11 - w.v : w.v) > win.p.target) {
+      win.p.dexPays++; win = null;
+    }
     if (win) {
+      if (win.waited || win.feint) win.p.dexPays++;
       win.p.tally += win.mirrored ? 11 - w.v : w.v; win.p.wins++;
       if (!win.want) { win.p.forcedWins++; if (win.p.tally > win.p.target) win.p.forcedOver++; }
     } else worldTakes++;
@@ -153,6 +199,14 @@ function runCheck(spec) {
       if (x === win || last) { x.p.discard.push(x.c); continue; }
       const p = x.p;
       if (x.c.s === "S") { p.brace = x.c.v; p.discard.push(x.c); }
+      else if (x.c.s === "D" && spec.dex) { // Dexterity replacement experiment
+        p.dexUses++;
+        const keep = spec.dex === "return" || (spec.dex === "return-noloop" && !x.c.st) || (spec.dex === "duck" && !x.c.st && x.c.v < w.v);
+        if (keep) p.hand.push(x.c); else p.discard.push(x.c);
+        if (spec.dex === "wait") p.wait = true;
+        if (spec.dex === "pull") p.pull = true;
+        if (spec.dex === "feint") p.feint = true;
+      }
       else if (x.c.s === "D") {
         if (spec.slipMode === "notrump" && x.c.s === p.trump && !x.c.st) p.discard.push(x.c); // variant: your own trump does not slip
         else if (spec.slipMode === "once" && p.slipped) p.discard.push(x.c); // variant: one Slip per check
@@ -183,15 +237,16 @@ function runCheck(spec) {
 }
 
 function situation(name, spec, note) {
+  if (ONLY && !ONLY.test(name)) return null;
   const stats = spec.players.map(() => ({ critical: 0, success: 0, partial: 0, failure: 0, bust: 0, tally: 0, wins: 0, stumblePrice: 0,
-    forcedWins: 0, forcedOver: 0, outbid: 0, tied: 0, blocked: 0, anyMiss: 0 }));
+    forcedWins: 0, forcedOver: 0, outbid: 0, tied: 0, blocked: 0, anyMiss: 0, dexUses: 0, dexPays: 0 }));
   let worldTakes = 0, opposed = { a: 0, b: 0, stalemate: 0 };
   for (let t = 0; t < TRIALS; t++) {
     const r = runCheck(spec);
     worldTakes += r.worldTakes;
     r.players.forEach((p, i) => {
       const s = stats[i]; s[result(p.tally, p.target)]++; s.tally += p.tally; s.wins += p.wins; s.stumblePrice += p.stumblePrice;
-      for (const k of ["forcedWins", "forcedOver", "outbid", "tied", "blocked"]) s[k] += p[k];
+      for (const k of ["forcedWins", "forcedOver", "outbid", "tied", "blocked", "dexUses", "dexPays"]) s[k] += p[k];
       s.forcedStatus = (s.forcedStatus || 0) + (p.forcedStatus || 0);
       if (p.forcedWins || p.outbid || p.tied || p.blocked) s.anyMiss++;
     });
@@ -211,6 +266,7 @@ function situation(name, spec, note) {
       avgTally: (stats[i].tally / TRIALS).toFixed(1), wins: (stats[i].wins / TRIALS).toFixed(1),
       stumblePrice: (stats[i].stumblePrice / TRIALS).toFixed(2),
       forcedStatusPlays: ((stats[i].forcedStatus || 0) / TRIALS).toFixed(2),
+      dexUsesPerCheck: (stats[i].dexUses / TRIALS).toFixed(2), dexPayoffsPerCheck: (stats[i].dexPays / TRIALS).toFixed(2),
       accidents: {
         forcedWinsPerCheck: (stats[i].forcedWins / TRIALS).toFixed(2), forcedWinBusts: pct(stats[i].forcedOver),
         outbidByAllyPerCheck: (stats[i].outbid / TRIALS).toFixed(2), tiedAwayPerCheck: (stats[i].tied / TRIALS).toFixed(2),
@@ -298,10 +354,36 @@ const situations = [
     }
     return out;
   })(),
+  ...(() => {
+    // Dexterity replacement experiment: every candidate under the adopted rules (suit-then-trump ties, forced statuses).
+    // Outside "return", a losing Stumble takes the new consolation and goes to discard: no loop.
+    const party = (extra = {}) => ["S", "D", "I", "W"].map((t, i) => P(`P${i + 1} (${{ S: "Strength", D: "Dexterity", I: "Intelligence", W: "Weird" }[t]})`, t, SUITS[(i + 1) % 4], 10, extra));
+    const scenes = [
+      ["3 players", 10, () => three(10)],
+      ["4 players", 13, () => party()],
+      ["worn party", 13, () => party({ statuses: ["S", "D", "I"] })],
+      ["mixed stakes", 10, () => [P("Ana (6)", "S", "D", 6), P("Ben (10)", "D", "I", 10), P("Cara (16)", "I", "W", 16)]],
+      ["2 players", 7, () => [P("Ana (Strength)", "S", "D", 10), P("Ben (Dexterity)", "D", "I", 10)]],
+      ["quick 3 players", 7, () => three(5)],
+    ];
+    const out = [];
+    for (const dex of ["return", "return-noloop", "none", "wait", "duck", "pull", "feint"]) for (const [scene, tricks, players] of scenes) {
+      out.push(situation(`Dex ${dex}: ${scene}`, { tricks, tieBreak: "suit+trump", mustStatus: true, dex, players: players() }, "Dexterity replacement experiment."));
+    }
+    // Without Slip's return, hands have no slack; test drawing extra cards at the start to restore it.
+    for (const dex of ["none", "wait", "duck"]) for (const extraDraw of [1, 2]) for (const [scene, tricks, players] of scenes) {
+      out.push(situation(`Dex ${dex}+${extraDraw}: ${scene}`, { tricks, tieBreak: "suit+trump", mustStatus: true, dex, extraDraw, players: players() }, "Dexterity replacement experiment, extra starting cards."));
+    }
+    return out;
+  })(),
+  // Survival rules under the adopted rules (suit-then-trump ties, forced statuses), Wait against the old Slip.
+  ...[["3M", (m) => 3 * m, "wait"], ["4M", (m) => 4 * m, "wait"], ["4M − 2", (m) => 4 * m - 2, "wait"], ["4M, old Slip", (m) => 4 * m, "return"]].flatMap(([rule, target, dex]) =>
+    [2, 3, 4, 5, 6].map((m) => situation(`Survival ${rule}: ${m} Injuries, target ${target(m)}`, { tricks: 10, tieBreak: "suit+trump", mustStatus: true, dex, players: [P(`Survivor (${m} Injuries)`, "S", "D", target(m), { statuses: Array(m).fill("S") }), P("Ally", "D", "I", 10), P("Ally", "I", "W", 10)] },
+      `Death on a bust or 7+ short. Rule ${rule}, target ${target(m)}.`))),
   situation("13. Hidden world value", { tricks: 10, hidden: true, players: three(10) },
     "As 1, but each world card's value stays hidden until everyone reveals; players see only how many tricks remain."),
   ...[2, 3, 4].flatMap((m) => [2 * m, 2 * m + 4, 3 * m, 4 * m].map((target) => situation(`Survival rule: ${m} Injuries, target ${target}`, { tricks: 10, players: [P(`Survivor (${m} Injuries)`, "S", "D", target, { statuses: Array(m).fill("S") }), P("Ally", "D", "I", 10), P("Ally", "I", "W", 10)] },
     `Death on a bust or 7+ short. Target ${target}.`))),
 ];
 
-console.log(JSON.stringify({ trials: TRIALS, situations }, null, 2));
+console.log(JSON.stringify({ trials: TRIALS, situations: situations.filter(Boolean) }, null, 2));

@@ -113,7 +113,7 @@ Hiding the value turns busting into a real risk, at the cost of most critical su
 
    - **2 × M + 4** is dangerous from the first scan and climbs gently.
    - **3 × M** is safe at two Injuries, then matches 2 × M + 4. It gives one free warning before the danger starts.
-   - **4 × M** starts like 2 × M + 4, but at four Injuries death is more likely than not. **This is the rule RULES.md now uses.**
+   - **4 × M** starts like 2 × M + 4, but at four Injuries death is more likely than not. RULES.md used it until Wait replaced Slip; see *Survival under Wait* below.
 5. **Statuses cost almost nothing during a check.** The deck-clogging pressure has moved entirely between checks. If statuses should bite at the table, give the in-check penalty to more than Stumble. One option: a status played while you are below your target gives no consolation.
 6. **Approach balance: Strength looks strongest.** Strength-trump players land exactly 22–30% of the time, against 14–20% for the others, in every situation. Brace is the only consolation that directly helps you win. Watch this in playtests before changing it; part of it may be how the bots pass.
 7. **Quick checks are partial-heavy.** With about 0.8 wins each, 40–47% of results land 4–6 short. If that feels mushy, use target 4 for quick checks or give them more tricks.
@@ -202,10 +202,78 @@ Stumble matters only when safe passes are scarce. With the current Slip, players
 - **It gives Stumble teeth without changing Stumble.** A losing Stumble still slips back to your hand, but every Dexterity world card forces it out again. So Price goes from almost never paid to about once a check.
 - **It reads well in the fiction:** the situation finds your weakness. It costs one glance per trick, at a card you already know you hold.
 
+## Replacing Slip
+
+Slip makes losing free: a losing Spade goes back to your hand, so a Spade can try for any world card without risk. These runs test replacements under the adopted rules: suit-then-trump ties, and a status in the world card's suit must be played. Only the current Slip keeps Stumble's loop. With every other rule, a losing Stumble takes the new consolation and goes to discard. Each line is 20,000 checks.
+
+**The candidates**, each taken on a trick loss with a Dexterity card:
+
+- **Wait:** on your next trick, choose and reveal after everyone else. Several Waiting players reveal together.
+- **Duck:** return the card to your hand only if its printed value was lower than the world card's. Statuses never return.
+- **Pull:** if your next card wins, you may refuse the world card; it is discarded.
+- **Feint:** your next card counts as the world card's suit for winning.
+- **+1 / +2:** draw one or two more cards than the check has tricks. Leftover cards discard at cleanup as usual.
+
+**3 players, target 10:**
+
+| Dexterity's consolation | Critical | Failure | Bust | Ally collisions per player per check | Success or better: Dexterity player / others |
+| --- | --- | --- | --- | --- | --- |
+| **Slip (current)** | 22% | 9% | 1% | 1.1 | 68% / 71% |
+| Nothing at all | 14% | 17% | 12% | 1.1 | 46% / 51% |
+| Wait | 14% | 16% | 12% | **0.77** | 47% / 52% |
+| Duck | 19% | 12% | 2% | 1.1 | 59% / 67% |
+| Pull | 14% | 17% | 11% | 1.1 | 46% / 52% |
+| Feint | 14% | 14% | 14% | 1.3 | 50% / 52% |
+| Nothing, +2 cards | 18% | 12% | 3% | 1.3 | 57% / 66% |
+| Wait, +1 card | 17% | 13% | 6% | 0.83 | 55% / 61% |
+| **Wait, +2 cards** | 19% | 11% | 3% | **0.85** | 59% / 67% |
+| Duck, +1 card | 22% | 10% | 1% | 1.1 | 63% / 72% |
+
+**4 players, target 10:**
+
+| Dexterity's consolation | Critical | Failure | Bust | Ally collisions |
+| --- | --- | --- | --- | --- |
+| **Slip (current)** | 27% | 6% | 0% | 1.6 |
+| Wait | 16% | 15% | 10% | 1.2 |
+| **Wait, +2 cards** | 20% | 11% | 3% | 1.3 |
+| Duck | 24% | 9% | 1% | 1.6 |
+| Duck, +1 card | 25% | 7% | 1% | 1.6 |
+
+"Ally collisions" counts the times a player went for a world card and lost it to a tie or a block.
+
+- **Slip's power is slack, not Dexterity.** The player whose trump is Dexterity does no better than the others under Slip (68% against 71%). Every deck holds Spades, and each one that comes back to hand is a spare card for the end of the check. Every rule that keeps no card scores about the same as giving Dexterity nothing: 14% critical and 11–14% busts. Nearly all of those busts come from forced wins, when every card left in hand would win.
+- **Extra starting cards restore most of that slack.** Two extra cards bring busts back to 3% with any consolation.
+- **Wait does what it was meant to.** It cuts ally collisions by about 30%, the only rule tested that does. Each player gets 0.4–0.5 waited wins per check. The bot uses Wait only to take a world card cleanly and to stay out of an ally's way. People will also use it to set up allies and dodge ties, so these numbers likely understate it.
+- **Duck is the closest drop-in.** With one extra card it matches Slip almost exactly. But it keeps Slip's return, only narrower, and it hits Dexterity players hardest. Their high Spades, which go for world cards, no longer come back.
+- **Pull and Feint don't work.** Pull almost never lands: you rarely hold it at the moment a forced win would bust you. Feint makes more of your cards accidental winners, so it raises busts.
+- **Without the loop, Stumble's Price falls from about once a check to 0.4** in a worn party. Stumble is still forced out by Dexterity world cards, but only once.
+- **The Dexterity player lags under every replacement,** by 5–9 points of success or better, against 3 under Slip. Watch this in playtest.
+
+**First proposal:** Wait, with everyone drawing two more cards than the check has tricks. Checks become a little harder than now (critical 19–20% against 22–27%), with busts at 3%. If that's too hard, lower targets by a point or two. Drawing extra cards also cycles decks about 20% faster, so evolution and Stress draws come around sooner.
+
+## Survival under Wait
+
+Wait made busts common, so the survival target was re-tested. Each cell is the chance of death (a bust, or 7 or more short), from 40,000 checks: the survivor plus two allies at target 10, a 10-trick check, the suit-then-trump tie-break and forced statuses.
+
+| Injuries | **3 × M** *(adopted)* | 4 × M − 2 | 4 × M | 4 × M, old Slip |
+| --- | --- | --- | --- | --- |
+| 2 | **14%** (target 6) | 14% (6) | 22% (8) | 7% (8) |
+| 3 | **24%** (9) | 25% (10) | 32% (12) | 21% (12) |
+| 4 | **34%** (12) | 46% (14) | 58% (16) | 48% (16) |
+| 5 | **55%** (15) | 72% (18) | 81% (20) | 74% (20) |
+| 6 | **74%** (18) | 89% (22) | 94% (24) | 91% (24) |
+
+- **3 × M climbs smoothly** and is the only rule tested whose targets stay inside 6–20 through six Injuries.
+- **At two Injuries the target is 6,** where landing 7 short is impossible: death comes only from overreaching.
+- **From four Injuries on, death is almost all failure** (7 or more short), not busts.
+
 ## Suggested next steps
 
-- **Adopted:** survival target 4 × M (RULES.md). Watch whether four-Injury scans feel fair at 57% death.
+- **Adopted:** survival target 3 × M (RULES.md), replacing 4 × M once Wait made busts common. See *Survival under Wait*.
 - **Adopted:** the suit-then-trump tie-break (RULES.md).
-- **Adopted:** Slip keeps its return, Stumble keeps Price, and a status in the world card's suit must be played (RULES.md).
+- **Adopted:** Stumble keeps Price, and a status in the world card's suit must be played (RULES.md).
+- **Adopted:** Wait replaces Slip, with **no extra cards**, and Stumble's loop is gone (RULES.md). Checks are harder and busts more common, a trade judged worth making.
+- **Adopted:** the lowest standard target is 6; quick and solo checks use 6–12. Below 6, busts rise without making success likelier.
+- Watch solo checks: with no one else at the table, Wait does nothing, and 28–31% of solo checks bust at targets 6–8.
 - Playtest with real people to see whether yielding happens naturally, and whether Strength's edge is real.
 - Decide whether busts should matter. If they should, try the hidden-value variant for tense scenes.

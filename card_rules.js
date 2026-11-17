@@ -12,11 +12,11 @@ globalThis.TrickCoreCards = {
   "dexterity": {
     "suitLabel": "Spades — Dexterity",
     "domain": "Spades / Consolation",
-    "title": "SLIP",
+    "title": "WAIT",
     "lines": [
-      "Return this card to your hand. You lost the trick, but spent nothing."
+      "On your next trick, choose your card after everyone else has revealed theirs."
     ],
-    "description": "Return this card to your hand. You lost the trick, but spent nothing."
+    "description": "On your next trick, choose your card after everyone else has revealed theirs."
   },
   "intelligence": {
     "suitLabel": "Diamonds — Intelligence",

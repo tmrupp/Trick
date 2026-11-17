@@ -3,8 +3,8 @@ CURRENT CARD TEXT — generated from the tables in RULES.md
 BRACE (Hearts — Strength)
 Your next card counts this card's printed value higher for beating. It never changes what you score.
 
-SLIP (Spades — Dexterity)
-Return this card to your hand. You lost the trick, but spent nothing.
+WAIT (Spades — Dexterity)
+On your next trick, choose your card after everyone else has revealed theirs.
 
 RECALCULATE (Diamonds — Intelligence)
 Discard one card from hand, then draw one. You need a card to discard.

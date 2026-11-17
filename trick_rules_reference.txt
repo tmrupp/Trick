@@ -41,28 +41,28 @@ The GM brings one standard deck and uses its A–10 cards for the world. Shuffle
 
 | Check | Tricks | Targets | Default |
 | --- | --- | --- | --- |
-| Standard | 3 per player, +1 | 3–20 | 10 |
-| Quick | 2 per player, +1 | 3–10 | 5 |
-| Solo | 6 | 3–10 | 6 |
+| Standard | 3 per player, +1 | 6–20 | 10 |
+| Quick | 2 per player, +1 | 6–12 | 6 |
+| Solo | 6 | 6–12 | 6 |
 
 The **target sets the difficulty**. Each player may have their own target if their tasks differ.
 
-| Target | Difficulty | Exact hit | 7 or more short |
-| --- | --- | --- | --- |
-| 3–6 | Easy | 24–41% | never |
-| 7–10 | Moderate | 16–35% | 7–16% |
-| 11–14 | Hard | 8–21% | 16–39% |
-| 15–17 | Very hard | 5–13% | 40–61% |
-| 18–20 | Extreme | 2–8% | 57–75% |
+| Target | Difficulty | Exact hit | 7 or more short | Bust |
+| --- | --- | --- | --- | --- |
+| 6–8 | Easy | 16–26% | 0–11% | 13–19% |
+| 9–11 | Moderate | 10–23% | 10–21% | 10–16% |
+| 12–14 | Hard | 7–15% | 20–40% | 7–11% |
+| 15–17 | Very hard | 4–12% | 36–60% | 4–7% |
+| 18–20 | Extreme | 2–7% | 51–75% | 2–5% |
 
-Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less.
+Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
 
 **Forced goals.** An immediate threat can require your goal: if attacked, you must get through the attack safely. The GM sets the outcome, target, and stakes; you choose the approach. Combine simultaneous threats into one goal. New threats during play resolve through agreed consequences or a forced goal in the next check.
 
 ## Play the tricks
 
 1. **The world leads** the next card in its row.
-2. **Everyone chooses a card face down,** then all reveal together. **If you hold a status in the world card's suit, you must play one.** If your hand is empty, sit out that trick.
+2. **Everyone chooses a card face down,** then all reveal together. Anyone **Waiting** chooses after that reveal, then reveals; several Waiting players choose and reveal together. **If you hold a status in the world card's suit, you must play one.** If your hand is empty, sit out that trick.
 3. **Find the single highest card on the table,** counting the world card and any Brace. If it is a player's card, and in the world card's suit **or** its owner's trump, it **wins**: its owner takes the world card into their tally pile and **scores its value**.
 4. **If players' cards tie for highest** above the world card and all are on-suit, rank them: a card in the world card's suit **and** its owner's trump beats one in the world card's suit only, which beats one in its owner's trump only. The single best-ranked card wins.
 5. Otherwise **the world takes the trick**: the world card is highest, the highest card is off-suit, or the tie stays level. Discard that world card.
@@ -79,17 +79,17 @@ On a **trick loss**, take your losing card's consolation, including when an ally
 | Suit | Effect |
 | --- | --- |
 | **Strength — Brace** | Your next card counts this card's printed value higher for beating. It never changes what you score. |
-| **Dexterity — Slip** | Return this card to your hand. You lost the trick, but spent nothing. |
+| **Dexterity — Wait** | On your next trick, choose your card after everyone else has revealed theirs. |
 | **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. |
 | **Weird — Mirror** | If your next card wins, the world card scores 11 minus its value. |
 
-Brace and Mirror last for your next play only: turn the losing card sideways as a reminder. Turn a Mirrored world card upside down in your tally pile so its changed score stays visible.
+Brace, Wait, and Mirror last for your next play only: turn the losing card sideways as a reminder. Wait shows you the table, not other Waiting players' cards, and the no-coordination rule still applies. Turn a Mirrored world card upside down in your tally pile so its changed score stays visible.
 
 ## Statuses
 
-Statuses are ordinary cards worth 0. They follow every playing and winning rule, and their printed suit gives its consolation as usual: Injury Braces for 0, Stumble slips back to hand, Stress recalculates, and Curse Mirrors.
+Statuses are ordinary cards worth 0. They follow every playing and winning rule, and their printed suit gives its consolation as usual: Injury Braces for 0, Stumble Waits, Stress recalculates, and Curse Mirrors.
 
-**The situation finds your weakness:** whenever the world card's suit matches a status in your hand, you must play that status, your choice if you hold several. A Strength world card calls out your Injury, a Dexterity one your Stumble, and so on. Because Stumble slips back to hand, every Dexterity world card can force it out again, and each time it costs its Price.
+**The situation finds your weakness:** whenever the world card's suit matches a status in your hand, you must play that status, your choice if you hold several. A Strength world card calls out your Injury, a Dexterity one your Stumble, and so on. Stumble's Price makes that call cost an ordinary card as well.
 
 | Status | Effect |
 | --- | --- |
@@ -152,7 +152,7 @@ Resolve goals and deaths, then clean up:
 
 ## Survival
 
-For living characters, count **M Injuries** in the top **N** discard cards, where N is the check's number of tricks, or all cards if fewer exist. Below two, nothing happens. At **two or more**, survival becomes that player's forced goal, with **target 4 × M**: 8 for two Injuries, 12 for three, 16 for four. It takes priority over other goals. **A bust, or landing 7 or more short, means death;** any other result is survival, with that result's complications.
+For living characters, count **M Injuries** in the top **N** discard cards, where N is the check's number of tricks, or all cards if fewer exist. Below two, nothing happens. At **two or more**, survival becomes that player's forced goal, with **target 3 × M**: 6 for two Injuries, 9 for three, 12 for four, up to 18 for six. It takes priority over other goals. **A bust, or landing 7 or more short, means death;** any other result is survival, with that result's complications.
 
 | Scan trigger | N | Survival applies |
 | --- | --- | --- |

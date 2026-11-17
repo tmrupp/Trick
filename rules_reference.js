@@ -17,10 +17,10 @@ globalThis.TrickRulesCard = {
             "Agree each goal, its target, and its stakes. Each player scores only their own tally.",
             "An immediate threat can force your goal; you still choose the approach.",
             "Each player declares a fitting approach; its suit is their trump for the check. The GM has final say.",
-            "Standard: 3 tricks per player, +1, target 3–20 (default 10). Quick: 2 per player, +1, target 3–10. Solo: 6 tricks.",
+            "Standard: 3 tricks per player, +1, target 6–20 (default 10). Quick: 2 per player, +1, target 6–12 (default 6). Solo: 6 tricks.",
             "Deal the world one card per trick, face up in a row. Everyone draws the same number."
           ],
-          "note": "Target 3–6 easy · 7–10 moderate · 11–14 hard · 15–17 very hard · 18–20 extreme."
+          "note": "Target 6–8 easy · 9–11 moderate · 12–14 hard · 15–17 very hard · 18–20 extreme."
         }
       ]
     },
@@ -34,7 +34,7 @@ globalThis.TrickRulesCard = {
         {
           "heading": "Every trick",
           "lines": [
-            "The world leads its next card. Everyone chooses a card face down, then all reveal together.",
+            "The world leads its next card. Everyone chooses a card face down, then all reveal together. Waiting players then choose and reveal.",
             "The single highest card on the table wins if it is a player's, in the world card's suit or its owner's trump. Count Brace.",
             "The winner scores the world card's value, not their own card's.",
             "Tied players: world card's suit and own trump beats world card's suit only, which beats trump only. Otherwise the world takes it: the world card is highest, the top card is off-suit, or the tie stays level.",
@@ -69,8 +69,8 @@ globalThis.TrickRulesCard = {
             },
             {
               "suit": "dexterity",
-              "label": "Spades — Slip",
-              "text": "Return this card to your hand. You lost the trick, but spent nothing."
+              "label": "Spades — Wait",
+              "text": "On your next trick, choose your card after everyone else has revealed theirs."
             },
             {
               "suit": "intelligence",
@@ -133,7 +133,7 @@ globalThis.TrickRulesCard = {
           "lines": [
             "On an empty deck you may evolve once: return 1 of 2 matching statuses in discard to reserve, then gain or return an ordinary card of that suit. Shuffle discard.",
             "Rest removes any number of non-Curse statuses from discard.",
-            "M Injuries in your top N discard cards, M ≥ 2: survival is your goal, target 4 × M. A bust or 7+ short means death."
+            "M Injuries in your top N discard cards, M ≥ 2: survival is your goal, target 3 × M. A bust or 7+ short means death."
           ],
           "note": "N is the check’s number of tricks."
         }

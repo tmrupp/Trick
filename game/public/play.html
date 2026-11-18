@@ -17,7 +17,7 @@
 </header>
 <main id="main" aria-live="polite"></main>
 <script type="module">
-import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, soundToggle, hasToken, itemsById, racesById, stripTags } from "/shared/client.js";
+import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, soundToggle, hasToken, itemsById, racesById, stripTags, difficultyHint, draft } from "/shared/client.js";
 
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -50,18 +50,29 @@ function askRoom() {
 
 function askName() {
   const input = h("input", { placeholder: "Your name", maxlength: 24, required: true, autocomplete: "nickname", "aria-label": "Your name" });
-  main.replaceChildren(h("form", { class: "panel stack", onsubmit: (e) => { e.preventDefault(); go(input.value.trim()); } },
-    h("h2", {}, `Join room ${room}`), input, h("button", { class: "primary big" }, "Join")));
+  const back = h("div", { class: "stack" });
+  main.replaceChildren(
+    h("form", { class: "panel stack", onsubmit: (e) => { e.preventDefault(); go(input.value.trim()); } },
+      h("h2", {}, `Join room ${room}`), h("p", { class: "muted" }, "New here? Enter your name."), input, h("button", { class: "primary big" }, "Join")),
+    back);
+  // Returning on a new browser or a new link: offer the characters nobody is playing right now.
+  fetch(`/api/rooms/${encodeURIComponent(room)}/returning`).then((r) => r.json()).then((d) => {
+    if (!d.returning || !d.returning.length) return;
+    back.replaceChildren(h("div", { class: "panel stack" }, h("h2", {}, "Coming back?"), h("p", { class: "muted" }, "Tap your character to pick up where you left off."),
+      d.returning.map((r) => h("button", { class: "big", onclick: () => go(null, r.seatId) }, r.character, r.name && r.name !== r.character ? h("span", { class: "small muted" }, ` (${r.name})`) : null))));
+  }).catch(() => {});
   input.focus();
 }
 
-function go(name) {
+function go(name, reclaim) {
   conn = connect({
-    room, as: "player", getName: () => name,
+    room, as: "player", getName: () => name, reclaim,
     onStatus: setStatus,
     onView: (msg) => { last = msg; react(msg); draw(); },
     onRejected: (reason) => { toast(reason); buzz(120); },
     onError: (reason) => {
+      // A saved seat this room doesn't know (or one someone else took back): start over at the join screen.
+      if (/Enter your name|already connected/.test(reason)) { conn.forget(); conn.stop(); toast(reason === "Enter your name to join." ? "Join again: your old seat isn't in this room." : reason); return askName(); }
       toast(reason);
       if (/No room|removed/.test(reason)) main.replaceChildren(h("div", { class: "panel banner bad" }, h("h2", {}, "Can't join"), h("p", {}, reason), h("p", { class: "muted" }, "Check the code with the GM.")));
     },
@@ -201,19 +212,25 @@ function checkView(view, info, me) {
   }
 
   if (ck.phase === "setup") {
-    const goal = p.survival ? null : h("input", { "data-key": "goal-text", placeholder: "What are you trying to do?", value: p.goal || "", maxlength: 100, "aria-label": "Your goal" });
-    const suit = h("select", { "data-key": "appr-suit", "aria-label": "Approach suit" }, Object.entries(SUITS).map(([k, s]) => h("option", { value: k, selected: k === (p.approach || view.characters[me].primary) }, `${s.sym} ${s.name}`)));
-    const text = h("input", { "data-key": "appr-text", placeholder: "How? e.g. shoulder the gate shut", value: p.approachText || "", maxlength: 60, "aria-label": "How you go about it" });
-    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Your goal and approach"),
-      p.survival ? h("p", { class: "pill bad" }, `Your goal is forced: survive. Target ${p.target}.`) : [h("label", {}, h("h3", {}, "Goal"), goal)],
-      h("label", {}, h("h3", {}, "Approach"), h("div", { class: "small muted" }, "Its suit is your trump for this check."), suit),
-      text,
+    const goal = p.survival ? null : h("textarea", { "data-key": "goal-text", rows: 3, placeholder: "e.g. Shoulder the gate shut before the bell", maxlength: 100, "aria-label": "What you're doing, and how", style: "width:100%; resize:vertical; line-height:1.35" }, p.goal || "");
+    const suit = h("select", { "data-key": "appr-suit", "aria-label": "Suit" }, Object.entries(SUITS).map(([k, s]) => h("option", { value: k, selected: k === (p.approach || view.characters[me].primary) }, `${s.sym} ${s.name}`)));
+    const start = p.suggested ?? (ck.kind === "standard" ? 10 : 6);
+    const hint = h("div", { class: "small", "aria-live": "polite" }, difficultyHint(ck.kind, Number(draft("suggest") ?? start)));
+    const hard = p.survival ? null : h("input", { type: "number", "data-key": "suggest", min: 1, max: 40, step: 1, inputmode: "numeric", value: start, "aria-label": "Your suggested target",
+      oninput: (e) => { hint.textContent = difficultyHint(ck.kind, Number(e.target.value)); } });
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Your goal"),
+      p.survival ? h("p", { class: "pill bad" }, `Your goal is forced: survive. Target ${p.target}.`)
+        : h("label", {}, h("h3", {}, "What are you doing, and how?"), h("div", { class: "small muted" }, "The GM sets the difficulty from this."), goal),
+      h("label", {}, h("h3", {}, "Which suit does it use?"), h("div", { class: "small muted" }, "Whichever the goal leans on. It's your trump for this check."), suit),
+      hard ? h("label", {}, h("h3", {}, "What target do you suggest?"), h("div", { class: "small muted" }, `The total you'll aim to hit. ${ck.kind === "standard" ? "Standard checks run 6–20." : "This check runs 6–12."} The GM has the final say.`), h("div", { class: "row" }, hard), hint) : null,
       h("button", { class: "primary big", onclick: () => {
         const g = goal ? goal.value.trim() : undefined;
         if (goal && !g) return toast("Say what you're trying to do.");
-        act({ type: "declareApproach", charId: me, suit: suit.value, approach: text.value, goal: g });
+        const n = hard ? Number(hard.value) : undefined;
+        if (hard && (!Number.isInteger(n) || n < 1 || n > 40)) return toast("Suggest a target from 1 to 40.");
+        act({ type: "declareApproach", charId: me, suit: suit.value, goal: g, suggested: n });
       } }, p.approach ? "Update" : "Declare"),
-      p.approach ? h("p", { class: `pill ${p.approved ? "good" : "warn"}` }, p.approved ? "Approved by the GM" : "Waiting for the GM to approve and set the target") : null));
+      p.approach ? h("p", { class: `pill ${p.approved ? "good" : "warn"}` }, p.approved ? `Target ${p.target}${p.survival ? "" : ", set by the GM"}` : "Waiting for the GM to set the target") : null));
   }
 
   for (const pr of view.prompts || []) out.push(promptPanel(pr, view, me));

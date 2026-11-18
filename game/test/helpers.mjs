@@ -22,14 +22,14 @@ export function game(ids = ["ana", "ben", "cara"], seed = "test") {
   return state;
 }
 
-// Begin and deal a check: approaches default to each primary, targets to 10.
+// Begin and deal a check: each player states a goal (its suit defaults to their primary), then the GM sets
+// the target (default 10).
 export function dealt(state, { kind = "standard", ids, targets = {}, approaches = {} } = {}) {
   ids = ids || Object.keys(state.characters);
   const acts = [{ type: "beginCheck", kind, participants: ids }];
   for (const id of ids) {
-    acts.push({ type: "setGoal", charId: id, goal: "Test", target: targets[id] ?? 10 });
-    acts.push({ type: "declareApproach", charId: id, suit: approaches[id] || state.characters[id].primary });
-    acts.push({ type: "approveApproach", charId: id });
+    acts.push({ type: "declareApproach", charId: id, goal: "Test", suit: approaches[id] || state.characters[id].primary });
+    acts.push({ type: "setGoal", charId: id, target: targets[id] ?? 10 });
   }
   acts.push({ type: "deal" });
   let s = state;

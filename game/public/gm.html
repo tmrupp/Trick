@@ -56,10 +56,9 @@ function nextStep(info, view, names) {
   if (ck.phase === "setup") {
     const noTarget = ck.participants.filter((id) => ck.players[id].target == null).map((id) => names[id]);
     const noAppr = ck.participants.filter((id) => !ck.players[id].approach).map((id) => names[id]);
-    const unapproved = ck.participants.filter((id) => ck.players[id].approach && !ck.players[id].approved).map((id) => names[id]);
-    if (noAppr.length) return ["Waiting for goals and approaches.", `${noAppr.join(", ")} still deciding on their phones. Set targets as goals come in.`];
-    if (noTarget.length) return ["Set a target for each goal.", `Still needed: ${noTarget.join(", ")}.`];
-    if (unapproved.length) return ["Approve approaches that fit the fiction.", `Waiting on you: ${unapproved.join(", ")}.`];
+    const unset = ck.participants.filter((id) => ck.players[id].approach && !ck.players[id].approved).map((id) => names[id]);
+    if (noAppr.length) return ["Waiting for goals.", `${noAppr.join(", ")} still deciding on their phones. Set targets as goals come in.`];
+    if (unset.length || noTarget.length) return ["Set a target for each goal.", `Still needed: ${[...new Set([...unset, ...noTarget])].join(", ")}.`];
     return ["Everything is set.", "Deal the world and draw hands."];
   }
   if (ck.waitingOn.length) return ["Waiting on players.", ck.waitingOn.map((w) => `${names[w.charId]}: ${w.type}`).join(", ")];
@@ -95,7 +94,7 @@ function checkTab(info, view, names) {
     const alive = Object.values(view.characters).filter((c) => c.alive);
     const kind = sel("begin-kind", [["standard", "Standard: 3 tricks per player, +1"], ["quick", "Quick: 2 per player, +1"], ["solo", "Solo: 6 tricks"]], "standard", "Check size");
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Start a check"),
-      h("p", { class: "small muted" }, "Choose who takes part. Each player states their own goal and approach on their phone; you set the target and approve."),
+      h("p", { class: "small muted" }, "Choose who takes part. Each player states their goal and its suit on their phone; you set the difficulty from the goal."),
       kind,
       h("div", { class: "row" }, alive.map((c) => h("label", { class: "pill" }, h("input", { type: "checkbox", "data-key": `begin-${c.id}`, checked: true }), c.name, c.survival ? " (survival)" : ""))),
       h("button", { class: "primary big", onclick: () => {
@@ -109,23 +108,31 @@ function checkTab(info, view, names) {
     ck.phase !== "setup" ? h("div", { class: "row", style: "margin-top:8px" }, ck.worldRow.map((c, i) => cardFace(c, i === ck.trick && ck.phase !== "resolve" ? "md" : "sm", { class: i === ck.trick && ck.phase !== "resolve" ? "current" : i < ck.trick ? "past" : "" }))) : null));
 
   if (ck.phase === "setup") {
-    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Goals, approaches and targets"),
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Goals and targets"),
       h("p", { class: "small muted" }, ck.kind === "standard" ? "Targets: 6–8 easy · 9–11 moderate · 12–14 hard · 15–17 very hard · 18–20 extreme. Default 10." : "Targets 6–12. Default 6."),
       ck.participants.map((id) => {
         const p = ck.players[id];
-        const t = Number(val(`t-${id}`, p.target ?? (ck.kind === "standard" ? 10 : 6)));
+        // The box resets when the player's suggestion or the set target changes.
+        const tk = `t-${id}-${p.suggested ?? ""}-${p.target ?? ""}`;
+        const t = Number(val(tk, p.target ?? p.suggested ?? (ck.kind === "standard" ? 10 : 6)));
         return h("div", { class: "panel stack" },
-          h("div", { class: "spread" }, h("h2", {}, names[id]), p.survival ? h("span", { class: "pill bad" }, `Survival: target ${p.target}`) : p.target != null ? h("span", { class: "pill good" }, `Target ${p.target}`) : null),
-          p.goal ? h("p", { class: "big", style: "font-family:var(--display);font-size:22px" }, `“${p.goal}”`) : h("p", { class: "muted" }, id === myChar ? "Your goal: state it below." : "Waiting for their goal…"),
-          p.approach ? h("div", { class: "row" }, h("span", {}, `${SUITS[p.approach].sym} ${p.approachText || SUITS[p.approach].name}`),
-            p.approved ? h("span", { class: "pill good" }, "approved") : [h("button", { class: "primary", onclick: () => act({ type: "approveApproach", charId: id }) }, "Approve"), h("button", { onclick: () => act({ type: "approveApproach", charId: id, approved: false }) }, "It doesn't fit")])
+          h("div", { class: "spread" }, h("h2", {}, names[id]),
+            p.survival ? h("span", { class: "pill bad" }, `Survival: target ${p.target}`)
+              : p.approved ? h("span", { class: "pill good" }, `Target ${p.target}`)
+              : p.approach && p.target != null ? h("span", { class: "pill warn" }, "Goal changed: confirm the target") : null),
+          p.approach && p.goal ? h("p", { class: "big", style: "font-family:var(--display);font-size:22px;margin:0" }, `“${p.goal}”`) : null,
+          p.approach ? h("div", { class: "small" }, `${SUITS[p.approach].sym} ${SUITS[p.approach].name}: their trump`, p.suggested != null ? h("span", { class: "pill", style: "margin-left:8px" }, `They suggest ${difficulty(ck.kind, p.suggested)} (${p.suggested})`) : null)
             : id === myChar ? h("div", { class: "stack", style: "width:100%" },
-                h("input", { "data-key": "my-goal", placeholder: "Your goal", maxlength: 100, style: "width:100%" }),
-                h("div", { class: "row" }, sel("my-appr", Object.entries(SUITS).map(([k, s]) => [k, `${s.sym} ${s.name}`]), view.characters[id].primary, "Your approach"),
-                  h("button", { onclick: () => act({ type: "declareApproach", charId: id, suit: draft("my-appr") || view.characters[id].primary, goal: p.survival ? undefined : (draft("my-goal") || "").trim() || undefined }) }, "Declare")))
-            : h("span", { class: "muted small" }, "Waiting for their approach…"),
-          h("div", { class: "row" }, "Target", num(`t-${id}`, p.target ?? (ck.kind === "standard" ? 10 : 6), { min: 1, max: 40, disabled: !!p.survival, oninput: () => draw() }), h("span", { class: "pill" }, difficulty(ck.kind, t)),
-            h("button", { onclick: () => act({ type: "setGoal", charId: id, target: p.survival ? p.target : Number(val(`t-${id}`, t)) }) }, p.target != null ? "Update target" : "Set target")));
+                p.survival ? null : h("input", { "data-key": "my-goal", placeholder: "Your goal: what you're doing, and how", maxlength: 100, style: "width:100%" }),
+                h("div", { class: "row" }, sel("my-appr", Object.entries(SUITS).map(([k, s]) => [k, `${s.sym} ${s.name}`]), view.characters[id].primary, "Suit"),
+                  h("button", { onclick: () => {
+                    const g = p.survival ? undefined : (draft("my-goal") || "").trim();
+                    if (!p.survival && !g) return toast("Say what you're trying to do.");
+                    act({ type: "declareApproach", charId: id, suit: draft("my-appr") || view.characters[id].primary, goal: g });
+                  } }, "Declare")))
+            : h("p", { class: "muted" }, "Waiting for their goal…"),
+          p.survival ? null : h("div", { class: "row" }, "Target", num(tk, p.target ?? p.suggested ?? (ck.kind === "standard" ? 10 : 6), { min: 1, max: 40, disabled: !p.approach, oninput: () => draw() }), h("span", { class: "pill" }, difficulty(ck.kind, t)),
+            h("button", { class: p.approach && !p.approved ? "primary" : "", disabled: !p.approach, onclick: () => act({ type: "setGoal", charId: id, target: Number(val(tk, t)) }) }, p.approved ? "Change target" : p.target != null ? "Confirm target" : "Set target")));
       }),
       h("button", { class: "primary big", onclick: () => act({ type: "deal" }) }, "Deal")));
   }

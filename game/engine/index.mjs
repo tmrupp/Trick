@@ -57,6 +57,8 @@ const HANDLERS = {
   setGoal: check.setGoal,
   declareApproach: check.declareApproach,
   approveApproach: check.approveApproach,
+  // Older saves asked the Peeking player whether to swap; Peek is now automatic, so the old answer is ignored.
+  peek: () => {},
   deal: check.deal,
   lockCard: check.lockCard,
   unlockCard: check.unlockCard,

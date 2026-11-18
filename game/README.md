@@ -5,6 +5,8 @@ The rules of [RULES.md](../RULES.md) as code, and a host server for playing them
 ```bash
 npm start            # host with a public link through a Cloudflare quick tunnel
 npm run start:local  # host on this computer only
+npm run restart      # stop any running host, start again with the tunnel, and open the host, table and GM windows
+npm run restart:local
 npm test             # engine rules, replay, card conservation, parity, and server tests
 npm run sim:engine   # bots play the default scene through the engine (add a number of checks)
 ```
@@ -12,14 +14,14 @@ npm run sim:engine   # bots play the default scene through the engine (add a num
 ## Hosting a game
 
 1. **Install cloudflared once** for the public link: on Windows, `winget install --id Cloudflare.cloudflared`. Without it, `npm start` still runs, local only.
-2. **Run `npm start`.** It prints a private host page link (with an admin token) and a public `trycloudflare.com` link. The public link changes each time you start.
+2. **Run `npm start`.** It prints a private host page link (with an admin token) and a public `trycloudflare.com` link. The public link changes each time you start. `npm run restart` does all of this in one go: it stops an older host on the same port (only if it is Node), opens your most recently played campaign, and opens the host, table and GM pages in Chrome or Edge windows. Add a campaign id to open a different one: `npm run restart -- --open black-valley`.
 3. **On the host page,** create a campaign or open a saved one. Each campaign shows its room code, a QR code and join link for players, a link to the table screen, and the secret GM link.
-4. **Players** scan the QR code or open the join link, enter a name, and create their character on their phone. A phone that sleeps or drops rejoins its seat automatically.
-5. **The GM** opens the GM link, on a phone or the laptop. A banner always says what to do next. Players state their own goals and approaches on their phones; the GM sets each target, approves approaches, and can also play a character, add consequences, give items, grant rest and Blessed, remove a seat, and hand a character to a new seat.
+4. **Players** scan the QR code or open the join link, enter a name, and create their character on their phone. A phone that sleeps or drops rejoins its seat automatically. A player on a new browser or a new link (every quick-tunnel restart is a new link) picks their character under **Coming back?** on the join screen; it lists characters whose phone isn't connected, and the old browser stops working for that seat. If the host restarted, a room opens by itself when a phone asks for its code.
+5. **The GM** opens the GM link, on a phone or the laptop. A banner always says what to do next. Players state their own goals on their phones, with the suit each leans on; the GM sets each target from the goal, which accepts it, and can also play a character, add consequences, give items, grant rest and Blessed, remove a seat, and hand a character to a new seat.
 
 ## The screens
 
-- **Phone (`/play`).** Character creation with suits and a people; your goal and approach for each check; a hand of the printed cards with forced statuses marked and each card's text a tap away; prompts that explain Recalculate, Stumble's Price and evolution; your tally against your target; a **My cards** tab with deck contents, discard, statuses, compulsion, survival warnings and items (with a **Use** button that tells the table); a link to print your cards.
+- **Phone (`/play`).** Character creation with suits and a people; your goal and its suit for each check; a hand of the printed cards with forced statuses marked and each card's text a tap away; prompts that explain Recalculate, Stumble's Price and evolution; your tally against your target; a **My cards** tab with deck contents, discard, statuses, compulsion, survival warnings and items (with a **Use** button that tells the table); a link to print your cards.
 - **Table (`/table`, or `/watch` for spectators).** The join QR code, the world row, each player's tally and progress to target, who has locked in (face down), a reveal at every trick with a one-line reason, waiting reminders, and results.
 - **GM (`/gm`).** Tabs for the check (setup with the difficulty beside each target, hands, adjustments, results and consequences), characters (statuses, Curses, rest, Blessed, items) and the room (join link, seats, assigning characters, playing a character).
 - **Host (`/host`).** Create, open, download, import and archive campaigns.
@@ -52,7 +54,7 @@ import { createGame, apply, viewFor } from "./engine/index.mjs";
 let game = createGame({ seed: "table-1" });
 ({ state: game } = apply(game, { type: "createCharacter", id: "ana", name: "Ana", primary: "S", secondary: "D", others: ["I", "W"] }));
 ({ state: game } = apply(game, { type: "beginCheck", kind: "standard", participants: ["ana", "ben", "cara"] }));
-// … declareApproach (the player's goal and approach), setGoal (the target), approveApproach, deal, lockCard, recalculate, addConsequence, endCheck
+// … declareApproach (the player's goal and its suit), setGoal (the target, which accepts the goal), deal, lockCard, recalculate, addConsequence, endCheck
 const phone = viewFor(game, { role: "player", charId: "ana" }); // only what Ana may see
 ```
 
@@ -70,8 +72,8 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | `createCharacter { id, name, primary, secondary, others }` | Any time | A player. `others` lists the two remaining suits; the first takes 2, 3, 6, 9 |
 | `setSeats { seats, gmSeat }` | Any time | GM. No longer in the pages: it only sets display order. Kept so older saves replay |
 | `beginCheck { kind, participants }` | No check running | GM. Runs the survival scan |
-| `declareApproach { charId, goal, suit, approach }` | Setup | The player states their goal and approach (a survival goal is fixed) |
-| `setGoal { charId, target }`, `approveApproach { charId, approved }` | Setup | GM: the target, and whether the approach fits. A survival target is fixed at 3 × M |
+| `declareApproach { charId, goal, suit, suggested }` | Setup | The player states their goal, the suit it leans on (their trump), and optionally a suggested target. A survival goal is fixed and accepted at once; restating a goal sends it back to the GM |
+| `setGoal { charId, target }` | Setup | GM: the target, set from the goal. Setting it accepts the goal and its suit. A survival target is fixed at 3 × M. (`approveApproach` remains only so older saves replay) |
 | `deal` | Setup | GM. Deals the world row and draws every hand |
 | `lockCard { charId, cardId, priceCardId }`, `unlockCard { charId }` | Play | A player. The trick resolves when everyone with cards has locked |
 | `recalculate { charId, cardId }` | Consolation | A player who lost with a Diamond |

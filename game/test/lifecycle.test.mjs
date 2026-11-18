@@ -20,14 +20,21 @@ test("incompatible goals: the better result wins, then the closer tally, else a 
   assert.equal(compareGoals(r, "c", "d"), null);
 });
 
-test("setup: targets, approaches and approval are required before the deal", () => {
+test("setup: a stated goal and a target are required before the deal", () => {
   let s = game(["ana"]);
   ({ state: s } = run(s, { type: "beginCheck", kind: "solo", participants: ["ana"] }));
   assert.equal(s.check.tricks, 6);
   assert.throws(() => run(s, { type: "deal" }), /no target/);
-  ({ state: s } = run(s, { type: "setGoal", charId: "ana", goal: "Hold the door", target: 6 }, { type: "declareApproach", charId: "ana", suit: "S" }));
-  assert.throws(() => run(s, { type: "deal" }), /isn't approved/);
-  ({ state: s } = run(s, { type: "approveApproach", charId: "ana" }, { type: "deal" }));
+  assert.throws(() => run(s, { type: "declareApproach", charId: "ana", suit: "S", goal: "  " }), /what you're trying/);
+  ({ state: s } = run(s, { type: "declareApproach", charId: "ana", suit: "S", goal: "Hold the door" }));
+  assert.throws(() => run(s, { type: "deal" }), /no target/);
+  ({ state: s } = run(s, { type: "setGoal", charId: "ana", target: 6 }));
+  assert.equal(s.check.players.ana.approved, true, "setting the target accepts the goal");
+  // Restating the goal sends it back to the GM.
+  ({ state: s } = run(s, { type: "declareApproach", charId: "ana", suit: "W", goal: "Bar the door with a hex" }));
+  assert.throws(() => run(s, { type: "deal" }), /Confirm Ana's target/);
+  ({ state: s } = run(s, { type: "setGoal", charId: "ana", target: 7 }, { type: "deal" }));
+  assert.equal(s.check.players.ana.approach, "W");
   assert.equal(hand(s, "ana").length, 6);
   assert.equal(s.check.worldRow.length, 6);
   assert.equal(s.check.worldDeck.length, 34);
@@ -122,7 +129,7 @@ test("evolution on a reshuffle: return a status and an ordinary card, or skip", 
   // Empty the deck into discard with two Injuries, so the deal must reshuffle.
   ana.discard.push(...ana.deck.splice(0), card("Dx", "ana"), card("Dx", "ana"));
   ({ state: s } = run(s, { type: "beginCheck", kind: "solo", participants: ["ana"] },
-    { type: "setGoal", charId: "ana", target: 6 }, { type: "declareApproach", charId: "ana", suit: "S" }, { type: "approveApproach", charId: "ana" }, { type: "deal" }));
+    { type: "declareApproach", charId: "ana", suit: "S", goal: "Hold the door" }, { type: "setGoal", charId: "ana", target: 6 }, { type: "deal" }));
   assert.equal(s.check.phase, "deal");
   assert.deepEqual(s.check.pending.map((x) => x.type), ["evolve"]);
   const back = s.characters.ana.discard.find((c) => !c.status && c.suit === "D");

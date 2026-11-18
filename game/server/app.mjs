@@ -34,6 +34,14 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
     return rooms.get(save.code);
   };
 
+  // A room by code, opening its saved campaign if the host hasn't yet (e.g. just after a restart).
+  const roomByCode = (code) => {
+    code = String(code || "").toUpperCase();
+    if (rooms.has(code)) return rooms.get(code);
+    const saved = store.list().find((c) => c.code === code);
+    return saved ? openRoom(saved.id) : null;
+  };
+
   const info = () => ({
     publicUrl: linkBase(),
     rooms: [...rooms.values()].map((r) => ({ id: r.save.id, name: r.save.name, code: r.code, gmKey: r.save.gmKey, seats: r.roomInfo(null).seats })),
@@ -80,6 +88,12 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
         const text = String(url.searchParams.get("text") || "").slice(0, 300);
         if (!/^https?:\/\//.test(text)) return send(res, 400, { error: "Give a link." });
         return send(res, 200, await QRCode.toString(text, { type: "svg", margin: 1 }), TYPES[".svg"]);
+      }
+      // Characters a returning player can take back. Names only; no tokens or hands.
+      const back = path.match(/^\/api\/rooms\/([A-Za-z]{1,8})\/returning$/);
+      if (back && req.method === "GET") {
+        const room = roomByCode(back[1]);
+        return room ? send(res, 200, { code: room.code, returning: room.returning() }) : send(res, 404, { error: "No room with that code." });
       }
       if (path.startsWith("/api/")) {
         if (req.headers["x-admin"] !== adminToken) return send(res, 403, { error: "This page needs the host's admin link." });
@@ -163,10 +177,10 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
         if (msg.type === "hello") {
           if (client) return reply({ type: "error", reason: "Already joined." });
           if (!allowJoin(ip)) return reply({ type: "error", reason: "Too many joins from here; wait a minute." });
-          room = rooms.get(String(msg.room || "").toUpperCase());
-          if (!room) return reply({ type: "error", reason: "No room with that code is open." });
+          room = roomByCode(msg.room);
+          if (!room) return reply({ type: "error", reason: "No room with that code." });
           const as = ["table", "gm", "player"].includes(msg.as) ? msg.as : "player";
-          const seat = room.join({ as, token: msg.token, name: msg.name, gmKey: msg.gmKey });
+          const seat = room.join({ as, token: msg.token, name: msg.name, gmKey: msg.gmKey, reclaim: msg.reclaim });
           clearTimeout(helloTimer);
           client = { seat, as, send: reply, close: () => ws.close(4001, "Removed") };
           room.clients.add(client);

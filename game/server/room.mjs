@@ -31,8 +31,16 @@ export class Room {
 
   seatById(id) { return this.save.seats.find((s) => s.id === id); }
 
+  // Player seats with a character and no phone connected: someone returning on a new browser or link can take one back.
+  returning() {
+    const connected = new Set([...this.clients].filter((c) => c.seat).map((c) => c.seat.id));
+    return this.save.seats
+      .filter((s) => s.role === "player" && !s.removed && s.charId && !connected.has(s.id) && this.state.characters[s.charId])
+      .map((s) => ({ seatId: s.id, name: s.name, character: this.state.characters[s.charId].name }));
+  }
+
   // Join or rejoin. Returns the seat (null for a table screen).
-  join({ as, token, name, gmKey }) {
+  join({ as, token, name, gmKey, reclaim }) {
     if (as === "table") return null;
     if (as === "gm") {
       if (gmKey !== this.save.gmKey) throw new RuleError("That GM link isn't valid for this room.");
@@ -48,6 +56,14 @@ export class Room {
       const seat = this.save.seats.find((s) => s.token === token && s.role === "player");
       if (seat && !seat.removed) return seat;
       if (seat && seat.removed) throw new RuleError("The GM removed this seat.");
+    }
+    if (reclaim) {
+      // A new token goes to the new browser; the old one stops working.
+      const seat = this.returning().some((r) => r.seatId === reclaim) && this.seatById(reclaim);
+      if (!seat) throw new RuleError("That character is already connected, or isn't in this room.");
+      seat.token = newSecret();
+      this.persist();
+      return seat;
     }
     const clean = String(name || "").trim().slice(0, 24);
     if (!clean) throw new RuleError("Enter your name to join.");

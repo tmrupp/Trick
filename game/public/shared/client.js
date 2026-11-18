@@ -13,7 +13,7 @@ export const params = new URLSearchParams(location.search);
 // ---- Connection ----
 
 // Connect to a room and stay connected: rejoins with the saved token after any drop.
-export function connect({ room, as, gmKey, getName, onView, onWelcome, onRejected, onStatus, onError }) {
+export function connect({ room, as, gmKey, getName, reclaim, onView, onWelcome, onRejected, onStatus, onError }) {
   const key = `trick:${room}:${as}`;
   let ws = null;
   let seq = 0;
@@ -27,7 +27,7 @@ export function connect({ room, as, gmKey, getName, onView, onWelcome, onRejecte
       wait = 500;
       let token = null;
       try { token = localStorage.getItem(key); } catch {}
-      ws.send(JSON.stringify({ type: "hello", room, as, token, gmKey, name: token ? undefined : getName && getName() }));
+      ws.send(JSON.stringify({ type: "hello", room, as, token, gmKey, name: token ? undefined : getName && getName(), reclaim: token ? undefined : reclaim }));
     };
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
@@ -50,6 +50,7 @@ export function connect({ room, as, gmKey, getName, onView, onWelcome, onRejecte
     act(action) { const s = ++seq; if (ws.readyState === 1) ws.send(JSON.stringify({ type: "action", seq: s, action })); else toast("Reconnecting… try again in a moment."); return s; },
     manage(op) { const s = ++seq; if (ws.readyState === 1) ws.send(JSON.stringify({ type: "manage", seq: s, ...op })); return s; },
     forget() { try { localStorage.removeItem(key); } catch {} },
+    stop() { stopped = true; try { ws.close(); } catch {} },
   };
 }
 
@@ -168,6 +169,26 @@ export const RESULT_NOTE = {
   failure: "7 or more short: it doesn't happen.",
   bust: "Over the target: it goes wrong, loudly.",
 };
+
+// Difficulty bands a player can suggest: [name, low, high, the target it suggests].
+export function difficultyBands(kind) {
+  return kind === "standard"
+    ? [["Easy", 6, 8, 7], ["Moderate", 9, 11, 10], ["Hard", 12, 14, 13], ["Very hard", 15, 17, 16], ["Extreme", 18, 20, 19]]
+    : [["Easy", 6, 8, 7], ["Moderate", 9, 10, 9], ["Hard", 11, 12, 11]];
+}
+
+// A one-line hint for a target a player is thinking of: its difficulty, its band, and for standard checks
+// the simulated odds from RULES.md.
+const STANDARD_ODDS = { Easy: "exact hit 17–24%, bust 13–19%", Moderate: "exact hit 10–22%, bust 10–16%", Hard: "exact hit 7–15%, bust 7–11%", "Very hard": "exact hit 4–11%, bust 4–7%", Extreme: "exact hit 2–7%, bust 2–5%" };
+export function difficultyHint(kind, target) {
+  if (!Number.isInteger(target) || target < 1) return "Enter a whole number.";
+  const bands = difficultyBands(kind);
+  const [lo, hi] = [bands[0][1], bands[bands.length - 1][2]];
+  if (target < lo) return `Too low: below ${lo}, busts rise without making success likelier.`;
+  if (target > hi) return `Beyond ${bands[bands.length - 1][0].toLowerCase()}: ${kind} checks run ${lo}–${hi}.`;
+  const [name, blo, bhi] = bands.find(([, a, b]) => target >= a && target <= b);
+  return `${name} (${blo}–${bhi})${kind === "standard" ? `: ${STANDARD_ODDS[name]}` : ""}.`;
+}
 
 export function difficulty(kind, target) {
   if (!Number.isInteger(target)) return "";

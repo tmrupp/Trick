@@ -99,7 +99,7 @@ function draw(info, view, names) {
     if (lastCheck) parts.push(h("div", { class: "panel" }, h("h2", {}, "Last check"), h("div", { class: "row" }, Object.entries(lastCheck.results).map(([id, r]) => h("span", { class: "pill" }, `${names[id]}: ${RESULT[r.result]} (${r.tally}/${r.target})`)))));
     return render(main, parts);
   }
-  sub.textContent = `${ck.kind[0].toUpperCase()}${ck.kind.slice(1)} check · ${ck.phase === "setup" ? "setting goals and approaches" : ck.phase === "resolve" ? "resolved" : `trick ${ck.trick + 1} of ${ck.tricks}`}`;
+  sub.textContent = `${ck.kind[0].toUpperCase()}${ck.kind.slice(1)} check · ${ck.phase === "setup" ? "setting goals" : ck.phase === "resolve" ? "resolved" : `trick ${ck.trick + 1} of ${ck.tricks}`}`;
   if (ck.phase !== "setup") {
     parts.push(h("div", { class: "panel" }, h("div", { class: "world" }, ck.worldRow.map((c, i) => {
       const cur = i === ck.trick && ck.phase !== "resolve";
@@ -118,7 +118,7 @@ function draw(info, view, names) {
     return h("div", { class: `lane${ck.log.length && ck.log[ck.log.length - 1].winner === id ? " flash" : ""}` },
       h("div", {}, h("div", { class: "who" }, names[id]),
         p.goal ? h("div", { class: "small", style: "font-style:italic" }, p.goal) : null,
-        h("div", { class: "small" }, p.approach ? `${SUITS[p.approach].sym} ${p.approachText || SUITS[p.approach].name}${p.approved ? "" : " (awaiting GM)"}` : "no approach yet"),
+        h("div", { class: "small" }, p.approach ? `${SUITS[p.approach].sym} ${SUITS[p.approach].name} trump${p.approved ? "" : " · waiting for a target"}` : "deciding on a goal"),
         p.survival ? h("span", { class: "pill bad" }, "Survival") : null),
       h("div", {}, h("div", { class: "tally" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm")), h("strong", { class: "big" }, ` ${p.total}`), h("span", { class: "muted" }, ` / ${p.target ?? "?"}`)),
         p.target ? h("div", { class: `bar${over ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / p.target)}%` })) : null,

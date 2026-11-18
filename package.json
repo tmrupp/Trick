@@ -16,6 +16,8 @@
     "sim:engine": "node game/sim/engine_bots.mjs",
     "start": "node game/server/main.mjs --tunnel",
     "start:local": "node game/server/main.mjs",
+    "restart": "node game/server/main.mjs --tunnel --restart --open",
+    "restart:local": "node game/server/main.mjs --restart --open",
     "export:cards:dark": "node export_cards.mjs --dark",
     "export:web-cards": "node export_web_cards.mjs"
   },

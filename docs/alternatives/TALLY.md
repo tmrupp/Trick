@@ -52,8 +52,8 @@ These use the blind Peek as Dexterity's consolation. **6 is the lowest useful ta
 
 ## A check
 
-1. **Agree goals, targets and stakes.**
-2. **Declare an approach.** Its suit is your **trump**.
+1. **State your goal:** what you're doing and how. The suit it leans on is your **trump**.
+2. **The GM sets its target** from the goal (you may suggest one), and the table agrees stakes.
 3. **Deal the world's cards face-up in a row,** one per trick, from the GM's shuffled A–10 deck. **Everyone draws** the same number.
 4. For each trick:
    1. **The world leads** its next card.

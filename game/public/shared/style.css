@@ -50,7 +50,7 @@ a { color: var(--i); }
 .spread { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .stack > * + * { margin-top: 10px; }
 button, select, input, textarea { font: 17px/1.2 var(--text); color: var(--ink); background: var(--card); border: 1.5px solid var(--rule); border-radius: 4px; padding: 9px 12px; min-height: 44px; }
-input::placeholder { color: var(--muted); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
 button { cursor: pointer; font-family: var(--label); font-weight: 700; letter-spacing: .04em; }
 button:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 6%, var(--card)); }
 button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--i); outline-offset: 2px; }

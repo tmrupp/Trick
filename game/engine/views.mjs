@@ -38,7 +38,7 @@ function checkPublic(ck) {
   for (const id of ck.participants) {
     const p = ck.players[id];
     players[id] = {
-      goal: p.goal, target: p.target, survival: p.survival,
+      goal: p.goal, target: p.target, suggested: p.suggested ?? null, survival: p.survival,
       approach: p.approach, approachText: p.approachText || null, approved: p.approved,
       handCount: p.hand.length, played: p.played.map(pub),
       tally: p.tally.map((t) => ({ card: pub(t.card), mirrored: t.mirrored, score: t.score, adjustment: !!t.adjustment, reason: t.reason || null })),

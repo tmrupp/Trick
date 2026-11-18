@@ -15,7 +15,7 @@ Each player brings **two standard decks**, preferably with matching backs. The f
 | Intelligence — Diamonds | Analysis, persuasion, planning | Stress |
 | Weird — Clubs | Intuition, empathy, invocation | Curse |
 
-Choose a **primary suit** and a different **secondary suit**. They set only your starting cards, never which approach you may declare. From **one deck**:
+Choose a **primary suit** and a different **secondary suit**. They set only your starting cards, never which suit your goal may use. From **one deck**:
 
 1. Take **A, 2, 4, 5, 7, 8, 10 of your primary suit**: every value except 3, 6 and 9.
 2. Take **A, 3, 6, 9, 10 of your secondary suit**.
@@ -27,7 +27,7 @@ The GM brings one standard deck and uses its A–10 cards for the world. Shuffle
 
 ## Shared rules
 
-- Each player has **one goal, one target, and one approach** per check. You score only your own tally; tallies are never pooled or transferred. Help each other through fiction and card play.
+- Each player has **one goal and one target** per check. You score only your own tally; tallies are never pooled or transferred. Help each other through fiction and card play.
 - **Finish negotiation before drawing.** During play, choose independently: no tactical discussion, card advice, or signals. A card cannot be taken back once played. Narration, rules questions, and effect declarations are welcome, but cannot coordinate tactics.
 - **Printed suit** determines consolation. A card's **value** decides only whether it wins; what you score is the world card you take.
 - Gained cards come from reserve; removed cards return there. Gained statuses enter discard immediately; gain no copy if none remain in reserve. **Gain Injuries only at cleanup or between checks**; Injury consequences arising during play wait for cleanup.
@@ -36,7 +36,7 @@ The GM brings one standard deck and uses its A–10 cards for the world. Shuffle
 ## Start a check
 
 1. Check each player's discard for survival before drawing or reshuffling.
-2. Agree goals, **targets**, stakes, and any incompatible goals or stalemates. Each player declares an approach whose suit is their **trump**, fixed for the check. **An approach must fit the fiction**: being good at sneaking does not help once you have been spotted. The GM has final say on whether an approach applies and may rule out one the situation has closed off.
+2. Each player **states a goal**: what they are doing and how. The suit it leans on is their **approach** and their **trump**, fixed for the check. The GM sets each goal's **target** from what it attempts; the player may suggest one. The table agrees stakes and any incompatible goals or stalemates. **A goal must fit the fiction**: being good at sneaking does not help once you have been spotted. The GM has final say on a goal's suit and may rule out one the situation has closed off.
 3. Size the check, then deal the world **one card per trick, face up in a row**, from its shuffled A–10 deck. Everyone draws the same number. Resolve draw effects as cards are drawn.
 
 | Check | Tricks | Targets | Default |
@@ -57,7 +57,7 @@ The **target sets the difficulty**. Each player may have their own target if the
 
 Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
 
-**Forced goals.** An immediate threat can require your goal: if attacked, you must get through the attack safely. The GM sets the outcome, target, and stakes; you choose the approach. Combine simultaneous threats into one goal. New threats during play resolve through agreed consequences or a forced goal in the next check.
+**Forced goals.** An immediate threat can require your goal: if attacked, you must get through the attack safely. The GM sets the outcome, target, and stakes; you choose how, and so its suit. Combine simultaneous threats into one goal. New threats during play resolve through agreed consequences or a forced goal in the next check.
 
 ## Play the tricks
 

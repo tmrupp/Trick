@@ -85,8 +85,8 @@ export function beginCheck(ctx, { kind = "standard", participants }) {
   ctx.events.push({ type: "checkBegun", kind, tricks, participants: st.check.participants });
 }
 
-// The GM sets the target, which is the difficulty. The goal itself is the player's to state (declareApproach);
-// a goal given here only fills in when the player hasn't stated one.
+// The GM sets the target (the difficulty) from the player's goal. Setting it accepts the goal and its suit.
+// A goal given here only fills in when the player hasn't stated one (older saves).
 export function setGoal(ctx, { charId, goal, target }) {
   const ck = activeCheck(ctx.state, ["setup"]);
   const p = participant(ck, charId);
@@ -94,26 +94,33 @@ export function setGoal(ctx, { charId, goal, target }) {
   if (p.survival && target !== 3 * p.survival.M) throw rule(`Survival is a forced goal at target ${3 * p.survival.M}.`);
   if (!p.goal && goal) p.goal = String(goal).slice(0, 100);
   p.target = target;
+  if (p.approach) p.approved = true;
   const [lo, hi] = CHECK_KINDS[ck.kind].targets;
   ctx.events.push({ type: "goalSet", id: charId, target, outsideRange: target < lo || target > hi });
 }
 
-// The player states their goal and their approach; its suit is their trump. A forced goal (survival) can't be restated.
-export function declareApproach(ctx, { charId, suit, approach, goal }) {
+// The player states their goal and the suit it uses, which is their trump. The goal is the approach: there's
+// no separate approach text. A forced goal (survival) can't be restated, and its fixed target accepts it at once.
+// Restating a goal sends it back to the GM, who confirms or changes the target.
+// The player may suggest a difficulty as a target; the GM decides.
+export function declareApproach(ctx, { charId, suit, approach, goal, suggested }) {
   const ck = activeCheck(ctx.state, ["setup"]);
   const p = participant(ck, charId);
-  if (!SUITS.includes(suit)) throw rule("An approach's suit is S, D, I or W.");
+  if (!SUITS.includes(suit)) throw rule("A goal's suit is S, D, I or W.");
+  if (suggested != null && (!Number.isInteger(suggested) || suggested < 1 || suggested > 40)) throw rule("A suggested target is a whole number from 1 to 40.");
   if (goal != null && !p.survival) {
     const g = String(goal).trim().slice(0, 100);
     if (!g) throw rule("Say what you're trying to do.");
     p.goal = g;
   }
   p.approach = suit;
-  p.approachText = (approach && String(approach).slice(0, 60)) || SUIT_INFO[suit].name;
-  p.approved = false;
+  p.suggested = p.survival ? null : suggested ?? null;
+  p.approachText = (approach && String(approach).slice(0, 60)) || null; // older saves only
+  p.approved = !!p.survival;
   ctx.events.push({ type: "approachDeclared", id: charId, suit });
 }
 
+// Kept so older saves replay; the pages accept a goal by setting its target.
 export function approveApproach(ctx, { charId, approved = true }) {
   const ck = activeCheck(ctx.state, ["setup"]);
   const p = participant(ck, charId);
@@ -130,7 +137,8 @@ export function deal(ctx) {
   for (const id of ck.participants) {
     const p = ck.players[id];
     if (!Number.isInteger(p.target)) throw rule(`${st.characters[id].name} has no target.`);
-    if (!p.approach || !p.approved) throw rule(`${st.characters[id].name}'s approach isn't approved.`);
+    if (!p.approach) throw rule(`${st.characters[id].name} hasn't stated a goal and suit.`);
+    if (!p.approved) throw rule(`Confirm ${st.characters[id].name}'s target for their new goal.`);
   }
   const world = ctx.rng.shuffle(worldCards());
   ck.worldRow = world.splice(0, ck.tricks);

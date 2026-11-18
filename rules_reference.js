@@ -14,9 +14,9 @@ globalThis.TrickRulesCard = {
           "heading": "Set the check",
           "lines": [
             "Scan every discard for survival before drawing or reshuffling.",
-            "Agree each goal, its target, and its stakes. Each player scores only their own tally.",
-            "An immediate threat can force your goal; you still choose the approach.",
-            "Each player declares a fitting approach; its suit is their trump for the check. The GM has final say.",
+            "Each player states a goal: what they do and how. The suit it leans on is their trump for the check.",
+            "The GM sets each goal's target (the player may suggest one) and has final say on its suit. Agree stakes.",
+            "An immediate threat can force your goal; you still choose how, and so its suit.",
             "Standard: 3 tricks per player, +1, target 6–20 (default 10). Quick: 2 per player, +1, target 6–12 (default 6). Solo: 6 tricks.",
             "Deal the world one card per trick, face up in a row. Everyone draws the same number."
           ],

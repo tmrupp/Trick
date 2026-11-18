@@ -92,10 +92,10 @@ test("a room plays a whole check over WebSockets, keeps hands private, survives 
     // Only the GM runs setup, and players act only for themselves.
     assert.equal((await players[0].act({ type: "beginCheck", participants: ids })).type, "rejected");
     assert.equal((await gm.act({ type: "beginCheck", participants: ids })).type, "ok");
-    for (const id of ids) assert.equal((await gm.act({ type: "setGoal", charId: id, goal: "Cross the river", target: 10 })).type, "ok");
-    assert.equal((await players[0].act({ type: "declareApproach", charId: "p2", suit: "S" })).reason, "You can only act for your own character.");
-    for (const [i, c] of players.entries()) await c.act({ type: "declareApproach", charId: ids[i], suit: suits[i][0] });
-    for (const id of ids) await gm.act({ type: "approveApproach", charId: id });
+    assert.equal((await players[0].act({ type: "declareApproach", charId: "p2", suit: "S", goal: "Cross the river" })).reason, "You can only act for your own character.");
+    for (const [i, c] of players.entries()) assert.equal((await c.act({ type: "declareApproach", charId: ids[i], suit: suits[i][0], goal: "Cross the river" })).type, "ok");
+    assert.equal((await players[0].act({ type: "setGoal", charId: ids[0], target: 6 })).type, "rejected", "only the GM sets targets");
+    for (const id of ids) assert.equal((await gm.act({ type: "setGoal", charId: id, target: 10 })).type, "ok");
     assert.equal((await gm.act({ type: "deal" })).type, "ok");
     await settle();
 
@@ -213,6 +213,49 @@ test("campaigns download, import with their code, archive, and hand characters t
     assert.notEqual(room.gmKey, gmKey);
     assert.equal((await api("/api/import", { nonsense: true })).status, 400);
     for (const c of [gm, ana, phone2]) await c.close();
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a player on a new browser takes their character back; a restarted host opens rooms on demand", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  let { host, port, api } = await startHost(dir);
+  try {
+    const created = await api("/api/campaigns", { name: "Back again", seed: "back" });
+    const { code } = created.body.rooms[0];
+    const ana = client(port, { room: code, as: "player", name: "Tess" });
+    await ana.ready;
+    await ana.act({ type: "createCharacter", name: "Ana", primary: "S", secondary: "D", others: ["I", "W"] });
+    const oldToken = ana.welcome.token;
+    // While Ana's phone is connected, nobody can take her character.
+    assert.deepEqual((await api(`/api/rooms/${code}/returning`)).body.returning, []);
+    const thief = client(port, { room: code, as: "player", reclaim: "p1" });
+    assert.match((await thief.ready).reason, /already connected/);
+    await thief.close();
+    await ana.close();
+    await settle();
+
+    // The host restarts and nobody reopens the campaign: the room still opens when a phone asks for it.
+    await host.close();
+    ({ host, port, api } = await startHost(dir));
+    const list = await api(`/api/rooms/${code.toLowerCase()}/returning`);
+    assert.deepEqual(list.body.returning, [{ seatId: "p1", name: "Tess", character: "Ana" }]);
+    assert.equal((await api("/api/rooms/ZZZZZ/returning")).status, 404);
+
+    // On a new browser (no saved token) Ana taps her character and gets it back, with a fresh token.
+    const back = client(port, { room: code, as: "player", reclaim: "p1" });
+    const w = await back.ready;
+    assert.equal(w.type, "welcome");
+    assert.equal(w.seatId, "p1");
+    assert.notEqual(w.token, oldToken);
+    await settle();
+    assert.equal(back.latest().room.you.charId, "p1");
+    // The old browser's token no longer works.
+    const stale = client(port, { room: code, as: "player", token: oldToken });
+    assert.match((await stale.ready).reason, /Enter your name/);
+    for (const c of [back, stale]) await c.close();
   } finally {
     await host.close();
     rmSync(dir, { recursive: true, force: true });

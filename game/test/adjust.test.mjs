@@ -78,12 +78,19 @@ test("a player's view lists their deck's contents, sorted, never its order", () 
   assert.equal(viewFor(s, { role: "table" }).characters.ana.deckCards, undefined, "the table never sees deck contents");
 });
 
-test("players state their own goal with their approach; the GM sets the target", () => {
+test("players state their own goal and its suit; the GM sets the target", () => {
   let s = game(["ana", "ben"]);
   ({ state: s } = run(s, { type: "beginCheck", participants: ["ana", "ben"] },
-    { type: "declareApproach", charId: "ana", suit: "S", approach: "shoulder the gate", goal: "Hold the gate until the bell" },
+    { type: "declareApproach", charId: "ana", suit: "S", goal: "Hold the gate until the bell" },
     { type: "setGoal", charId: "ana", target: 8, goal: "GM's words" }));
   assert.equal(s.check.players.ana.goal, "Hold the gate until the bell", "the GM doesn't overwrite a stated goal");
   assert.equal(s.check.players.ana.target, 8);
   assert.throws(() => run(s, { type: "declareApproach", charId: "ben", suit: "D", goal: "   " }), /what you're trying/);
+  // A player may suggest a difficulty; the GM's target still decides.
+  ({ state: s } = run(s, { type: "declareApproach", charId: "ben", suit: "D", goal: "Pick the lock", suggested: 13 }));
+  assert.equal(viewFor(s, { role: "gm" }).check.players.ben.suggested, 13);
+  assert.equal(s.check.players.ben.target, null);
+  ({ state: s } = run(s, { type: "setGoal", charId: "ben", target: 11 }));
+  assert.equal(s.check.players.ben.target, 11);
+  assert.throws(() => run(s, { type: "declareApproach", charId: "ben", suit: "D", goal: "Pick the lock", suggested: 2.5 }), /suggested target/);
 });

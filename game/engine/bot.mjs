@@ -80,9 +80,8 @@ export function playCheck(state, { kind = "standard", goals, consequences = [] }
   step({ type: "beginCheck", kind, participants: ids });
   for (const id of ids) {
     const p = state.check.players[id];
-    step({ type: "setGoal", charId: id, goal: p.survival ? "Survive" : "Bot goal", target: p.survival ? p.target : goals[id].target });
-    step({ type: "declareApproach", charId: id, suit: goals[id].approach });
-    step({ type: "approveApproach", charId: id });
+    step({ type: "declareApproach", charId: id, suit: goals[id].approach, goal: p.survival ? undefined : "Bot goal" });
+    if (!p.survival) step({ type: "setGoal", charId: id, target: goals[id].target });
   }
   step({ type: "deal" });
   for (let guard = 0; state.check.phase !== "resolve"; guard++) {

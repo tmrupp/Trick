@@ -99,14 +99,14 @@ Pure functions over plain data, with a seeded random number generator so any gam
 **Phone (`/play`):**
 - join with a name; rejoin automatically after the phone sleeps, using a token kept on the phone;
 - character setup: primary and secondary suit, and which other suit takes 2, 3, 6, 9;
-- each check: see your goal and target, choose an approach (the GM approves), then your hand;
+- each check: state your goal and the suit it leans on, see the target the GM sets, then your hand;
 - each trick: legal cards only, tap to choose, tap to lock, and undo until everyone locks;
 - prompts: Peek ("keep the 9♦ or swap in the 4♠?"), Recalculate, Stumble's Price, giving a Blessed;
 - your deck, discard and reserve between checks, and evolution choices on a reshuffle.
 
 **GM (`/gm`, phone or laptop):**
 - set each goal, target, check size and stakes, with the difficulty table beside the target picker;
-- approve approaches, start the check, pause it;
+- set each target from the player's goal, start the check, pause it;
 - during play, see the full table and every hand, for rulings;
 - after the check, record complications, give statuses, name Curse compulsions, grant rest and Blessed.
 

@@ -226,11 +226,11 @@ function checkView(view, info, me) {
       h("div", {}, h("span", { class: "big" }, h("strong", {}, p.total)), h("span", { class: "muted" }, ` of ${p.target ?? "?"}`))),
     need != null ? h("div", { class: `bar${need < 0 ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / Math.max(1, p.target))}%` })) : null,
     h("div", { class: "row small" },
-      need != null ? h("span", { class: `pill ${need < 0 ? "bad" : need === 0 ? "good" : ""}` }, need < 0 ? `Over by ${-need}` : need === 0 ? "Exactly on target" : `Need ${need}`) : null,
-      p.approach ? h("span", { class: "pill" }, `Trump ${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
-      p.brace ? h("span", { class: "pill good" }, `Brace +${p.brace}`) : null,
-      p.mirror ? h("span", { class: "pill good" }, "Mirror ready") : null,
-      p.boost ? h("span", { class: "pill good" }, `Next card ${p.boost > 0 ? "+" : ""}${p.boost}`) : null),
+      need != null ? h("span", { class: `pill ${need < 0 ? "bad" : need === 0 ? "good" : ""}`, "data-tip": need < 0 ? "Over your target: a bust, unless an adjustment brings you back." : need === 0 ? "Exactly on target: a critical." : "Points still needed. 1–3 short is a success; 4–6 a partial." }, need < 0 ? `Over by ${-need}` : need === 0 ? "Exactly on target" : `Need ${need}`) : null,
+      p.approach ? h("span", { class: "pill", "data-tip": "Your goal's suit. Cards in it can win any trick, not only ones in the world card's suit." }, `Trump ${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
+      p.brace ? h("span", { class: "pill good", "data-tip": "Brace: your next card counts this much higher for beating. It never changes what you score." }, `Brace +${p.brace}`) : null,
+      p.mirror ? h("span", { class: "pill good", "data-tip": "Mirror: your next card counts 11 minus its value for beating (a 2 counts 9, a 9 counts 2). Statuses stay at 0." }, "Mirror ready") : null,
+      p.boost ? h("span", { class: "pill good", "data-tip": "The GM's adjustment to your next card, for beating." }, `Next card ${p.boost > 0 ? "+" : ""}${p.boost}`) : null),
     p.tally.length ? h("div", { class: "row" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm", { title: t.mirrored ? `Mirrored: scores ${t.score}` : undefined }))) : null));
 
   if (ck.phase !== "setup") {

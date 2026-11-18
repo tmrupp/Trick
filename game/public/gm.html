@@ -13,7 +13,7 @@
 <header class="spread"><h1 id="title">GM</h1><div class="row"><span id="status" class="pill">…</span><a class="small" href="/rules" target="_blank">Rules</a><span id="tools"></span></div></header>
 <main id="main"></main>
 <script type="module">
-import { connect, params, h, render, forget, draft, cardFace, SUITS, RESULT, trickSentence, eventText, toast, difficulty, soundToggle, chime, itemsById, racesById, stripTags } from "/shared/client.js";
+import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, RESULT, trickSentence, eventText, toast, difficulty, soundToggle, chime, itemsById, racesById, stripTags, menu, openMenuAt } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -24,7 +24,6 @@ let last = null;
 let feed = [];
 let tab = "check";
 let mine = { chosen: null, price: null };
-let picked = { charId: null, cardId: null }; // the card selected in a character's card editor
 const openEditors = new Set(); // characters whose card editor is open
 
 const conn = connect({
@@ -48,6 +47,56 @@ const act = (a) => conn.act(a);
 const sel = (key, opts, value, label) => h("select", { "data-key": key, "aria-label": label || key }, opts.map(([v, t]) => h("option", { value: v, selected: v === value }, t)));
 const num = (key, value, attrs = {}) => h("input", { type: "number", "data-key": key, value, ...attrs });
 const val = (key, fallback = "") => draft(key) ?? fallback;
+
+// ---- Menu builders and tips shared by the tabs ----
+const STATUS_TIP = (s) => `${SUITS[s].status} (${SUITS[s].name}). ${cardText({ suit: s, status: true })}`;
+const itemTip = (id) => { const it = ITEMS[id]; return it ? stripTags((it.lines || []).join(" ")) : id; };
+const PLACES = [["discard", "Discard"], ["deck-top", "Top of deck"], ["deck-bottom", "Bottom of deck"], ["deck-shuffle", "Shuffled into deck"], ["hand", "Hand"]];
+const why = { type: "text", placeholder: "Why (shown to the table)" };
+
+// Statuses as menu items; a Curse asks for its compulsion.
+function statusItems(onpick, tipPrefix = "") {
+  return [
+    ...["S", "D", "I"].map((s) => ({ label: SUITS[s].status, hint: SUITS[s].sym, tip: `${tipPrefix}${STATUS_TIP(s)}`, onclick: () => onpick(s) })),
+    { label: "Curse…", hint: SUITS.W.sym, tip: `${tipPrefix}${STATUS_TIP("W")}`, items: [{ label: "The compulsion", fields: [{ type: "text", placeholder: "e.g. never refuse a dare" }], submit: "Give Curse", onsubmit: ([c]) => onpick("W", c || undefined) }] },
+  ];
+}
+
+// Adjustments to one player in a check: the GM's stand-in for items, peoples and fiction.
+function adjustItems(ck, view, id, late = false) {
+  const p = ck.players[id];
+  const hand = (view.hands && view.hands[id]) || [];
+  return [
+    late ? null : { label: "Next card counts higher", tip: "Their next card counts this much more for beating (not for scoring). Once.", items: [{ label: "Counts higher by", fields: [{ type: "number", value: 2, min: -10, max: 10 }, why], submit: "Apply", onsubmit: ([n, w]) => act({ type: "gmBoost", charId: id, amount: n, reason: w || undefined }) }] },
+    { label: "Change their tally", tip: "Add to or take from what they've scored.", items: [{ label: "Change by", fields: [{ type: "number", value: 1, min: -20, max: 20 }, why], submit: "Change", onsubmit: ([n, w]) => act({ type: "gmAdjustTally", charId: id, delta: n, reason: w || undefined }) }] },
+    { label: "Change their target", hint: p.target != null ? `now ${p.target}` : "", items: [{ label: "New target", fields: [{ type: "number", value: p.target ?? 10, min: 1, max: 40 }, why], submit: "Set", onsubmit: ([n, w]) => act({ type: "gmAdjustTarget", charId: id, target: n, reason: w || undefined }) }] },
+    late ? null : "-",
+    late ? null : { label: "They draw a card", tip: "From their deck, reshuffling if it's empty.", onclick: () => act({ type: "gmDraw", charId: id, n: 1 }) },
+    late || !hand.length ? null : { label: "Discard from their hand", items: hand.map((c) => ({ label: c.label, tip: cardText(c), disabled: view.locks && view.locks[id] && view.locks[id].cardId === c.id, onclick: () => act({ type: "gmDiscard", charId: id, cardId: c.id }) })) },
+    "-",
+    { label: "Edit their cards…", tip: "Move, add or remove any of their cards.", onclick: () => { tab = "chars"; openEditors.add(id); draw(); } },
+  ].filter(Boolean);
+}
+
+// Where a selected card can go.
+function moveItems(c, card, canHand) {
+  return [
+    { heading: card.label },
+    { label: "Move to", items: PLACES.filter(([v]) => v !== "hand" || canHand).map(([v, t]) => ({ label: t, onclick: () => act({ type: "gmMoveCard", charId: c.id, cardId: card.id, to: v }) })) },
+    { label: "Remove", tip: "Back to their reserve, out of play.", danger: true, onclick: () => act({ type: "gmMoveCard", charId: c.id, cardId: card.id, to: "reserve" }) },
+  ];
+}
+
+// Add a card: a suit, then a value; or a status or Blessed.
+function addItems(c, where) {
+  const to = () => draft(where) || "discard";
+  return [
+    ...Object.entries(SUITS).map(([s, x]) => ({ label: `${x.sym} ${x.name}`, items: [{ grid: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => ({ label: v === 1 ? "A" : String(v), onclick: () => act({ type: "gmAddCard", charId: c.id, suit: s, v, to: to() }) })) }] })),
+    "-",
+    { label: "A status", items: ["S", "D", "I", "W"].map((s) => ({ label: SUITS[s].status, hint: SUITS[s].sym, tip: STATUS_TIP(s), onclick: () => act({ type: "gmAddCard", charId: c.id, kind: "status", suit: s, to: to() }) })) },
+    { label: "Blessed", tip: cardText({ blessed: true }), onclick: () => act({ type: "gmAddCard", charId: c.id, kind: "blessed", to: to() }) },
+  ];
+}
 
 // What the GM should do next, in one line.
 function nextStep(info, view, names) {
@@ -107,7 +156,14 @@ function checkTab(info, view, names) {
   }
 
   out.push(h("div", { class: "panel" }, h("div", { class: "spread" }, h("strong", {}, `${ck.kind} check · ${ck.tricks} tricks`), h("span", { class: "small muted" }, ck.phase)),
-    ck.phase !== "setup" ? h("div", { class: "row", style: "margin-top:8px" }, ck.worldRow.map((c, i) => cardFace(c, i === ck.trick && ck.phase !== "resolve" ? "md" : "sm", { class: i === ck.trick && ck.phase !== "resolve" ? "current" : i < ck.trick ? "past" : "" }))) : null));
+    ck.phase !== "setup" ? h("div", { class: "row", style: "margin-top:8px" }, ck.worldRow.map((c, i) => {
+      const cur = i === ck.trick && ck.phase !== "resolve";
+      const open = i >= ck.trick && ck.phase !== "resolve";
+      return cardFace(c, cur ? "md" : "sm", { class: cur ? "current" : i < ck.trick ? "past" : "",
+        onclick: open ? (e) => openMenuAt(e.currentTarget, [{ heading: `World card ${i + 1}: ${c.label}` },
+          { label: "Counts as, for beating", tip: "Players must beat this number instead. It still scores its printed value.", fields: [{ type: "number", value: c.beat ?? c.v, min: 0, max: 20 }, why], submit: "Set", onsubmit: ([n, w]) => act({ type: "gmWorldValue", index: i, value: n, reason: w || undefined }) }]) : undefined });
+    })) : null,
+    ck.phase !== "setup" && ck.phase !== "resolve" ? h("p", { class: "small muted", style: "margin:8px 0 0" }, "Select an upcoming world card to change what it takes to beat it.") : null));
 
   if (ck.phase === "setup") {
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Goals and targets"),
@@ -143,48 +199,46 @@ function checkTab(info, view, names) {
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Hands"), ck.participants.map((id) => {
       const p = ck.players[id];
       const lockId = view.locks && view.locks[id] && view.locks[id].cardId;
-      return h("div", { class: "stack", style: "border-bottom:1px dashed var(--line); padding-bottom:8px" },
-        h("div", { class: "spread" }, h("strong", {}, names[id]), h("span", { class: "small" }, `tally ${p.total} / ${p.target}`, p.brace ? ` · Brace +${p.brace}` : "", p.mirror ? " · Mirror" : "", p.boost ? ` · next ${p.boost > 0 ? "+" : ""}${p.boost}` : "", p.locked ? " · locked" : "")),
-        h("div", { class: "row" }, view.hands[id].map((c) => cardFace(c, "sm", { class: c.id === lockId ? "chosen" : "" }))));
+      const canHand = ["play", "consolation"].includes(ck.phase);
+      return h("div", { class: "stack", style: "border-bottom:1px dashed var(--rule-soft); padding-bottom:10px" },
+        h("div", { class: "headrow" }, h("strong", { style: "flex:1" }, names[id]),
+          h("div", { class: "facts small" },
+            h("span", { class: "pill", "data-tip": "What they've scored, against their target." }, `${p.total} / ${p.target}`),
+            p.brace ? h("span", { class: "pill good", "data-tip": "Brace: their next card counts this much higher for beating." }, `Brace +${p.brace}`) : null,
+            p.mirror ? h("span", { class: "pill good", "data-tip": "Mirror: their next card counts 11 minus its value for beating (a 2 counts 9, a 9 counts 2). Statuses stay at 0." }, "Mirror") : null,
+            p.boost ? h("span", { class: "pill good", "data-tip": "Your adjustment to their next card, for beating." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null,
+            p.locked ? h("span", { class: "pill", "data-tip": "They've locked in a card for this trick." }, "locked") : null),
+          menu("Adjust", () => adjustItems(ck, view, id), { class: "small", tip: "Items, peoples and story effects for this player." })),
+        h("div", { class: "row" }, view.hands[id].map((c) => cardFace(c, "sm", { class: c.id === lockId ? "chosen" : "",
+          onclick: (e) => openMenuAt(e.currentTarget, c.id === lockId ? [{ heading: `${c.label}: locked in` }] : moveItems({ id }, c, canHand)) }))));
     })));
   }
 
   if (myChar && ck.players[myChar]) out.push(...myPlay(view, ck, myChar));
 
-  if (ck.phase !== "setup" && ck.phase !== "resolve") out.push(adjustPanel(view, ck, names));
 
   if (ck.phase === "resolve") {
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Results"),
-      h("table", {}, h("tbody", {}, Object.entries(ck.results).map(([id, r]) => h("tr", {}, h("td", {}, names[id]), h("td", {}, h("strong", {}, RESULT[r.result])), h("td", {}, `${r.tally} of ${r.target}`), h("td", {}, r.dies ? h("span", { class: "pill bad" }, "dies") : ""))))),
-      h("p", { class: "small" }, "Critical: grant a benefit that fits the fiction. Bust: a loud consequence, which may be a status. 4–6 short: a serious complication, which may be a status. Failure: each exposed participant normally gains a fitting status."),
-      h("div", { class: "row" }, sel("c-who", ck.participants.map((id) => [id, names[id]]), ck.participants[0], "Who"), sel("c-st", Object.entries(SUITS).map(([k, s]) => [k, s.status]), "S", "Status"),
-        h("input", { "data-key": "c-comp", placeholder: "Compulsion (for a Curse)", maxlength: 80 }),
-        h("button", { onclick: () => { act({ type: "addConsequence", charId: draft("c-who") || ck.participants[0], suit: draft("c-st") || "S", compulsion: draft("c-comp") || undefined }); forget("c-comp"); } }, "Add status")),
+      h("table", {}, h("tbody", {}, Object.entries(ck.results).map(([id, r]) => h("tr", {}, h("td", {}, names[id]),
+        h("td", {}, h("strong", { "data-tip": RESULT_TIPS[r.result] }, RESULT[r.result])), h("td", {}, `${r.tally} of ${r.target}`), h("td", {}, r.dies ? h("span", { class: "pill bad", "data-tip": "A failed survival goal: the character dies at cleanup." }, "dies") : ""),
+        h("td", { style: "text-align:right" }, h("div", { class: "row", style: "justify-content:flex-end" },
+          menu("Consequence", statusItems((s, comp) => act({ type: "addConsequence", charId: id, suit: s, compulsion: comp }), "Goes into their discard at cleanup. "), { class: "small", tip: "A status they gain at cleanup." }),
+          menu("Adjust", () => adjustItems(ck, view, id, true), { class: "small" }))))))),
+      h("p", { class: "small muted" }, "Hover a result for what it calls for. Statuses added here go into discards at cleanup; Injuries go on top last."),
       ck.consequences.length ? h("ul", {}, ck.consequences.map((c) => h("li", {}, `${names[c.charId]}: ${SUITS[c.suit].status}${c.compulsion ? ` (${c.compulsion})` : ""}`))) : h("p", { class: "small muted" }, "No status consequences yet."),
-      adjustPanel(view, ck, names, true),
       h("button", { class: "primary big", onclick: () => act({ type: "endCheck" }) }, "Clean up and end the check")));
   }
   if (ck.log.length) out.push(h("div", { class: "panel log" }, [...ck.log].reverse().map((e) => h("div", {}, `${e.trick + 1}. ${trickSentence(e, names)}`))));
   return out;
 }
 
-// GM adjustments, for items, peoples and fiction.
-function adjustPanel(view, ck, names, late = false) {
-  const who = () => draft("a-who") || ck.participants[0];
-  const whoSel = sel("a-who", ck.participants.map((id) => [id, names[id]]), ck.participants[0], "Who");
-  const reason = h("input", { "data-key": "a-why", placeholder: "Why (shown to the table)", maxlength: 60 });
-  const n = (k, d) => Number(draft(k) ?? d);
-  return h("details", { class: "panel" }, h("summary", {}, late ? "Adjust the result" : "Adjust (items, peoples, fiction)"),
-    h("div", { class: "stack", style: "margin-top:8px" },
-      h("div", { class: "row" }, whoSel, reason),
-      late ? null : h("div", { class: "row" }, "Next card counts", num("a-boost", 2, { min: -10, max: 10 }), "higher", h("button", { onclick: () => act({ type: "gmBoost", charId: who(), amount: n("a-boost", 2), reason: draft("a-why") || undefined }) }, "Apply")),
-      h("div", { class: "row" }, "Tally", num("a-tally", 1, { min: -20, max: 20 }), h("button", { onclick: () => act({ type: "gmAdjustTally", charId: who(), delta: n("a-tally", 1), reason: draft("a-why") || undefined }) }, "Adjust")),
-      h("div", { class: "row" }, "Target", num("a-target", ck.players[ck.participants[0]].target ?? 10, { min: 1, max: 40 }), h("button", { onclick: () => act({ type: "gmAdjustTarget", charId: who(), target: n("a-target", 10), reason: draft("a-why") || undefined }) }, "Set")),
-      late ? null : h("div", { class: "row" }, "World card", sel("a-wi", ck.worldRow.map((c, i) => [String(i), `${i + 1}: ${c.label}`]).slice(ck.trick), String(ck.trick), "World card"), "counts", num("a-wv", 0, { min: 0, max: 20 }), "for beating",
-        h("button", { onclick: () => act({ type: "gmWorldValue", index: Number(draft("a-wi") ?? ck.trick), value: n("a-wv", 0), reason: draft("a-why") || undefined }) }, "Set")),
-      late ? null : h("div", { class: "row" }, h("button", { onclick: () => act({ type: "gmDraw", charId: who(), n: 1 }) }, "They draw 1"),
-        view.hands && view.hands[who()] ? [h("span", { class: "small" }, "Discard from their hand:"), view.hands[who()].map((c) => cardFace(c, "sm", { onclick: () => act({ type: "gmDiscard", charId: who(), cardId: c.id }) }))] : null)));
-}
+const RESULT_TIPS = {
+  critical: "Exactly on target: grant a benefit that fits the fiction.",
+  success: "1–3 short: they get what they wanted.",
+  partial: "4–6 short: success with a serious complication, which may be a status.",
+  failure: "7 or more short: it doesn't happen; each exposed participant normally gains a fitting status.",
+  bust: "Over the target: a loud consequence, which may be a status.",
+};
 
 // The GM's own character.
 function myPlay(view, ck, me) {
@@ -214,64 +268,69 @@ function myPlay(view, ck, me) {
 
 // ---------------- Characters ----------------
 
-// Free card editing for one character: move any card between deck, discard, hand and reserve, or add one.
+// Free card editing for one character: select any card to move or remove it, or add one.
 function cardEditor(c, view) {
   const ck = view.check && view.check.phase !== "closed" ? view.check : null;
   const hand = ck && view.hands && view.hands[c.id];
   const canHand = !!(hand && ["play", "consolation"].includes(ck.phase));
-  const k = (s) => `ce-${s}-${c.id}`;
-  const pick = (x) => cardFace(x, "sm", { class: picked.charId === c.id && picked.cardId === x.id ? "chosen" : "", title: "Select to move or remove",
-    onclick: () => { picked = picked.cardId === x.id ? { charId: null, cardId: null } : { charId: c.id, cardId: x.id }; draw(); } });
-  const pile = (title, cards, note) => h("div", { class: "stack" }, h("div", { class: "small" }, h("strong", {}, title), note ? h("span", { class: "muted" }, ` · ${note}`) : null),
+  const pick = (x) => cardFace(x, "sm", { title: `${x.label}. Select to move or remove.`, onclick: (e) => openMenuAt(e.currentTarget, moveItems(c, x, canHand)) });
+  const pile = (title, cards, tip) => h("div", { class: "stack" }, h("div", { class: "small" }, h("strong", { "data-tip": tip }, title)),
     cards && cards.length ? h("div", { class: "row" }, cards.map(pick)) : h("div", { class: "small muted" }, "empty"));
-  const sel_ = picked.charId === c.id && [...(c.deckCards || []), ...(c.discard || []), ...(hand || []), ...(c.reserveCards || [])].find((x) => x.id === picked.cardId);
-  const move = (to) => { act({ type: "gmMoveCard", charId: c.id, cardId: picked.cardId, to }); picked = { charId: null, cardId: null }; };
-  const places = [["deck-top", "Top of deck"], ["deck-bottom", "Bottom of deck"], ["deck-shuffle", "Shuffle into deck"], ["discard", "Discard"], ...(canHand ? [["hand", "Hand"]] : [])];
-  const what = sel(k("what"), [...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => [String(v), v === 1 ? "A" : String(v)]), ["status", "Status"], ["blessed", "Blessed"]], "10", "Value");
-  const suit = sel(k("suit"), Object.entries(SUITS).map(([s, x]) => [s, `${x.sym} ${x.name}`]), c.primary, "Suit");
-  const to = sel(k("to"), places, "discard", "Where");
-  return h("details", { class: "stack", open: openEditors.has(c.id), ontoggle: (e) => { if (e.target.open) openEditors.add(c.id); else openEditors.delete(c.id); } },
-    h("summary", {}, "Edit cards"),
-    h("p", { class: "small muted" }, "For items, people and story effects. Select a card, then choose where it goes. Removing a card returns it to their reserve. The deck shows its contents, not its order."),
-    sel_ ? h("div", { class: "panel row", style: "position:sticky;top:0;z-index:2" }, h("strong", {}, `${sel_.label}:`),
-      places.map(([v, t]) => h("button", { class: "small", onclick: () => move(v) }, t)),
-      h("button", { class: "small", onclick: () => move("reserve") }, "Remove (to reserve)"),
-      h("button", { class: "small ghost", onclick: () => { picked = { charId: null, cardId: null }; draw(); } }, "Cancel")) : null,
-    canHand ? pile(`Hand (${hand.length})`, hand) : null,
-    pile(`Deck (${c.deckCount})`, c.deckCards, "order hidden"),
-    pile(`Discard (${c.discardCount})`, c.discard, "top card last"),
-    h("details", {}, h("summary", { class: "small" }, `Reserve (${(c.reserveCards || []).length})`), h("div", { class: "row" }, (c.reserveCards || []).map(pick))),
-    h("div", { class: "row" }, h("span", { class: "small" }, "Add"), what, suit, h("span", { class: "small" }, "to"), to,
-      h("button", { onclick: () => {
-        const w = draft(k("what")) || "10";
-        act({ type: "gmAddCard", charId: c.id, kind: w === "status" || w === "blessed" ? w : "ordinary", suit: draft(k("suit")) || c.primary, v: Number(w) || undefined, to: draft(k("to")) || "discard" });
-      } }, "Add card"),
-      h("button", { class: "ghost", onclick: () => act({ type: "gmShuffleDeck", charId: c.id }) }, "Shuffle their deck")));
+  const where = `ce-to-${c.id}`;
+  return h("div", { class: "stack editor" },
+    h("div", { class: "headrow" }, h("h3", { style: "flex:1;margin:0" }, "Cards"),
+      menu("Add a card", () => addItems(c, where), { class: "small", tip: "From their reserve if one matches; otherwise an extra copy made for them." }),
+      h("label", { class: "small row", style: "gap:6px" }, "into", sel(where, PLACES.filter(([v]) => v !== "hand" || canHand), "discard", "Where the new card goes")),
+      h("button", { class: "small ghost", "data-tip": "Shuffle their deck into a new random order.", onclick: () => act({ type: "gmShuffleDeck", charId: c.id }) }, "Shuffle deck"),
+      h("button", { class: "small ghost", onclick: () => { openEditors.delete(c.id); draw(); } }, "Done")),
+    canHand ? pile(`Hand (${hand.length})`, hand, "Cards in their hand this check.") : null,
+    pile(`Deck (${c.deckCount})`, c.deckCards, "What's in their deck. The order stays hidden, even from you."),
+    pile(`Discard (${c.discardCount})`, c.discard, "Their discard, top card last."),
+    h("details", {}, h("summary", { class: "small" }, `Reserve (${(c.reserveCards || []).length})`), h("p", { class: "small muted" }, "Cards out of play. Select one to bring it in."), h("div", { class: "row" }, (c.reserveCards || []).map(pick))));
+}
+
+// Everything the GM can do to a character, between checks or during one.
+function characterItems(c, inCheck) {
+  const restable = (c.discard || []).filter((x) => x.status && x.suit !== "W");
+  const between = inCheck ? "Between checks only: during a check, statuses wait for cleanup." : undefined;
+  return [
+    { label: "Give a status", disabled: inCheck, tip: between || "Into their discard now.", items: statusItems((s, comp) => act({ type: "gainStatus", charId: c.id, suit: s, compulsion: comp }), "Into their discard now. ") },
+    { label: "Rest", disabled: inCheck || !restable.length, tip: between || (restable.length ? "Return statuses from their discard to reserve. Curses need a ritual." : "No Injury, Stumble or Stress in their discard."),
+      items: [...restable.map((x) => ({ label: `Remove a ${x.label}`, tip: STATUS_TIP(x.suit), onclick: () => act({ type: "rest", charId: c.id, cardIds: [x.id] }) })), "-",
+        { label: `Remove all ${restable.length}`, onclick: () => act({ type: "rest", charId: c.id, cardIds: restable.map((x) => x.id) }) }] },
+    { label: "Compulsion broken", disabled: !c.compulsion.length, tip: c.compulsion.length ? "They broke their Curse's compulsion: they gain Stress." : "They have no compulsion.", onclick: () => act({ type: "curseViolation", charId: c.id }) },
+    { label: "Grant a Blessed", hint: `${c.reserveBlessed} left`, disabled: !c.reserveBlessed, tip: cardText({ blessed: true }) + " It goes on top of their deck.", onclick: () => act({ type: "grantBlessed", charId: c.id }) },
+    "-",
+    { label: "Give an item", items: Object.values(ITEMS).filter((it) => !c.items.includes(it.id)).map((it) => ({ label: it.label, tip: itemTip(it.id), onclick: () => act({ type: "giveItem", charId: c.id, itemId: it.id }) })) },
+    { label: "Take an item", disabled: !c.items.length, items: c.items.map((id) => ({ label: ITEM_NAMES[id] || id, tip: itemTip(id), onclick: () => act({ type: "loseItem", charId: c.id, itemId: id }) })) },
+    "-",
+    { label: "Edit cards", tip: "Move, add or remove any of their cards.", onclick: () => { openEditors.add(c.id); draw(); } },
+    c.alive ? null : { label: `Bring ${c.name} back`, disabled: inCheck, tip: "Their cards stay as they are, so survival may come up again.", onclick: () => act({ type: "resurrect", charId: c.id }) },
+  ].filter(Boolean);
 }
 
 function charsTab(info, view, names) {
   const chars = Object.values(view.characters);
   if (!chars.length) return [h("div", { class: "panel muted" }, "No characters yet.")];
-  const inCheck = view.check && view.check.phase !== "closed";
+  const inCheck = !!(view.check && view.check.phase !== "closed");
   return chars.map((c) => {
     const race = c.race && RACES[c.race];
-    const k = (s) => `${s}-${c.id}`;
+    const out = (s) => 6 - ((c.reserveStatuses || {})[s] || 0);
     return h("div", { class: "panel stack" },
-      h("div", { class: "spread" }, h("h2", {}, c.name, c.alive ? "" : " (dead)"), h("span", { class: "small muted" }, `${SUITS[c.primary].sym} primary · ${SUITS[c.secondary].sym} secondary${race ? ` · ${race.label}` : ""}`)),
-      race ? h("p", { class: "small" }, h("strong", {}, `${race.abilityTitle}: `), (race.rules || []).map(stripTags).join(" ")) : null,
-      c.survival ? h("p", { class: "pill bad" }, `Survival required: ${c.survival.M} Injuries, target ${c.survival.target}`) : null,
-      c.compulsion.length ? h("p", { class: "small" }, h("strong", {}, "Compulsion: "), c.compulsion.join("; ")) : null,
-      h("div", { class: "row small" }, `Deck ${c.deckCount} · discard ${c.discardCount} · Blessed in reserve ${c.reserveBlessed}`, Object.entries(SUITS).map(([s, x]) => h("span", { class: "pill" }, `${x.status} out: ${6 - ((c.reserveStatuses || {})[s] || 0)}`))),
-      cardEditor(c, view),
-      inCheck ? h("p", { class: "small muted" }, "Statuses during a check wait for cleanup: add them as consequences when it resolves.") : h("div", { class: "stack" },
-        h("div", { class: "row" }, sel(k("st"), Object.entries(SUITS).map(([s, x]) => [s, x.status]), "S", "Status"), h("input", { "data-key": k("comp"), placeholder: "Compulsion (for a Curse)", maxlength: 80 }),
-          h("button", { onclick: () => { act({ type: "gainStatus", charId: c.id, suit: draft(k("st")) || "S", compulsion: draft(k("comp")) || undefined }); forget(k("comp")); } }, "Give status")),
-        c.alive ? null : h("div", { class: "row" }, h("button", { class: "primary", onclick: () => act({ type: "resurrect", charId: c.id }) }, `Bring ${c.name} back`), h("span", { class: "small muted" }, "Their cards stay as they are, so survival may come up again.")),
-        h("div", { class: "row" }, h("button", { onclick: () => act({ type: "curseViolation", charId: c.id }) }, "Compulsion broken"), h("button", { onclick: () => act({ type: "grantBlessed", charId: c.id }) }, "Grant Blessed")),
-        h("div", { class: "row" }, h("span", { class: "small" }, "Rest (choose statuses to remove):"), (c.discard || []).filter((x) => x.status && x.suit !== "W").map((x) => h("label", { class: "pill" }, h("input", { type: "checkbox", "data-key": k(`r-${x.id}`) }), x.label)),
-          h("button", { onclick: () => act({ type: "rest", charId: c.id, cardIds: (c.discard || []).filter((x) => x.status && x.suit !== "W" && draft(k(`r-${x.id}`))).map((x) => x.id) }) }, "Rest"))),
-      h("div", { class: "row" }, h("span", { class: "small" }, "Items:"), c.items.map((id) => h("span", { class: "pill" }, ITEM_NAMES[id] || id, h("button", { class: "ghost small", "aria-label": `Take ${ITEM_NAMES[id] || id}`, onclick: () => act({ type: "loseItem", charId: c.id, itemId: id }) }, "×"))),
-        sel(k("item"), Object.values(ITEMS).map((it) => [it.id, it.label]), Object.keys(ITEMS)[0], "Item"), h("button", { onclick: () => act({ type: "giveItem", charId: c.id, itemId: draft(k("item")) || Object.keys(ITEMS)[0] }) }, "Give item")));
+      h("div", { class: "headrow" }, h("h2", {}, c.name),
+        c.alive ? null : h("span", { class: "pill bad", "data-tip": "Dead. Bring them back from Actions, or the player can make a new character." }, "dead"),
+        menu("Actions", () => characterItems(c, inCheck), { tip: "Statuses, rest, Blessed, items, cards." })),
+      h("div", { class: "facts small" },
+        h("span", { "data-tip": `${SUITS[c.primary].name} primary: A, 2, 4, 5, 7, 8, 10. ${SUITS[c.secondary].name} secondary: A, 3, 6, 9, 10.` }, `${SUITS[c.primary].sym} ${SUITS[c.primary].name} · ${SUITS[c.secondary].sym} ${SUITS[c.secondary].name}`),
+        race ? h("span", { "data-tip": `${race.abilityTitle}: ${(race.rules || []).map(stripTags).join(" ")}` }, `· ${race.label}`) : null,
+        h("span", { class: "muted" }, `· deck ${c.deckCount} · discard ${c.discardCount}`)),
+      c.survival ? h("p", { class: "pill bad", "data-tip": "2 or more Injuries near the top of their discard: their next goal is to survive." }, `Survival: ${c.survival.M} Injuries, target ${c.survival.target}`) : null,
+      c.compulsion.length ? h("p", { class: "small" }, h("strong", { "data-tip": STATUS_TIP("W") }, "Compulsion: "), c.compulsion.join("; ")) : null,
+      h("div", { class: "facts" },
+        ["S", "D", "I", "W"].map((s) => out(s) ? h("span", { class: "pill", "data-tip": `${out(s)} of 6 ${SUITS[s].status} cards are in play for them. ${STATUS_TIP(s)}` }, `${SUITS[s].status} ×${out(s)}`) : null),
+        c.items.map((id) => h("span", { class: "pill", "data-tip": itemTip(id) }, ITEM_NAMES[id] || id)),
+        h("span", { class: "pill", "data-tip": cardText({ blessed: true }) }, `Blessed ${c.reserveBlessed} in reserve`)),
+      openEditors.has(c.id) ? cardEditor(c, view) : null);
   });
 }
 
@@ -282,11 +341,14 @@ function roomTab(info, view, names) {
   out.push(h("div", { class: "panel stack" }, h("h2", {}, "Join"), h("p", {}, "Players join at ", h("a", { href: info.joinUrl, target: "_blank" }, info.joinUrl), " or with code ", h("strong", {}, info.code), "."),
     h("p", {}, h("a", { href: `/table?room=${info.code}`, target: "_blank" }, "Open the table screen"))));
   out.push(h("div", { class: "panel" }, h("h2", {}, "Seats"), h("table", {}, h("tbody", {}, info.seats.map((s) => h("tr", {},
-    h("td", {}, h("span", { class: `dot${s.connected ? " on" : ""}` }), " ", s.name, s.role === "gm" ? " (you)" : ""),
-    h("td", {}, s.charId ? names[s.charId] : s.role === "player" && Object.keys(names).length ? h("span", { class: "row" }, h("span", { class: "muted small" }, "no character"),
-      sel(`as-${s.id}`, Object.entries(names).map(([id, nm]) => [id, nm]), Object.keys(names)[0], "Character"),
-      h("button", { class: "small", onclick: () => conn.manage({ op: "assign", seatId: s.id, charId: draft(`as-${s.id}`) || Object.keys(names)[0] }) }, "Give them this character")) : h("span", { class: "muted" }, "no character")),
-    h("td", {}, s.role === "player" ? h("button", { class: "small", onclick: () => { if (confirmRemove === s.id) { conn.manage({ op: "remove", seatId: s.id }); confirmRemove = null; } else { confirmRemove = s.id; toast(`Press Remove again to remove ${s.name}.`); setTimeout(() => { confirmRemove = null; }, 4000); } } }, "Remove") : null)))))));
+    h("td", {}, h("span", { class: `dot${s.connected ? " on" : ""}`, "data-tip": s.connected ? "Connected now." : "Not connected." }), " ", s.name, s.role === "gm" ? " (you)" : ""),
+    h("td", {}, s.charId ? names[s.charId] : h("span", { class: "muted" }, "no character")),
+    h("td", { style: "text-align:right" }, s.role === "player" ? menu("Seat", [
+      { label: "Give them a character", disabled: !Object.keys(names).length, tip: "Hand a character to this seat, e.g. a player on a new phone. Its old seat lets go of it.",
+        items: Object.entries(names).filter(([id]) => id !== s.charId).map(([id, nm]) => ({ label: nm, onclick: () => conn.manage({ op: "assign", seatId: s.id, charId: id }) })) },
+      "-",
+      { label: "Remove this seat", danger: true, tip: "Their phone is disconnected and can't rejoin this seat.", items: [{ label: `Yes, remove ${s.name}`, danger: true, onclick: () => conn.manage({ op: "remove", seatId: s.id }) }] },
+    ], { class: "small" }) : null)))))));
   if (!info.you.charId) {
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Play a character too"),
       h("input", { "data-key": "my-name", placeholder: "Character name", maxlength: 24 }),
@@ -301,7 +363,6 @@ function roomTab(info, view, names) {
   }
   return out;
 }
-let confirmRemove = null;
 </script>
 </body>
 </html>

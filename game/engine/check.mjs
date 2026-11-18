@@ -1,6 +1,6 @@
 // A Tally check, from setup to cleanup (RULES.md: Start a check, Play the tricks, Consolations,
 // Statuses, Blessed, Resolve the check, Survival).
-import { SUITS, SUIT_INFO, worldCards, isOrdinary, isStatus, isBlessed, label } from "./cards.mjs";
+import { SUITS, SUIT_INFO, worldCards, isOrdinary, isStatus, isBlessed, label, countsAs } from "./cards.mjs";
 import { rule, character, drawOwed, gainStatus, returnToReserve, injuriesInTop, scanAfterInjury } from "./campaign.mjs";
 
 export const CHECK_KINDS = {
@@ -234,8 +234,8 @@ function resolveTrick(ctx) {
       ctx.events.push({ type: "pricePaid", id, card: label(price) });
     }
     plays.push({
-      id, card, approach: p.approach, mirrored: p.mirror,
-      bv: isBlessed(card) ? null : card.v + p.brace + (p.boost || 0),
+      id, card, approach: p.approach, mirrored: p.mirror && isOrdinary(card),
+      bv: isBlessed(card) ? null : countsAs(card, p.mirror) + p.brace + (p.boost || 0),
       boost: p.boost || 0, brace: p.brace,
       onSuit: !isBlessed(card) && (card.suit === p.approach || card.suit === w.suit),
     });
@@ -246,8 +246,8 @@ function resolveTrick(ctx) {
   const { winner, reason, by } = trickWinner(w, plays);
   let score = 0;
   if (winner) {
-    score = winner.mirrored ? 11 - w.v : w.v;
-    ck.players[winner.id].tally.push({ card: w, mirrored: winner.mirrored, score });
+    score = w.v;
+    ck.players[winner.id].tally.push({ card: w, mirrored: false, score });
   } else ck.worldTaken.push(w);
   for (const x of plays) {
     // A played Blessed returns to its owner's reserve, even if it was given to someone else.

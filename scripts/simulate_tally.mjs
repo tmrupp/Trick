@@ -48,12 +48,15 @@ const worldDeck = () => { const d = []; for (const s of SUITS) for (let v = 1; v
 
 // Dexterity candidates that change the world row instead of the player's next play.
 const WORLD_DEX = new Set(["choose", "blind", "reroll", "reroll-each", "peek", "sidestep", "shove"]);
+// What a card counts for beating, before Brace: Mirror turns an ordinary card into 11 minus its value.
+const cv = (c, p) => (p.mirror && !c.st ? 11 - c.v : c.v);
+
 // How much a player wants this world card next: 3 lands them exactly, 2 fits, 0 is no use, -2 would force a win that busts them.
 function worth(p, wc) {
   const need = p.target - p.tally;
-  const prize = p.mirror ? 11 - wc.v : wc.v;
+  const prize = wc.v;
   const on = (c) => c.s === p.trump || c.s === wc.s;
-  const beats = p.hand.filter((c) => on(c) && c.v + p.brace > wc.v);
+  const beats = p.hand.filter((c) => on(c) && cv(c, p) + p.brace > wc.v);
   if (p.hand.length && beats.length === p.hand.length && prize > need) return -2;
   if (!beats.length || need <= 0 || prize > need) return 0;
   return prize === need ? 3 : 2;
@@ -86,9 +89,9 @@ function choose(p, w, table, hidden, wb = w.v, spec = {}) {
   const need = p.target - p.tally;
   const wv = hidden ? 5.5 : wb; // the value to beat; with a hidden world value, bots guess the average
   const pv = hidden ? 5.5 : w.v; // the value it scores
-  const prize = p.mirror ? 11 - pv : pv;
+  const prize = pv;
   const opts = p.hand.map((c) => {
-    const bv = c.v + p.brace;
+    const bv = cv(c, p) + p.brace;
     const on = c.s === p.trump || c.s === w.s || p.feint;
     return { c, bv, beats: on && bv > wv };
   });
@@ -99,8 +102,8 @@ function choose(p, w, table, hidden, wb = w.v, spec = {}) {
   // Runoff information: a card an ally revealed in a runoff (and kept) is known. If it would take this world card
   // and the card still fits that ally, stand aside unless it lands you exactly.
   if (want && spec.runoffInfo && prize !== need) {
-    const allyHasIt = table.some((q) => q !== p && q.hand.some((c) => c.revealed && (c.s === q.trump || c.s === w.s) && c.v + q.brace > w.v)
-      && (q.mirror ? 11 - w.v : w.v) <= q.target - q.tally);
+    const allyHasIt = table.some((q) => q !== p && q.hand.some((c) => c.revealed && (c.s === q.trump || c.s === w.s) && cv(c, q) + q.brace > w.v)
+      && w.v <= q.target - q.tally);
     if (allyHasIt) { want = false; p.deferred = (p.deferred || 0) + 1; }
   }
   // Cooperative bots yield a world card that lands an ally exactly, unless it lands them exactly too.
@@ -117,12 +120,12 @@ function choose(p, w, table, hidden, wb = w.v, spec = {}) {
 // Take the world card outright if it fits; otherwise lose without stealing or blocking an ally's win.
 function chooseSeen(p, w, plays, wb, spec) {
   const need = p.target - p.tally;
-  const prize = p.mirror ? 11 - w.v : w.v;
+  const prize = w.v;
   const top = Math.max(wb, ...plays.map((x) => x.bv));
   const atTop = plays.filter((x) => x.bv === top);
   const allyWinning = top > wb && atTop.length === 1 && (atTop[0].c.s === atTop[0].p.trump || atTop[0].c.s === w.s || atTop[0].feint);
   const opts = p.hand.map((c) => {
-    const bv = c.v + p.brace;
+    const bv = cv(c, p) + p.brace;
     const on = c.s === p.trump || c.s === w.s || p.feint;
     return { c, bv, wins: on && bv > top };
   });
@@ -190,7 +193,7 @@ function runCheck(rawSpec) {
       for (const p of players) {
         if (!p.hand.length || p.wait) { sig.set(p, 0); continue; }
         const o = choose(p, w, players, spec.hidden, wb, spec);
-        const exact = (p.mirror ? 11 - w.v : w.v) === p.target - p.tally;
+        const exact = w.v === p.target - p.tally;
         sig.set(p, o.want ? (exact ? 2 : 1) : 0);
       }
       const ins = players.filter((p) => sig.get(p) > 0);
@@ -256,7 +259,7 @@ function runCheck(rawSpec) {
       if (spec.runoff === "all" && top > wb && atTop.every(onSuit)) field = plays.filter((x) => onSuit(x) && x.bv > wb);
       if (field.length > 1) {
         const shown = field.map((x) => {
-          const p = x.p, need = p.target - p.tally, prize = x.mirrored ? 11 - w.v : w.v;
+          const p = x.p, need = p.target - p.tally, prize = w.v;
           const pool = [...p.hand].sort((a, b) => a.v - b.v);
           const c = prize <= need ? pool[pool.length - 1] : pool[0];
           if (c && spec.runoffSpend) { p.hand.splice(p.hand.indexOf(c), 1); p.discard.push(c); }
@@ -304,7 +307,7 @@ function runCheck(rawSpec) {
       const field = atTop.filter((x, i) => sc[i] === m);
       const shown = field.map((x) => {
         const p = x.p, pool = [...p.hand].sort((a, b) => a.v - b.v);
-        const c = (x.mirrored ? 11 - w.v : w.v) <= p.target - p.tally ? pool[pool.length - 1] : pool[0];
+        const c = w.v <= p.target - p.tally ? pool[pool.length - 1] : pool[0];
         if (c) c.revealed = true;
         return c ? c.v : -1;
       });
@@ -318,12 +321,12 @@ function runCheck(rawSpec) {
       if (st.length === 1) { win = st[0]; win.p.stumbleTakes = (win.p.stumbleTakes || 0) + 1; }
     }
     // Pull: a winner may refuse the world card; the bot refuses one that would bust it.
-    if (win && win.pulling && win.p.tally + (win.mirrored ? 11 - w.v : w.v) > win.p.target) {
+    if (win && win.pulling && win.p.tally + w.v > win.p.target) {
       win.p.dexPays++; win = null;
     }
     if (win) {
       if (win.waited || win.feint) win.p.dexPays++;
-      win.p.tally += win.mirrored ? 11 - w.v : w.v; win.p.wins++;
+      win.p.tally += w.v; win.p.wins++;
       if (!win.want) { win.p.forcedWins++; if (win.p.tally > win.p.target) win.p.forcedOver++; }
     } else worldTakes++;
     // Accidents of hidden, silent play: a player who went for the world card and did not get it.

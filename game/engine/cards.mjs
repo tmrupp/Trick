@@ -25,6 +25,10 @@ export const isStatus = (c) => !!c && c.status === true;
 export const isBlessed = (c) => !!c && c.blessed === true;
 export const isOrdinary = (c) => !!c && !c.status && !c.blessed;
 
+// What a card counts for beating, before Brace and adjustments. Mirror turns an ordinary card's value
+// into 11 minus it (a 2 counts 9); statuses stay at 0.
+export const countsAs = (c, mirror) => (mirror && isOrdinary(c) ? 11 - c.v : c.v);
+
 export function label(c) {
   if (!c) return "nothing";
   if (isBlessed(c)) return "Blessed";

@@ -71,6 +71,149 @@ export function h(tag, attrs = {}, ...kids) {
   return el;
 }
 
+// ---- Tooltips ----
+// Any element with data-tip shows a styled tip: on hover or keyboard focus, or on touch by pressing and holding.
+let tipEl = null;
+let tipFor = null;
+let holdTimer = null;
+function showTip(el) {
+  const text = el && el.getAttribute("data-tip");
+  if (!text) return;
+  if (!tipEl) { tipEl = document.createElement("div"); tipEl.className = "tip"; tipEl.id = "tip"; tipEl.setAttribute("role", "tooltip"); document.body.append(tipEl); }
+  tipEl.textContent = text;
+  tipEl.hidden = false;
+  tipFor = el;
+  el.setAttribute("aria-describedby", "tip");
+  const r = el.getBoundingClientRect();
+  const t = tipEl.getBoundingClientRect();
+  const below = r.top < t.height + 14;
+  tipEl.classList.toggle("below", below);
+  tipEl.style.left = `${Math.max(8, Math.min(innerWidth - t.width - 8, r.left + r.width / 2 - t.width / 2))}px`;
+  tipEl.style.top = `${below ? r.bottom + 10 : r.top - t.height - 10}px`;
+}
+export function hideTip() {
+  clearTimeout(holdTimer);
+  if (tipEl) tipEl.hidden = true;
+  if (tipFor) tipFor.removeAttribute("aria-describedby");
+  tipFor = null;
+}
+if (typeof document !== "undefined") {
+  document.addEventListener("pointerover", (e) => {
+    if (e.pointerType === "touch") return;
+    const el = e.target.closest && e.target.closest("[data-tip]");
+    if (el && el !== tipFor) showTip(el); else if (!el && tipFor) hideTip();
+  });
+  document.addEventListener("focusin", (e) => { const el = e.target.closest && e.target.closest("[data-tip]"); if (el) showTip(el); });
+  document.addEventListener("focusout", hideTip);
+  document.addEventListener("pointerdown", (e) => {
+    hideTip();
+    if (e.pointerType !== "touch") return;
+    const el = e.target.closest && e.target.closest("[data-tip]");
+    if (el) holdTimer = setTimeout(() => showTip(el), 450);
+  });
+  document.addEventListener("pointerup", (e) => { if (e.pointerType === "touch" && tipFor) setTimeout(hideTip, 2200); clearTimeout(holdTimer); });
+  addEventListener("scroll", hideTip, true);
+}
+
+// ---- Menus ----
+// menu(label, items) is a button that opens a menu. An item is one of:
+//   { label, onclick, tip, hint, disabled, danger }      an action
+//   { label, items: [...], tip }                          a submenu (opens to the side; inline on narrow screens)
+//   { label, fields: [{ type, value, min, max, placeholder, name }], submit, onsubmit(values) }   a small form
+//   { heading: "…" } and "-"                              a heading and a divider
+// Menus live outside the page, so a redraw underneath doesn't close them.
+const openPanels = [];
+export function closeMenus(from = 0) {
+  for (const p of openPanels.splice(from)) { p.panel.remove(); if (p.anchor) p.anchor.setAttribute("aria-expanded", "false"); }
+}
+function placePanel(panel, anchor, side) {
+  const r = anchor.getBoundingClientRect();
+  panel.style.visibility = "hidden";
+  document.body.append(panel);
+  const p = panel.getBoundingClientRect();
+  let left = side ? r.right - 4 : r.left;
+  let top = side ? r.top - 6 : r.bottom + 6;
+  if (side && left + p.width > innerWidth - 8) left = r.left - p.width + 4;
+  if (!side && left + p.width > innerWidth - 8) left = Math.max(8, r.right - p.width);
+  if (top + p.height > innerHeight - 8) top = Math.max(8, side ? innerHeight - p.height - 8 : r.top - p.height - 6);
+  panel.style.left = `${Math.max(8, left)}px`;
+  panel.style.top = `${top}px`;
+  panel.style.visibility = "";
+}
+const narrow = () => innerWidth < 600;
+function menuItem(it, level) {
+  if (it === "-") return h("div", { class: "menu-sep", role: "separator" });
+  if (it.heading) return h("div", { class: "menu-head" }, it.heading);
+  if (it.grid) return h("div", { class: "grid" }, it.grid.map((x) => menuItem(x, level)));
+  if (it.fields) {
+    const inputs = it.fields.map((f) => h("input", { type: f.type || "text", value: f.value ?? "", min: f.min, max: f.max, placeholder: f.placeholder || "", "aria-label": f.placeholder || f.name || it.label, maxlength: f.type === "number" ? undefined : 80 }));
+    const go = () => { const values = inputs.map((i) => (i.type === "number" ? Number(i.value) : i.value.trim())); closeMenus(); it.onsubmit(values); };
+    for (const i of inputs) i.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go(); } e.stopPropagation(); });
+    return h("div", { class: "menu-form", "data-tip": it.tip }, it.label ? h("div", { class: "menu-head" }, it.label) : null, h("div", { class: "row" }, inputs, h("button", { class: "small primary", onclick: go }, it.submit || "OK")));
+  }
+  const sub = !!it.items;
+  const btn = h("button", { class: `menu-item${it.danger ? " danger" : ""}`, role: "menuitem", disabled: it.disabled, "data-tip": it.tip, "aria-haspopup": sub ? "menu" : undefined, "aria-expanded": sub ? "false" : undefined },
+    h("span", { class: "menu-label" }, it.label), it.hint ? h("span", { class: "menu-hint" }, it.hint) : null, sub ? h("span", { class: "menu-arrow", "aria-hidden": "true" }, "›") : null);
+  if (!sub) {
+    btn.addEventListener("click", () => { closeMenus(); it.onclick && it.onclick(); });
+    btn.addEventListener("pointerenter", (e) => { if (e.pointerType !== "touch" && !narrow()) closeMenus(level + 1); });
+    return btn;
+  }
+  if (narrow()) {
+    // Phones: the submenu opens inline, under its item.
+    const box = h("div", { class: "menu-inline", hidden: true }, it.items.map((x) => menuItem(x, level)));
+    btn.addEventListener("click", () => { box.hidden = !box.hidden; btn.setAttribute("aria-expanded", String(!box.hidden)); });
+    return [btn, box];
+  }
+  const open = () => { if (openPanels[level + 1] && openPanels[level + 1].anchor === btn) return; closeMenus(level + 1); openPanel(btn, it.items, level + 1, true); };
+  btn.addEventListener("click", open);
+  btn.addEventListener("pointerenter", (e) => { if (e.pointerType !== "touch") open(); });
+  btn.addEventListener("keydown", (e) => { if (e.key === "ArrowRight") { e.preventDefault(); open(); openPanels[level + 1] && openPanels[level + 1].panel.querySelector("button, input")?.focus(); } });
+  return btn;
+}
+function openPanel(anchor, items, level, side) {
+  const panel = h("div", { class: "menu", role: "menu" }, items.filter(Boolean).map((it) => menuItem(it, level)));
+  panel.addEventListener("keydown", (e) => {
+    const all = [...panel.querySelectorAll(":scope > .menu-item:not([disabled]), :scope > .menu-inline:not([hidden]) > .menu-item:not([disabled])")];
+    const i = all.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { e.preventDefault(); (all[i + 1] || all[0])?.focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); (all[i - 1] || all[all.length - 1])?.focus(); }
+    else if (e.key === "ArrowLeft" && level > 0) { e.preventDefault(); closeMenus(level); anchor.focus(); }
+    else if (e.key === "Escape") { e.preventDefault(); closeMenus(); openPanels.length || (menuRoot && menuRoot.focus()); }
+  });
+  anchor.setAttribute("aria-expanded", "true");
+  openPanels[level] = { panel, anchor };
+  placePanel(panel, anchor, side);
+  return panel;
+}
+let menuRoot = null;
+export function menu(label, items, { class: cls = "", tip, onopen } = {}) {
+  const btn = h("button", { class: `menu-button ${cls}`, "aria-haspopup": "menu", "aria-expanded": "false", "data-tip": tip },
+    label, h("span", { class: "menu-caret", "aria-hidden": "true" }, "▾"));
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const wasOpen = openPanels[0] && openPanels[0].anchor === btn;
+    closeMenus();
+    if (wasOpen) return;
+    hideTip();
+    onopen && onopen();
+    menuRoot = btn;
+    const list = typeof items === "function" ? items() : items;
+    openPanel(btn, list, 0, false).querySelector("button:not([disabled]), input")?.focus({ preventScroll: true });
+  });
+  return btn;
+}
+// Open a menu at any element, e.g. a card that was tapped.
+export function openMenuAt(anchor, items) {
+  closeMenus(); hideTip(); menuRoot = anchor;
+  openPanel(anchor, items, 0, false).querySelector("button:not([disabled]), input")?.focus({ preventScroll: true });
+}
+if (typeof document !== "undefined") {
+  document.addEventListener("pointerdown", (e) => { if (openPanels.length && !e.target.closest(".menu, .menu-button")) closeMenus(); });
+  addEventListener("resize", () => closeMenus());
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && openPanels.length) closeMenus(); });
+}
+
 // Redraw a region without losing what someone is typing: inputs with data-key keep their draft value
 // and focus across redraws. Call forget(key) after sending a form.
 const drafts = new Map();
@@ -90,6 +233,7 @@ export function render(root, nodes) {
     const el = root.querySelector(`[data-key="${CSS.escape(focusKey)}"]`);
     if (el) { el.focus({ preventScroll: true }); try { if (sel) el.setSelectionRange(...sel); } catch {} }
   }
+  if (tipFor && !tipFor.isConnected) hideTip();
 }
 // The current value of a keyed field: what's on screen now, else the last draft.
 export const draft = (key) => {
@@ -144,7 +288,7 @@ export function cardFace(c, size = "md", extra = {}) {
   const label = cardLabel(c);
   return h(extra.onclick ? "button" : "div", {
     class: `cf ${size} ${extra.class || ""}`,
-    title: extra.title || `${label}. ${cardText(c)}`,
+    "data-tip": extra.title || `${label}. ${cardText(c)}`,
     onclick: extra.onclick, disabled: extra.disabled, type: extra.onclick ? "button" : undefined,
     "aria-label": extra.onclick ? label : undefined,
   },
@@ -200,11 +344,11 @@ export function difficulty(kind, target) {
 export function trickSentence(e, names) {
   const n = (id) => names[id] || id;
   const play = (id) => e.plays.find((p) => p.id === id);
-  const bits = (p) => [p.brace ? `Brace +${p.brace}` : "", p.boost ? `${p.boost > 0 ? "+" : ""}${p.boost}` : ""].filter(Boolean).join(", ");
+  const bits = (p) => [p.mirrored ? `Mirrored, it counts ${p.bv}` : "", p.brace ? `Brace +${p.brace}` : "", p.boost ? `${p.boost > 0 ? "+" : ""}${p.boost}` : ""].filter(Boolean).join(", ");
   if (e.winner) {
     const p = play(e.winner);
     const how = { blessed: "Blessed always takes it", highest: `the highest on-suit card${bits(p) ? ` (${bits(p)})` : ""}`, tieBreak: "a tie, settled by suit, then trump" }[e.reason];
-    return `${n(e.winner)}'s ${p.label} takes the ${e.worldLabel}: ${how}. ${p.mirrored ? `Mirrored, it scores ${e.score}.` : `+${e.score}.`}`;
+    return `${n(e.winner)}'s ${p.label} takes the ${e.worldLabel}: ${how}. +${e.score}.`;
   }
   const why = {
     worldHighest: `no card beat it${e.worldBeat !== undefined ? ` (it counts ${e.worldBeat})` : ""}`,

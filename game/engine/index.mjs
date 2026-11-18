@@ -8,7 +8,7 @@ import * as campaign from "./campaign.mjs";
 import * as check from "./check.mjs";
 
 export { RuleError } from "./campaign.mjs";
-export { label, SUITS, SUIT_INFO, STARTER, isStatus, isBlessed, isOrdinary } from "./cards.mjs";
+export { label, SUITS, SUIT_INFO, STARTER, isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
 export { CHECK_KINDS, RESULT_RANK, resultFor, compareGoals, legalCards, trickWinner } from "./check.mjs";
 export { viewFor } from "./views.mjs";
 

@@ -80,7 +80,7 @@ globalThis.TrickRulesCard = {
             {
               "suit": "weird",
               "label": "Clubs — Mirror",
-              "text": "If your next card wins, the world card scores 11 minus its value."
+              "text": "Your next card counts 11 minus its value for beating (a 2 counts 9). Scores don’t change; statuses stay 0."
             }
           ],
           "note": "Use the losing card’s printed suit, even if an ally won. No consolations after the final trick."

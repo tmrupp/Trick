@@ -5,7 +5,10 @@ Thirteen table situations and seven experiments, run under the current [RULES.md
 - Peek is Dexterity's consolation: each losing Spade chooses, blind, whether to replace the next world card, once a trick;
 - ties go by suit, then trump;
 - a status in the world card's suit must be played;
-- survival targets 3 × Injuries.
+- survival targets 3 × Injuries;
+- Mirror makes your next card count 11 minus its value for beating.
+
+**Mirror changed after most of these runs.** It used to make the next world card you won score 11 minus its value. Only the default scene (situation 1) and the difficulty table in RULES.md have been re-run with the new Mirror; the other tables below still use the old one. With the new Mirror, busts fall 2–4 points in every difficulty band and success or better rises 1–4, because a Mirrored high card is a safe way to lose and a Mirrored low card can win.
 
 Each line is 20,000 checks. Two simulators produce the numbers:
 
@@ -41,11 +44,11 @@ Unless stated, players use fresh 20-card starter decks whose primary suit is the
 
 | Player | Critical | Success | Partial | Failure | Bust |
 | --- | --- | --- | --- | --- | --- |
-| Ana (Strength) | 21% | 44% | 18% | 7% | 10% |
-| Ben (Dexterity) | 15% | 39% | 22% | 16% | 9% |
-| Cara (Intelligence) | 15% | 36% | 19% | 11% | 19% |
+| Ana (Strength) | 21% | 45% | 17% | 7% | 9% |
+| Ben (Dexterity) | 14% | 41% | 21% | 16% | 8% |
+| Cara (Intelligence) | 15% | 38% | 18% | 11% | 18% |
 
-The world takes 48% of tricks. More than half of all results are success or better, and about 1 in 8 busts.
+The world takes 45% of tricks. More than half of all results are success or better, and about 1 in 9 busts. (Re-run with the new Mirror and the Peek choice.)
 
 ### 2. The same scene, with allies yielding
 

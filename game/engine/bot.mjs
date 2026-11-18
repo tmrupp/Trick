@@ -2,7 +2,7 @@
 // with the published simulations. A bot reads only its own hand and the public table.
 import { apply } from "./index.mjs";
 import { legalCards } from "./check.mjs";
-import { isStatus, isBlessed, isOrdinary } from "./cards.mjs";
+import { isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
 
 const total = (p) => p.tally.reduce((a, t) => a + t.score, 0);
 const onSuit = (c, p, w) => !isBlessed(c) && (c.suit === p.approach || c.suit === w.suit);
@@ -17,8 +17,8 @@ function passOrder(c) {
 // How much a player wants this world card next: 3 exact, 2 fits, 0 no use, -2 forces a busting win.
 export function worth(p, wc) {
   const need = p.target - total(p);
-  const prize = p.mirror ? 11 - wc.v : wc.v;
-  const beats = p.hand.filter((c) => !isBlessed(c) && onSuit(c, p, wc) && c.v + p.brace > wc.v);
+  const prize = wc.v;
+  const beats = p.hand.filter((c) => !isBlessed(c) && onSuit(c, p, wc) && countsAs(c, p.mirror) + p.brace > wc.v);
   if (p.hand.length && beats.length === p.hand.length && prize > need) return -2;
   if (!beats.length || need <= 0 || prize > need) return 0;
   return prize === need ? 3 : 2;
@@ -35,11 +35,11 @@ export function chooseLock(state, charId) {
     card = hand[0]; // a forced status
   } else {
     const need = p.target - total(p);
-    const prize = p.mirror ? 11 - w.v : w.v;
+    const prize = w.v;
     const blessed = hand.find(isBlessed);
     if (blessed && prize === need) card = blessed;
     else {
-      const opts = hand.filter((c) => !isBlessed(c)).map((c) => ({ c, bv: c.v + p.brace, beats: onSuit(c, p, w) && c.v + p.brace > w.v }));
+      const opts = hand.filter((c) => !isBlessed(c)).map((c) => ({ c, bv: countsAs(c, p.mirror) + p.brace, beats: onSuit(c, p, w) && countsAs(c, p.mirror) + p.brace > w.v }));
       const beaters = opts.filter((o) => o.beats).sort((a, b) => a.bv - b.bv);
       if (beaters.length && prize <= need) card = beaters[beaters.length > 1 && beaters[0].bv - w.v < 2 ? 1 : 0].c;
       else {

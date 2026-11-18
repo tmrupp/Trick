@@ -78,14 +78,33 @@ test("a whole trick: the winner scores the world card's value, losers take conso
   assert.equal(ck.players.ana.played.length, 1, "played cards stay in the row until cleanup");
 });
 
-test("Mirror: the next winning card scores 11 minus the world card", () => {
+test("Mirror: your next card counts 11 minus its value; the world card scores as printed", () => {
   let s = dealt(game());
-  rig(s, { row: ["W5", "W2"], hands: { ana: ["S1", "S2"], ben: ["D1", "D2"], cara: ["W3", "W9"] }, worldDeck: [] }); // an empty world deck: Ben's Spade can't replace the 2
+  rig(s, { row: ["W5", "W8", "W6"], hands: { ana: ["S1", "S2", "S3"], ben: ["D1", "D2", "D3"], cara: ["W3", "W2", "W4"] }, worldDeck: [] }); // an empty world deck: no Peek replaces
   ({ state: s } = run(s, lock(s, "ana", "S1"), lock(s, "ben", "D1"), lock(s, "cara", "W3")));
   assert.equal(s.check.players.cara.mirror, true);
-  ({ state: s } = run(s, lock(s, "ana", "S2"), lock(s, "ben", "D2"), lock(s, "cara", "W9")));
-  assert.equal(s.check.players.cara.tally[0].score, 9);
-  assert.equal(s.check.players.cara.tally[0].mirrored, true);
+  // Cara's 2 counts 9 and beats the 8; she scores 8.
+  let events;
+  ({ state: s, events } = run(s, lock(s, "ana", "S2"), lock(s, "ben", "D2"), lock(s, "cara", "W2")));
+  const t = events.find((e) => e.type === "trickResolved");
+  assert.equal(t.winner, "cara");
+  assert.equal(s.check.players.cara.tally[0].score, 8);
+  assert.equal(s.check.log[1].plays.find((p) => p.id === "cara").bv, 9);
+  assert.equal(s.check.log[1].plays.find((p) => p.id === "cara").mirrored, true);
+  assert.equal(s.check.players.cara.mirror, false, "Mirror lasts one play");
+});
+
+test("Mirror leaves a status at 0", () => {
+  let s = dealt(game());
+  rig(s, { row: ["S5", "D6"], hands: { ana: ["S1", "S2"], ben: ["D1", "Dx"], cara: ["W3", "I2"] }, worldDeck: [] });
+  s.check.players.ben.mirror = true;
+  // Ben must play his Stumble (the world card is a Spade); mirrored or not, it counts 0.
+  ({ state: s } = run(s, lock(s, "ana", "S1"), lock(s, "ben", "D1"), lock(s, "cara", "W3")));
+  s.check.players.ben.mirror = true;
+  ({ state: s } = run(s, lock(s, "ana", "S2"), { type: "lockCard", charId: "ben", cardId: find(s, "ben", "Dx").id }, lock(s, "cara", "I2")));
+  const ben = s.check.log[1].plays.find((p) => p.id === "ben");
+  assert.equal(ben.bv, 0);
+  assert.equal(ben.mirrored, false);
 });
 
 test("a status in the world card's suit must be played", () => {

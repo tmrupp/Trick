@@ -47,11 +47,11 @@ The **target sets the difficulty**. Each player may have their own target if the
 
 | Target | Difficulty | Exact hit | 7 or more short | Bust |
 | --- | --- | --- | --- | --- |
-| 6–8 | Easy | 18–27% | 0–10% | 13–19% |
-| 9–11 | Moderate | 11–23% | 11–21% | 10–16% |
-| 12–14 | Hard | 7–15% | 23–41% | 7–10% |
-| 15–17 | Very hard | 4–11% | 40–59% | 4–7% |
-| 18–20 | Extreme | 2–7% | 56–75% | 2–4% |
+| 6–8 | Easy | 18–27% | 0–8% | 11–15% |
+| 9–11 | Moderate | 11–24% | 8–21% | 8–13% |
+| 12–14 | Hard | 7–16% | 20–42% | 5–8% |
+| 15–17 | Very hard | 4–11% | 38–62% | 3–5% |
+| 18–20 | Extreme | 2–7% | 56–77% | 2–3% |
 
 Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
 
@@ -79,9 +79,9 @@ On a **trick loss**, take your losing card's consolation, including when an ally
 | **Strength — Brace** | Your next card counts this card's printed value higher for beating. It never changes what you score. |
 | **Dexterity — Peek** | You may replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost. |
 | **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. |
-| **Weird — Mirror** | If your next card wins, the world card scores 11 minus its value. |
+| **Weird — Mirror** | Your next card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change. Statuses stay at 0. |
 
-Brace and Mirror last for your next play only: turn the losing card sideways as a reminder. Peek is blind: you choose whether to replace, but nobody sees the new card before it lands. Everyone who lost with a Spade chooses in secret at the same time; if anyone chooses to replace, the next world card is replaced once. Turn a Mirrored world card upside down in your tally pile so its changed score stays visible.
+Brace and Mirror last for your next play only: turn the losing card sideways as a reminder. Peek is blind: you choose whether to replace, but nobody sees the new card before it lands. Everyone who lost with a Spade chooses in secret at the same time; if anyone chooses to replace, the next world card is replaced once.
 
 ## Statuses
 
@@ -129,7 +129,7 @@ At a GM-granted rest, remove any number of non-Curse statuses from discard. **Ho
 
 ## Resolve the check
 
-Your **tally** is the total of the world cards in your tally pile, with Mirrored cards counting 11 minus their value.
+Your **tally** is the total of the world cards in your tally pile.
 
 | Final tally | Result |
 | --- | --- |

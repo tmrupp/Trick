@@ -32,9 +32,9 @@ globalThis.TrickCoreCards = {
     "domain": "Clubs / Consolation",
     "title": "MIRROR",
     "lines": [
-      "If your next card wins, the world card scores 11 minus its value."
+      "Your next card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change. Statuses stay at 0."
     ],
-    "description": "If your next card wins, the world card scores 11 minus its value."
+    "description": "Your next card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change. Statuses stay at 0."
   },
   "injury": {
     "suitLabel": "Hearts — Injury",

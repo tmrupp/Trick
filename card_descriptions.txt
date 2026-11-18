@@ -10,7 +10,7 @@ RECALCULATE (Diamonds — Intelligence)
 Discard one card from hand, then draw one. You need a card to discard.
 
 MIRROR (Clubs — Weird)
-If your next card wins, the world card scores 11 minus its value.
+Your next card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change. Statuses stay at 0.
 
 INJURY (Hearts — Injury)
 Two or more Injuries in your top N discard cards make survival your forced goal. Gain Injuries only at cleanup or between checks.

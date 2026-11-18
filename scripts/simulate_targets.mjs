@@ -2,7 +2,7 @@
 // Usage: node scripts/simulate_targets.mjs [trials per point]   (default 5000)
 // Random 21-card decks, trump = each deck's biggest suit; need-seeking bots that never bust by choice.
 // Rules: world leads; simultaneous; the single highest card wins if on-suit; the winner scores the world card
-// (Mirror: 11 minus it); suit-then-trump tie-break; Brace / Recalculate / Mirror; Dexterity is the blind Peek (adopted), or the Peek with a look,
+// (Mirror: your next card counts 11 minus its value); suit-then-trump tie-break; Brace / Recalculate / Mirror; Dexterity is the blind Peek (adopted), or the Peek with a look,
 // Wait or the old Slip for comparison. Standard checks are 3 tricks per player + 1, quick checks 2 per player + 1, solo 6.
 const SUITS = ['S', 'D', 'I', 'W'];
 const sh = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -15,10 +15,13 @@ function randomDeck() {
 }
 const worldDeck = () => { const d = []; for (const s of SUITS) for (let v = 1; v <= 10; v++) d.push({ s, v }); return sh(d); };
 
+// What a card counts for beating, before Brace: Mirror turns an ordinary card into 11 minus its value.
+const cv = (c, p) => (p.mirror && !c.st ? 11 - c.v : c.v);
+
 // Pick a card. `seen` is the list of revealed plays when Waiting, else null (choose blind against the world card).
 function pick(p, w, T, seen) {
   const need = T - p.tally;
-  const prize = p.mirror ? 11 - w.v : w.v;
+  const prize = w.v;
   let top = w.v, allyWinning = false;
   if (seen) {
     top = Math.max(w.v, ...seen.map((x) => x.bv));
@@ -26,7 +29,7 @@ function pick(p, w, T, seen) {
     allyWinning = top > w.v && at.length === 1 && at[0].on;
   }
   const opts = p.hand.map((c) => {
-    const bv = c.v + p.brace;
+    const bv = cv(c, p) + p.brace;
     const on = c.s === p.tr || c.s === w.s;
     const beats = on && bv > top;
     let sc = beats ? (p.tally + prize > T ? 999 : need - prize) : need + bv * 0.01;
@@ -40,8 +43,8 @@ function pick(p, w, T, seen) {
 
 // Peek: how much a player wants this world card next (3 exact, 2 fits, 0 no use, -2 forces a busting win).
 function worth(p, wc, T) {
-  const need = T - p.tally, prize = p.mirror ? 11 - wc.v : wc.v;
-  const beats = p.hand.filter((c) => (c.s === p.tr || c.s === wc.s) && c.v + p.brace > wc.v);
+  const need = T - p.tally, prize = wc.v;
+  const beats = p.hand.filter((c) => (c.s === p.tr || c.s === wc.s) && cv(c, p) + p.brace > wc.v);
   if (p.hand.length && beats.length === p.hand.length && prize > need) return -2;
   if (!beats.length || need <= 0 || prize > need) return 0;
   return prize === need ? 3 : 2;
@@ -76,7 +79,7 @@ function run(P, T, dex, trials, tricks) {
           if (sc.filter((v) => v === best).length === 1) win = at[sc.indexOf(best)];
         }
       }
-      if (win) win.p.tally += win.mirrored ? 11 - w.v : w.v;
+      if (win) win.p.tally += w.v;
       if (last) return;
       const peekers = [];
       for (const x of plays) {

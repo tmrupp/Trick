@@ -76,7 +76,7 @@ Your losing card's printed suit gives its consolation, statuses included. There 
 | **Strength: Brace** | Your next card counts this card's value higher **for beating**. |
 | **Dexterity: Peek** | **You may replace the next world card, unseen,** with the top card of the world deck; the replaced card goes to the bottom. Everyone who lost with a Spade chooses in secret; if anyone chooses to, it's replaced once. Nobody looks first. |
 | **Intelligence: Recalculate** | Discard one card from hand, then draw one. |
-| **Weird: Mirror** | If your next card wins, **the world card scores 11 minus its value.** |
+| **Weird: Mirror** | **Your next card counts 11 minus its value** for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change, and statuses stay at 0. |
 
 Brace and Mirror last for your next play only; Peek is decided at once, blind. Turn the losing card sideways as a reminder, and straighten it when you play.
 
@@ -90,7 +90,7 @@ Each suit does one job:
 **Losing on purpose** sets you up:
 - **A losing Strength card is a Brace:** next trick, reach for a bigger world card than your hand could otherwise take.
 - **A losing Dexterity card is a Peek:** the next world card is redrawn, for better or worse. Lose with a Spade when the next prize is one nobody wants.
-- **A losing Weird card is a Mirror:** a low world card coming up becomes a big score, or a big one a small, safe score.
+- **A losing Weird card is a Mirror:** your low cards become strong for one play, and your high cards become safe ways to lose.
 
 **Changes from the old consolations:**
 - **Brace** has no choice and can't stack.
@@ -102,7 +102,8 @@ Each suit does one job:
 
 | | Option | Effect | Trade-off |
 | --- | --- | --- | --- |
-| **Weird** | **Mirror** *(recommended)* | The next world card you win scores 11 minus its value. | Plannable, double-edged. |
+| **Weird** | **Mirror** *(adopted)* | Your next card counts 11 minus its value for beating. | Plannable, double-edged: turns a weak hand strong or a strong hand safe. |
+| | **Mirror the prize** *(replaced)* | The next world card you win scores 11 minus its value. | Changed what you score, which made tallies hard to read at the table. |
 | | **Shift** | If any losing card this trick is Weird, discard the next world card and flip a replacement. | Changes the whole table's next trick, at random. |
 | | **Echo** | If your next card wins, the world card scores double. | Big swings, real bust risk. |
 | **Dexterity** | **Peek** *(adopted)* | Choose, blind, whether to replace the next world card; once a trick if anyone does. | One secret yes-or-no per loser; works at any table size. |
@@ -121,9 +122,9 @@ Target 10, a standard check.
 - **This trick:** she plays 4♥. It can't beat 6, so it loses, and she Braces for 4.
 - **Next trick:** she plays 5♥, which counts 5 + 4 = 9 for beating. It beats the 8♠, nobody plays higher, and she scores the world card's 8: **exactly 10**.
 
-**Cara** (Weird trump) is on 3 and needs 7. A 4♣ is coming up.
-- **The trick before it:** she loses with a Weird card, so her next win is Mirrored.
-- **On the 4♣:** her 5♣ wins, and the world card scores 11 − 4 = 7: **exactly 10**.
+**Cara** (Weird trump) is on 3 and needs 7. A 7♦ is coming up, and her hand is all low: 2♣, 3♣, 4♥.
+- **The trick before it:** she loses with her 3♣, so her next card is Mirrored.
+- **On the 7♦:** her 2♣ counts 11 − 2 = 9 and beats the 7. She scores the world card's 7: **exactly 10**.
 
 **Ben** (Dexterity trump) is on 6 and needs 4. The next world card is a 9♦, which nobody can use without busting.
 - **This trick:** he loses on purpose with his 2♠ and chooses to replace the 9♦, unseen: the world deck's top card is dealt in its place. It's a 4♠.
@@ -138,7 +139,7 @@ Target 10, a standard check.
 | **Injury, Strength** | Brace for 0, which does nothing. | Two or more Injuries in your recent discard make survival a forced goal. |
 | **Stumble, Dexterity** | Peek: the next world card is replaced. | **Price:** when you play Stumble, discard an ordinary card from hand, your choice. |
 | **Stress, Intelligence** | Recalculate. You may discard another status. | Whenever you draw Stress, gain another Stress into discard. |
-| **Curse, Weird** | Mirrors your next win. | Breaking the compulsion gains one Stress per Curse outside your reserve. |
+| **Curse, Weird** | Mirrors your next card. | Breaking the compulsion gains one Stress per Curse outside your reserve. |
 
 - **A Braced status can win.** A 0 Braced by 6 beats a world 5, and you score the 5.
 - **Late in a check, statuses are passes.** Once you're on target, a card that loses is useful. Statuses hurt early, as dead slots in a hand you need for winning, and between checks.

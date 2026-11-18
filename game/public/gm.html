@@ -24,6 +24,8 @@ let last = null;
 let feed = [];
 let tab = "check";
 let mine = { chosen: null, price: null };
+let picked = { charId: null, cardId: null }; // the card selected in a character's card editor
+const openEditors = new Set(); // characters whose card editor is open
 
 const conn = connect({
   room, as: "gm", gmKey: params.get("key"),
@@ -212,6 +214,41 @@ function myPlay(view, ck, me) {
 
 // ---------------- Characters ----------------
 
+// Free card editing for one character: move any card between deck, discard, hand and reserve, or add one.
+function cardEditor(c, view) {
+  const ck = view.check && view.check.phase !== "closed" ? view.check : null;
+  const hand = ck && view.hands && view.hands[c.id];
+  const canHand = !!(hand && ["play", "consolation"].includes(ck.phase));
+  const k = (s) => `ce-${s}-${c.id}`;
+  const pick = (x) => cardFace(x, "sm", { class: picked.charId === c.id && picked.cardId === x.id ? "chosen" : "", title: "Select to move or remove",
+    onclick: () => { picked = picked.cardId === x.id ? { charId: null, cardId: null } : { charId: c.id, cardId: x.id }; draw(); } });
+  const pile = (title, cards, note) => h("div", { class: "stack" }, h("div", { class: "small" }, h("strong", {}, title), note ? h("span", { class: "muted" }, ` · ${note}`) : null),
+    cards && cards.length ? h("div", { class: "row" }, cards.map(pick)) : h("div", { class: "small muted" }, "empty"));
+  const sel_ = picked.charId === c.id && [...(c.deckCards || []), ...(c.discard || []), ...(hand || []), ...(c.reserveCards || [])].find((x) => x.id === picked.cardId);
+  const move = (to) => { act({ type: "gmMoveCard", charId: c.id, cardId: picked.cardId, to }); picked = { charId: null, cardId: null }; };
+  const places = [["deck-top", "Top of deck"], ["deck-bottom", "Bottom of deck"], ["deck-shuffle", "Shuffle into deck"], ["discard", "Discard"], ...(canHand ? [["hand", "Hand"]] : [])];
+  const what = sel(k("what"), [...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => [String(v), v === 1 ? "A" : String(v)]), ["status", "Status"], ["blessed", "Blessed"]], "10", "Value");
+  const suit = sel(k("suit"), Object.entries(SUITS).map(([s, x]) => [s, `${x.sym} ${x.name}`]), c.primary, "Suit");
+  const to = sel(k("to"), places, "discard", "Where");
+  return h("details", { class: "stack", open: openEditors.has(c.id), ontoggle: (e) => { if (e.target.open) openEditors.add(c.id); else openEditors.delete(c.id); } },
+    h("summary", {}, "Edit cards"),
+    h("p", { class: "small muted" }, "For items, people and story effects. Select a card, then choose where it goes. Removing a card returns it to their reserve. The deck shows its contents, not its order."),
+    sel_ ? h("div", { class: "panel row", style: "position:sticky;top:0;z-index:2" }, h("strong", {}, `${sel_.label}:`),
+      places.map(([v, t]) => h("button", { class: "small", onclick: () => move(v) }, t)),
+      h("button", { class: "small", onclick: () => move("reserve") }, "Remove (to reserve)"),
+      h("button", { class: "small ghost", onclick: () => { picked = { charId: null, cardId: null }; draw(); } }, "Cancel")) : null,
+    canHand ? pile(`Hand (${hand.length})`, hand) : null,
+    pile(`Deck (${c.deckCount})`, c.deckCards, "order hidden"),
+    pile(`Discard (${c.discardCount})`, c.discard, "top card last"),
+    h("details", {}, h("summary", { class: "small" }, `Reserve (${(c.reserveCards || []).length})`), h("div", { class: "row" }, (c.reserveCards || []).map(pick))),
+    h("div", { class: "row" }, h("span", { class: "small" }, "Add"), what, suit, h("span", { class: "small" }, "to"), to,
+      h("button", { onclick: () => {
+        const w = draft(k("what")) || "10";
+        act({ type: "gmAddCard", charId: c.id, kind: w === "status" || w === "blessed" ? w : "ordinary", suit: draft(k("suit")) || c.primary, v: Number(w) || undefined, to: draft(k("to")) || "discard" });
+      } }, "Add card"),
+      h("button", { class: "ghost", onclick: () => act({ type: "gmShuffleDeck", charId: c.id }) }, "Shuffle their deck")));
+}
+
 function charsTab(info, view, names) {
   const chars = Object.values(view.characters);
   if (!chars.length) return [h("div", { class: "panel muted" }, "No characters yet.")];
@@ -225,7 +262,7 @@ function charsTab(info, view, names) {
       c.survival ? h("p", { class: "pill bad" }, `Survival required: ${c.survival.M} Injuries, target ${c.survival.target}`) : null,
       c.compulsion.length ? h("p", { class: "small" }, h("strong", {}, "Compulsion: "), c.compulsion.join("; ")) : null,
       h("div", { class: "row small" }, `Deck ${c.deckCount} · discard ${c.discardCount} · Blessed in reserve ${c.reserveBlessed}`, Object.entries(SUITS).map(([s, x]) => h("span", { class: "pill" }, `${x.status} out: ${6 - ((c.reserveStatuses || {})[s] || 0)}`))),
-      h("details", {}, h("summary", {}, "Discard"), h("div", { class: "row" }, (c.discard || []).map((x) => cardFace(x, "sm")))),
+      cardEditor(c, view),
       inCheck ? h("p", { class: "small muted" }, "Statuses during a check wait for cleanup: add them as consequences when it resolves.") : h("div", { class: "stack" },
         h("div", { class: "row" }, sel(k("st"), Object.entries(SUITS).map(([s, x]) => [s, x.status]), "S", "Status"), h("input", { "data-key": k("comp"), placeholder: "Compulsion (for a Curse)", maxlength: 80 }),
           h("button", { onclick: () => { act({ type: "gainStatus", charId: c.id, suit: draft(k("st")) || "S", compulsion: draft(k("comp")) || undefined }); forget(k("comp")); } }, "Give status")),

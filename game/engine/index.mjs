@@ -74,6 +74,9 @@ const HANDLERS = {
   gmAdjustTarget: check.gmAdjustTarget,
   gmDraw: (ctx, a) => { check.gmDraw(ctx, a); check.settle(ctx); },
   gmDiscard: check.gmDiscard,
+  gmMoveCard: (ctx, a) => { check.gmMoveCard(ctx, a); check.settle(ctx); },
+  gmAddCard: (ctx, a) => { check.gmAddCard(ctx, a); check.settle(ctx); },
+  gmShuffleDeck: check.gmShuffleDeck,
 };
 
 export const ACTION_TYPES = Object.keys(HANDLERS);

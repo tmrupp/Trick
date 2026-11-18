@@ -27,6 +27,7 @@ function characterPrivate(ch) {
     // The deck's contents, never its order.
     deckCards: ch.deck.map(pub).sort((a, b) => (a.blessed - b.blessed) || (a.status - b.status) || String(a.suit).localeCompare(String(b.suit)) || a.v - b.v),
     reserveCount: ch.reserve.length,
+    reserveCards: ch.reserve.map(pub).sort((a, b) => (a.blessed - b.blessed) || (a.status - b.status) || String(a.suit).localeCompare(String(b.suit)) || a.v - b.v),
     reserveStatuses: statuses,
     reserveBlessed: ch.reserve.filter((c) => c.blessed).length,
   };

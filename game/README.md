@@ -76,6 +76,7 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | `setGoal { charId, target }` | Setup | GM: the target, set from the goal. Setting it accepts the goal and its suit. A survival target is fixed at 3 × M. (`approveApproach` remains only so older saves replay) |
 | `peek { charId, replace }` | After a trick | A player who lost with a Spade: replace the next world card unseen, or keep it |
 | `resurrect { charId }` | Between checks | GM: bring a dead character back |
+| `gmMoveCard { charId, cardId, to }`, `gmAddCard { charId, kind, suit, v, to }`, `gmShuffleDeck { charId }` | Any time | GM: free card editing for items and story effects. `to` is `deck-top`, `deck-bottom`, `deck-shuffle`, `discard`, `hand` (in a check) or `reserve` (removes it). Adding takes a matching card from reserve, or makes an extra one. Only the GM and that player are told |
 | `deal` | Setup | GM. Deals the world row and draws every hand |
 | `lockCard { charId, cardId, priceCardId }`, `unlockCard { charId }` | Play | A player. The trick resolves when everyone with cards has locked |
 | `recalculate { charId, cardId }` | Consolation | A player who lost with a Diamond |

@@ -94,3 +94,51 @@ test("players state their own goal and its suit; the GM sets the target", () => 
   assert.equal(s.check.players.ben.target, 11);
   assert.throws(() => run(s, { type: "declareApproach", charId: "ben", suit: "D", goal: "Pick the lock", suggested: 2.5 }), /suggested target/);
 });
+
+test("GM card editing: move between deck, discard, hand and reserve; add from reserve or as an extra card", () => {
+  let s = game(["ana"]);
+  const ana = () => s.characters.ana;
+  const deckCard = ana().deck[0];
+  let events;
+  // Deck to discard, then to the top of the deck (a deck's top is its last card), then removed to reserve.
+  ({ state: s, events } = run(s, { type: "gmMoveCard", charId: "ana", cardId: deckCard.id, to: "discard" }));
+  assert.equal(ana().discard.at(-1).id, deckCard.id);
+  assert.deepEqual(events.find((e) => e.type === "gmCardMoved"), { type: "gmCardMoved", id: "ana", card: events.find((e) => e.type === "gmCardMoved").card, from: "deck", to: "discard" });
+  ({ state: s } = run(s, { type: "gmMoveCard", charId: "ana", cardId: deckCard.id, to: "deck-top" }));
+  assert.equal(ana().deck.at(-1).id, deckCard.id);
+  ({ state: s } = run(s, { type: "gmMoveCard", charId: "ana", cardId: deckCard.id, to: "reserve" }));
+  assert.ok(ana().reserve.some((c) => c.id === deckCard.id));
+  assert.equal(ana().deck.length, 19);
+  assert.throws(() => run(s, { type: "gmMoveCard", charId: "ana", cardId: deckCard.id, to: "hand" }), /during a check/);
+  assert.throws(() => run(s, { type: "gmMoveCard", charId: "ana", cardId: "nope", to: "discard" }), /isn't in/);
+
+  // Add from reserve: Ana starts with two 10s of her primary suit; a third comes from reserve? No: both are in her deck,
+  // so a third 10 is an extra card. A Stumble and a Blessed come from reserve.
+  const tens = () => [...ana().deck, ...ana().discard].filter((c) => !c.status && !c.blessed && c.suit === "S" && c.v === 10).length;
+  const before = tens();
+  ({ state: s, events } = run(s, { type: "gmAddCard", charId: "ana", suit: "S", v: 10, to: "deck-shuffle" }));
+  assert.equal(tens(), before + 1);
+  ({ state: s, events } = run(s, { type: "gmAddCard", charId: "ana", suit: "S", v: 10, to: "discard" }));
+  ({ state: s, events } = run(s, { type: "gmAddCard", charId: "ana", suit: "S", v: 10, to: "discard" }));
+  assert.equal(events.find((e) => e.type === "gmCardAdded").extra, true, "with every copy out, an extra card is made");
+  assert.match(ana().discard.at(-1).id, /^ana\/gm\.\d+$/);
+  ({ state: s } = run(s, { type: "gmAddCard", charId: "ana", kind: "status", suit: "D", to: "deck-bottom" }));
+  assert.equal(ana().deck[0].status, true);
+  ({ state: s } = run(s, { type: "gmAddCard", charId: "ana", kind: "blessed", to: "deck-top" }));
+  assert.equal(ana().deck.at(-1).blessed, true);
+  assert.throws(() => run(s, { type: "gmAddCard", charId: "ana", suit: "S", v: 11, to: "discard" }), /A to 10/);
+  // The GM sees the reserve's cards, to choose from.
+  assert.ok(viewFor(s, { role: "gm" }).characters.ana.reserveCards.length > 0);
+
+  // In a check: a card from the deck into a hand; a locked card can't move.
+  s = dealt(game(["ana", "ben"]));
+  const card = s.characters.ana.deck[0];
+  ({ state: s } = run(s, { type: "gmMoveCard", charId: "ana", cardId: card.id, to: "hand" }));
+  assert.ok(hand(s, "ana").some((c) => c.id === card.id));
+  const legal = s.check.players.ana.hand.find((c) => c.id === card.id && !c.status) ? card.id : null;
+  if (legal) ({ state: s } = run(s, { type: "lockCard", charId: "ana", cardId: card.id }));
+  else ({ state: s } = run(s, { type: "lockCard", charId: "ana", cardId: s.check.players.ana.hand.find((c) => !c.status).id }));
+  const locked = s.check.locks.ana.cardId;
+  assert.throws(() => run(s, { type: "gmMoveCard", charId: "ana", cardId: locked, to: "discard" }), /locked in/);
+  ({ state: s } = run(s, { type: "gmShuffleDeck", charId: "ana" }));
+});

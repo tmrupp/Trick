@@ -291,7 +291,16 @@ test("a player makes another character after a death, switches between them, and
     assert.equal(ana.latest().view.characters.p1.alive, true);
     assert.equal((await ana.manage({ op: "switch", charId: "gm" })).type, "rejected", "only your own characters");
     assert.equal((await ana.act({ type: "lockCard", charId: "p1-2", cardId: "x" })).reason, "You can only act for your own character.", "you act as the one you're playing");
-    for (const c of [gm, ana]) await c.close();
+    // The GM's card edits reach the GM and that character's player only.
+    const ben = client(port, { room: code, as: "player", name: "Rob" });
+    const table = client(port, { room: code, as: "table" });
+    await ben.ready; await table.ready;
+    assert.equal((await gm.act({ type: "gmAddCard", charId: "p1", suit: "S", v: 10, to: "deck-top" })).type, "ok");
+    await settle();
+    const heard = (c) => c.views.some((v) => v.events.some((e) => e.type === "gmCardAdded"));
+    assert.ok(heard(gm) && heard(ana), "the GM and Ana's player see it");
+    assert.ok(!heard(ben) && !heard(table), "other phones and the table don't");
+    for (const c of [gm, ana, ben, table]) await c.close();
   } finally {
     await host.close();
     rmSync(dir, { recursive: true, force: true });

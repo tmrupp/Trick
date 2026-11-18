@@ -493,3 +493,83 @@ export function gmDiscard(ctx, { charId, cardId }) {
   ctx.state.characters[charId].discard.push(card);
   ctx.events.push({ type: "gmDiscarded", id: charId, card: label(card) });
 }
+
+// ---- The GM's free card editing: a stand-in for items, people and story effects ----
+
+const PLACES = ["deck-top", "deck-bottom", "deck-shuffle", "discard", "hand", "reserve"];
+
+// Where a character's card is now: deck, discard, reserve, or (in a check) hand.
+function findCard(st, ch, cardId) {
+  const p = st.check && st.check.phase !== "closed" && st.check.players[ch.id];
+  const piles = [["deck", ch.deck], ["discard", ch.discard], ["reserve", ch.reserve], ...(p ? [["hand", p.hand]] : [])];
+  for (const [name, pile] of piles) {
+    const i = pile.findIndex((c) => c.id === cardId);
+    if (i >= 0) return { name, pile, i };
+  }
+  return null;
+}
+
+function place(ctx, ch, card, to) {
+  const st = ctx.state;
+  if (to === "deck-top") ch.deck.push(card); // a deck's top is its last card
+  else if (to === "deck-bottom") ch.deck.unshift(card);
+  else if (to === "deck-shuffle") ch.deck.splice(ctx.rng.int(ch.deck.length + 1), 0, card);
+  else if (to === "discard") {
+    ch.discard.push(card);
+    if (isStatus(card) && card.suit === "S" && !(st.check && st.check.phase !== "closed")) scanAfterInjury(ctx, ch);
+  } else if (to === "reserve") returnToReserve(ch, card);
+  else if (to === "hand") st.check.players[ch.id].hand.push(card);
+}
+
+function checkPlace(st, ch, to) {
+  if (!PLACES.includes(to)) throw rule(`Move a card to ${PLACES.join(", ")}.`);
+  if (to === "hand") {
+    const ck = st.check;
+    if (!ck || !["play", "consolation"].includes(ck.phase) || !ck.players[ch.id]) throw rule("A card goes to a hand only during a check they're in.");
+  }
+}
+
+// Move one of a character's cards between deck, discard, hand and reserve. Removing a card returns it to reserve.
+export function gmMoveCard(ctx, { charId, cardId, to }) {
+  const st = ctx.state;
+  const ch = character(st, charId);
+  checkPlace(st, ch, to);
+  const at = findCard(st, ch, cardId);
+  if (!at) throw rule("That card isn't in their deck, discard, hand or reserve.");
+  if (at.name === "hand" && st.check.locks[charId] && st.check.locks[charId].cardId === cardId) throw rule("That card is locked in.");
+  const [card] = at.pile.splice(at.i, 1);
+  place(ctx, ch, card, to);
+  ctx.events.push({ type: "gmCardMoved", id: charId, card: label(card), from: at.name, to });
+}
+
+// Add a card: from the character's reserve if one matches, otherwise an extra copy made for them.
+export function gmAddCard(ctx, { charId, kind = "ordinary", suit, v, to = "discard" }) {
+  const st = ctx.state;
+  const ch = character(st, charId);
+  checkPlace(st, ch, to);
+  if (to === "reserve") throw rule("Add a card to their deck, discard or hand.");
+  let match;
+  if (kind === "blessed") match = (c) => isBlessed(c);
+  else if (kind === "status") { if (!SUITS.includes(suit)) throw rule("Choose a status suit."); match = (c) => isStatus(c) && c.suit === suit; }
+  else {
+    if (!SUITS.includes(suit) || !Number.isInteger(v) || v < 1 || v > 10) throw rule("Choose a suit and a value from A to 10.");
+    match = (c) => isOrdinary(c) && c.suit === suit && c.v === v;
+  }
+  let card = take(ch.reserve, match);
+  const extra = !card;
+  if (!card) {
+    ch.extraCards = (ch.extraCards || 0) + 1;
+    const id = `${ch.id}/gm.${ch.extraCards}`;
+    card = kind === "blessed" ? { id, owner: ch.id, v: 0, blessed: true }
+      : kind === "status" ? { id, owner: ch.id, suit, v: 0, status: true }
+      : { id, owner: ch.id, suit, v };
+  }
+  place(ctx, ch, card, to);
+  ctx.events.push({ type: "gmCardAdded", id: charId, card: label(card), to, extra });
+}
+
+export function gmShuffleDeck(ctx, { charId }) {
+  const ch = character(ctx.state, charId);
+  ctx.rng.shuffle(ch.deck);
+  ctx.events.push({ type: "gmDeckShuffled", id: charId });
+}

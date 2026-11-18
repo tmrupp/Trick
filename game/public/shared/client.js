@@ -215,6 +215,8 @@ export function trickSentence(e, names) {
   return `The world keeps the ${e.worldLabel}: ${why}.`;
 }
 
+const PLACE_NAMES = { "deck-top": "the top of their deck", "deck-bottom": "the bottom of their deck", "deck-shuffle": "shuffled into their deck", discard: "their discard", hand: "their hand", reserve: "reserve" };
+
 export function eventText(e, names, items = {}) {
   const n = (id) => names[id] || id;
   switch (e.type) {
@@ -223,6 +225,9 @@ export function eventText(e, names, items = {}) {
     case "survivalRequired": return `${n(e.id)} must survive: target ${e.target}.`;
     case "died": return `${n(e.id)} does not survive.`;
     case "resurrected": return `${n(e.id)} is back.`;
+    case "gmCardMoved": return `GM: ${n(e.id)}'s ${e.card} moves from ${e.from} to ${PLACE_NAMES[e.to] || e.to}.`;
+    case "gmCardAdded": return `GM: ${n(e.id)} gains ${/^[AEIOU]/.test(e.card) ? "an" : "a"} ${e.card} (${PLACE_NAMES[e.to] || e.to})${e.extra ? ", an extra card" : ""}.`;
+    case "gmDeckShuffled": return `GM: ${n(e.id)}'s deck is shuffled.`;
     case "characterCreated": return `${e.name} joins the campaign.`;
     case "blessedGranted": return `${n(e.id)} is granted a Blessed.`;
     case "blessedGiven": return `${n(e.from)} gives a Blessed to ${n(e.to)}.`;

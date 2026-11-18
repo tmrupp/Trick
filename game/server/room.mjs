@@ -177,7 +177,10 @@ export class Room {
   }
 
   viewMessage(seat, events = []) {
-    return { type: "view", room: this.roomInfo(seat), view: viewFor(this.state, this.who(seat)), events };
+    // The GM's card edits name cards from a deck or reserve: only the GM and that character's player hear of them.
+    const secret = (e) => /^gm(CardMoved|CardAdded|DeckShuffled)$/.test(e.type);
+    const mine = (e) => seat && (seat.role === "gm" || charsOf(seat).includes(e.id));
+    return { type: "view", room: this.roomInfo(seat), view: viewFor(this.state, this.who(seat)), events: events.filter((e) => !secret(e) || mine(e)) };
   }
 
   broadcast(events = []) {

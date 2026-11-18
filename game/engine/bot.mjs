@@ -1,7 +1,7 @@
 // Simple bot players, matching the bots in scripts/simulate_tally.mjs, so engine-driven games can be compared
 // with the published simulations. A bot reads only its own hand and the public table.
 import { apply } from "./index.mjs";
-import { legalCards, activePeek } from "./check.mjs";
+import { legalCards } from "./check.mjs";
 import { isStatus, isBlessed, isOrdinary } from "./cards.mjs";
 
 const total = (p) => p.tally.reduce((a, t) => a + t.score, 0);
@@ -59,10 +59,6 @@ export function chooseLock(state, charId) {
 export function answerPrompt(state, prompt) {
   const ck = state.check;
   const p = ck.players[prompt.charId];
-  if (prompt.type === "peek") {
-    const top = ck.worldDeck[ck.worldDeck.length - 1];
-    return { type: "peek", charId: prompt.charId, swap: !!top && worth(p, top) > worth(p, ck.worldRow[ck.trick]) };
-  }
   if (prompt.type === "recalculate") {
     const status = p.hand.find(isStatus);
     const drop = status || [...p.hand].filter((c) => !isBlessed(c)).sort((a, b) => a.v - b.v)[0] || p.hand[0];
@@ -73,9 +69,8 @@ export function answerPrompt(state, prompt) {
   throw new Error(`No bot answer for ${prompt.type}`);
 }
 
-// The next prompt to answer: everything else before Peeks, then the active Peek (as the simulator orders them).
 function nextPrompt(ck) {
-  return ck.pending.find((x) => x.type !== "peek") || activePeek(ck);
+  return ck.pending[0] || null;
 }
 
 // Play one whole check with bots. goals: { charId: { target, approach } }. Returns the final state.

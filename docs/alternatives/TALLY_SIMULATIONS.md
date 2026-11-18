@@ -2,7 +2,7 @@
 
 Thirteen table situations and seven experiments, run under the current [RULES.md](../../RULES.md):
 - the 20-card starter has two of each value;
-- Peek is Dexterity's consolation;
+- Peek is Dexterity's consolation, as a blind replace once a trick;
 - ties go by suit, then trump;
 - a status in the world card's suit must be played;
 - survival targets 3 × Injuries.
@@ -19,7 +19,7 @@ node scripts/simulate_targets.mjs 6000
 **The bots are simple.**
 - A bot takes a world card when it can beat it without busting, using its lowest winning card.
 - Otherwise it passes with the card it values least, in this order: statuses, then Dexterity and Weird, then Strength, then Intelligence, then Stumble last.
-- A Peeking bot swaps in the world deck's top card when that card suits it better than the next card in the row. That means clearing a card it can't use or that would force a busting win, or bringing in one that fits what it still needs.
+- Peek needs no decisions: any losing Spade replaces the next world card, unseen, once a trick. (The tables below the *Dexterity's consolation* section were run with the earlier Peek, where a bot looked at the top card and swapped it in only when it suited them; the blind Peek lands within about a point of them, as that section shows.)
 - Cooperative bots in situation 2 also skip a world card that would land an ally exactly.
 
 No bot reads another player's hand or plans more than one trick ahead. So **compare situations with each other rather than treating any number as table odds.** People should land exactly more often.
@@ -171,7 +171,8 @@ Slip returned a losing Dexterity card to hand, so losing was free. These runs co
 - **Feint:** your next card counts as the world card's suit for winning.
 
 **Rules that change the world row:**
-- **Peek** *(adopted)*: look at the top card of the world deck; you may swap it for the next world card.
+- **Peek** *(adopted)*: replace the next world card, unseen, from the top of the world deck; once a trick, however many Spades lost.
+- **Peek with a look** (adopted, then replaced): look at the top card of the world deck; you may swap it for the next world card. Several Peeks resolve one at a time.
 - **Reroll:** if anyone asks, discard the next world card and deal a replacement, once.
 - **Reroll each:** each Dexterity loser may discard and replace the next world card.
 - **Sidestep:** swap the next world card with any later card in the row.
@@ -187,7 +188,8 @@ Slip returned a losing Dexterity card to hand, so losing was free. These runs co
 | Duck | 21% | 8% | 4% | 2.4 | 65% / 73% | — |
 | Pull | 16% | 13% | 13% | 2.3 | 53% / 57% | — |
 | Feint | 16% | 8% | 17% | 2.5 | 57% / 57% | — |
-| **Peek** *(adopted)* | 17% | 12% | 13% | 2.6 | 53% / 58% | **26% / 25%** |
+| **Peek, blind** *(adopted)* | 15% | 13% | 14% | 2.3 | 52% / 56% | 22% / 27% |
+| Peek with a look | 16% | 11% | 13% | 2.6 | 53% / 58% | 26% / 25% |
 | Reroll | 16% | 12% | 12% | 2.7 | 52% / 58% | 25% / 27% |
 | Reroll each | 17% | 11% | 13% | 2.7 | 54% / 58% | 25% / 26% |
 | Sidestep | 18% | 12% | 15% | 2.6 | 51% / 56% | 28% / 28% |
@@ -198,7 +200,8 @@ Slip returned a losing Dexterity card to hand, so losing was free. These runs co
 "Lost to an ally" counts the times a player went for a world card and lost it to an ally: one who played higher, tied, or blocked with an off-suit card.
 
 - **Slip's power was spare cards, not Dexterity.** The Dexterity player did no better than the others under Slip. Every deck holds Spades, and each one that came back was a card that could always lose. Every rule that keeps no card lands within a point or two of giving Dexterity nothing.
-- **So the choice is about feel.** Wait was the only rule that cut collisions, by about a quarter, but did nothing solo. Peek works at any table size, puts the world deck in play, and is among the best solo options. A Peeking bot acts only about once in every eight losses with a Spade, because it swaps only when the top card is better.
+- **So the choice is about feel.** Wait was the only rule that cut collisions, by about a quarter, but did nothing solo. Peek puts the world deck in play at any table size.
+- **The blind Peek scores like giving Dexterity nothing** (15% critical against 16% with a look, and 27% solo busts against 25%), because a random redraw has no average value. Its value is in timing: a person can lose with a Spade on purpose when the next prize is one nobody wants. The bots don't play that way. It needs no choices, prompts or turn order, which is why it was adopted.
 - **Reroll and Shove churn the table.** They act one to two times a check per player, and the bots ignore allies, so a reroll can throw away a card a friend wanted.
 - **Extra starting cards would restore the spare cards** and bring busts back to 2–4%. They weren't adopted: the harder checks were judged better for the game.
 
@@ -349,36 +352,36 @@ From [`simulate_targets.mjs`](../../scripts/simulate_targets.mjs): random 21-car
 
 | Target | Difficulty | Exact hit | 7 or more short | Bust | Under the old Slip: exact / bust |
 | --- | --- | --- | --- | --- | --- |
-| 1–5 | *(too low)* | 20–29% | 0% | 15–32% | 25–44% / 1–12% |
-| 6–8 | Easy | 18–27% | 0–10% | 13–18% | 22–41% / 1–9% |
-| 9–11 | Moderate | 12–23% | 10–20% | 9–14% | 13–36% / 1–7% |
-| 12–14 | Hard | 8–16% | 22–39% | 7–10% | 9–24% / 1–6% |
-| 15–17 | Very hard | 4–11% | 39–59% | 4–6% | 5–17% / 0–4% |
-| 18–20 | Extreme | 2–7% | 55–74% | 2–4% | 3–11% / 0–2% |
+| 1–5 | *(too low)* | 16–27% | 0% | 16–34% | 25–44% / 1–12% |
+| 6–8 | Easy | 17–24% | 0–11% | 13–19% | 22–41% / 1–9% |
+| 9–11 | Moderate | 10–22% | 11–22% | 10–16% | 13–36% / 1–7% |
+| 12–14 | Hard | 7–15% | 22–41% | 7–11% | 9–24% / 1–6% |
+| 15–17 | Very hard | 4–11% | 38–60% | 4–7% | 5–17% / 0–4% |
+| 18–20 | Extreme | 2–7% | 54–75% | 2–5% | 3–11% / 0–2% |
 
-Below 6, busts climb (32% at target 1 with 2 players), while success or better doesn't get any likelier. That is why RULES.md starts targets at 6.
+Below 6, busts climb (34% at target 1 with 2 players), while success or better doesn't get any likelier. That is why RULES.md starts targets at 6.
 
 **Quick checks** (2 tricks per player, +1) and **solo checks** (6 tricks):
 
 | Target | Quick: exact | Quick: 7+ short | Quick: bust | Solo: exact | Solo: 7+ short | Solo: bust |
 | --- | --- | --- | --- | --- | --- | --- |
-| 6–8 | 12–18% | 0–23% | 9–13% | 21–24% | 0–3% | 25–29% |
-| 9–10 | 8–14% | 25–32% | 7–9% | 17–20% | 5–8% | 21–23% |
-| 11–12 | 5–9% | 34–47% | 5–6% | 13–15% | 11–15% | 16–18% |
+| 6–8 | 11–16% | 0–26% | 9–14% | 18–20% | 0–4% | 28–32% |
+| 9–10 | 7–14% | 25–34% | 8–10% | 15–17% | 6–9% | 23–26% |
+| 11–12 | 4–8% | 33–49% | 5–7% | 11–13% | 12–17% | 18–20% |
 
 ## Suggested next steps
 
 - **Adopted** (RULES.md):
   - the suit-then-trump tie-break, with simultaneous play kept;
   - forced statuses, with Stumble keeping Price;
-  - Peek, with no extra cards;
+  - Peek as a blind replace, once a trick, with no extra cards;
   - targets from 6;
   - survival at 3 × M;
   - fiction-based critical and bust results;
   - the 20-card starter with two of each value.
 - **Playtest with real people.** Check whether:
   - talk before and after a check is enough for allies to stay out of each other's way;
-  - Peek swaps that take a card an ally wanted feel like collisions of their own;
+  - a Peek that redraws a card an ally wanted feels like a collision of its own;
   - working out the exact total at the end of a check drags;
   - busts at 13–18% feel right on easy targets.
 - **Watch Strength's edge.** Strength players land 3–8 points more exact hits than the others under every recipe. If playtests agree, Brace may need a limit.

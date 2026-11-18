@@ -2,176 +2,299 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f4a3c">
 <title>TRICK</title>
 <link rel="stylesheet" href="/shared/style.css">
+<script src="/suit_icons.js"></script>
+<script src="/card_rules.js"></script>
+<script src="/items/item_catalog.js"></script>
+<script src="/races/race_catalog.js"></script>
 </head>
 <body>
-<div class="row" style="justify-content: space-between"><h1 id="title">TRICK</h1><span id="status" class="small muted"></span></div>
-<div id="main"></div>
+<header class="spread">
+  <h1 id="title">TRICK</h1>
+  <div class="row"><span id="status" class="pill"><span class="dot"></span><span>…</span></span><span id="tools" class="row"></span></div>
+</header>
+<main id="main" aria-live="polite"></main>
 <script type="module">
-import { connect, params, h, cardEl, SUITS, RESULT, describeTrick, suitSelect, toast } from "/shared/client.js";
+import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, soundToggle, hasToken, itemsById, racesById, stripTags } from "/shared/client.js";
+
 const main = document.getElementById("main");
-const status = document.getElementById("status");
+const ITEMS = itemsById();
+const RACES = racesById();
+const ITEM_NAMES = Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, v.label]));
 let room = (params.get("room") || "").toUpperCase();
 let conn = null;
 let last = null;
-let ui = { chosen: null, price: null, recalcMode: false };
+let tab = "play"; // play | cards
+let ui = { chosen: null, price: null, info: false };
+let lastTrickSeen = -1;
+let lastPromptKey = "";
 
-const hasToken = () => { try { return !!localStorage.getItem(`trick:${room}:player`); } catch { return false; } };
+document.getElementById("tools").append(
+  h("a", { href: "/rules", target: "_blank", class: "small" }, "Rules"),
+  soundToggle(),
+);
+
+const setStatus = (s) => {
+  const el = document.getElementById("status");
+  el.replaceChildren(h("span", { class: `dot${s === "connected" ? " on" : ""}` }), h("span", {}, s === "connected" ? "connected" : s === "offline" ? "reconnecting…" : "connecting…"));
+};
 
 function askRoom() {
-  const input = h("input", { placeholder: "Room code", maxlength: 8, autocapitalize: "characters" });
-  main.replaceChildren(h("form", { class: "panel", onsubmit: (e) => { e.preventDefault(); room = input.value.trim().toUpperCase(); history.replaceState(null, "", `?room=${room}`); start(); } },
-    h("h2", {}, "Join a game"), h("div", { class: "row" }, input, h("button", { class: "primary" }, "Next"))));
+  const input = h("input", { placeholder: "Room code", maxlength: 8, autocapitalize: "characters", autocomplete: "off", "aria-label": "Room code" });
+  main.replaceChildren(h("form", { class: "panel stack", onsubmit: (e) => { e.preventDefault(); room = input.value.trim().toUpperCase(); history.replaceState(null, "", `?room=${room}`); start(); } },
+    h("h2", {}, "Join a game"), h("p", { class: "muted" }, "Enter the code on the table screen, or scan its QR code."), input, h("button", { class: "primary big" }, "Next")));
+  input.focus();
 }
 
 function askName() {
-  const input = h("input", { placeholder: "Your name", maxlength: 24, required: true });
-  main.replaceChildren(h("form", { class: "panel", onsubmit: (e) => { e.preventDefault(); go(input.value.trim()); } },
-    h("h2", {}, `Join room ${room}`), h("div", { class: "row" }, input, h("button", { class: "primary" }, "Join"))));
+  const input = h("input", { placeholder: "Your name", maxlength: 24, required: true, autocomplete: "nickname", "aria-label": "Your name" });
+  main.replaceChildren(h("form", { class: "panel stack", onsubmit: (e) => { e.preventDefault(); go(input.value.trim()); } },
+    h("h2", {}, `Join room ${room}`), input, h("button", { class: "primary big" }, "Join")));
+  input.focus();
 }
 
 function go(name) {
   conn = connect({
     room, as: "player", getName: () => name,
-    onStatus: (s) => { status.textContent = s; },
-    onView: (msg) => { last = msg; render(); },
-    onRejected: (reason) => toast(reason),
-    onError: (reason) => { toast(reason); if (/No room|removed/.test(reason)) main.replaceChildren(h("div", { class: "panel" }, reason)); },
+    onStatus: setStatus,
+    onView: (msg) => { last = msg; react(msg); draw(); },
+    onRejected: (reason) => { toast(reason); buzz(120); },
+    onError: (reason) => {
+      toast(reason);
+      if (/No room|removed/.test(reason)) main.replaceChildren(h("div", { class: "panel banner bad" }, h("h2", {}, "Can't join"), h("p", {}, reason), h("p", { class: "muted" }, "Check the code with the GM.")));
+    },
   });
 }
 
-function start() {
-  if (!room) return askRoom();
-  if (hasToken()) go(); else askName();
-}
-
+function start() { if (!room) return askRoom(); if (hasToken(room, "player")) go(); else askName(); }
 const act = (a) => conn.act(a);
 
-function createForm(you) {
-  const name = h("input", { value: you.name, maxlength: 24 });
-  const prim = suitSelect("prim", "S");
-  const sec = suitSelect("sec", "D");
-  const otherBox = h("div", { class: "row" });
-  const refreshOthers = () => {
-    const rest = Object.keys(SUITS).filter((s) => s !== prim.value && s !== sec.value);
-    otherBox.replaceChildren(h("span", { class: "small" }, "Takes 2, 3, 6, 9:"), ...rest.map((s, i) => h("label", {}, h("input", { type: "radio", name: "o", value: s, checked: i === 0 }), ` ${SUITS[s].sym} ${SUITS[s].name}`)));
-  };
-  prim.onchange = sec.onchange = refreshOthers;
-  refreshOthers();
-  return h("form", { class: "panel", onsubmit: (e) => {
-      e.preventDefault();
-      if (prim.value === sec.value) return toast("Pick a different secondary suit.");
-      const first = otherBox.querySelector("input:checked").value;
-      const rest = Object.keys(SUITS).filter((s) => s !== prim.value && s !== sec.value);
-      act({ type: "createCharacter", name: name.value, primary: prim.value, secondary: sec.value, others: [first, rest.find((s) => s !== first)] });
-    } },
-    h("h2", {}, "Create your character"),
-    h("p", {}, "Name ", name),
-    h("p", {}, "Primary suit ", prim, h("div", { class: "small muted" }, "A, 2, 4, 5, 7, 8, 10")),
-    h("p", {}, "Secondary suit ", sec, h("div", { class: "small muted" }, "A, 3, 6, 9, 10")),
-    otherBox, h("div", { class: "small muted" }, "The last suit takes 4, 5, 7, 8."),
-    h("p", {}, h("button", { class: "primary" }, "Create")));
+// Sounds, buzzes and toasts for what just happened.
+function react(msg) {
+  const view = msg.view;
+  const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
+  for (const e of msg.events || []) {
+    const t = eventText(e, names, ITEM_NAMES);
+    if (t && e.type !== "reshuffled") toast(t);
+  }
+  const ck = view.check;
+  if (ck && ck.log.length - 1 > lastTrickSeen) {
+    if (lastTrickSeen >= -1 && ck.log.length) { chime("reveal"); toast(trickSentence(ck.log[ck.log.length - 1], names), 5000); }
+    lastTrickSeen = ck.log.length - 1;
+  }
+  const promptKey = (view.prompts || []).map((p) => p.type).join(",");
+  if (promptKey && promptKey !== lastPromptKey) { chime("turn"); buzz(); }
+  lastPromptKey = promptKey;
 }
 
-function render() {
-  const { room: info, view } = last;
-  document.getElementById("title").textContent = info.name;
-  const me = info.you.charId;
-  if (!me) return main.replaceChildren(createForm(info.you));
+// ---- Character creation ----
+
+function createForm(you) {
+  const name = h("input", { "data-key": "c-name", value: you.name, maxlength: 24, "aria-label": "Character name" });
+  const pick = (key, value, label) => h("select", { "data-key": key, "aria-label": label }, Object.entries(SUITS).map(([k, s]) => h("option", { value: k, selected: k === value }, `${s.sym} ${s.name}`)));
+  const prim = pick("c-prim", "S", "Primary suit"), sec = pick("c-sec", "D", "Secondary suit");
+  const race = h("select", { "data-key": "c-race", "aria-label": "People" }, h("option", { value: "" }, "Human (no people's ability)"), Object.values(RACES).map((r) => h("option", { value: r.id }, r.label || r.name)));
+  const others = h("div", { class: "stack" });
+  const raceInfo = h("p", { class: "small muted" });
+  const refresh = () => {
+    const rest = Object.keys(SUITS).filter((s) => s !== prim.value && s !== sec.value);
+    const chosen = others.querySelector("input:checked")?.value;
+    others.replaceChildren(h("div", { class: "small" }, "Which suit takes 2, 3, 6, 9? The other takes 4, 5, 7, 8."),
+      h("div", { class: "row" }, rest.map((s, i) => h("label", { class: "pill" }, h("input", { type: "radio", name: "o", value: s, checked: chosen ? chosen === s : i === 0 }), `${SUITS[s].sym} ${SUITS[s].name}`))));
+    const r = RACES[race.value];
+    raceInfo.textContent = r ? `${r.abilityTitle || ""}: ${(r.rules || []).map(stripTags).join(" ")}` : "";
+  };
+  prim.onchange = sec.onchange = race.onchange = refresh;
+  queueMicrotask(refresh);
+  return h("form", { class: "panel stack", onsubmit: (e) => {
+      e.preventDefault();
+      if (prim.value === sec.value) return toast("Pick a different secondary suit.");
+      const rest = Object.keys(SUITS).filter((s) => s !== prim.value && s !== sec.value);
+      const first = others.querySelector("input:checked")?.value || rest[0];
+      act({ type: "createCharacter", name: name.value, primary: prim.value, secondary: sec.value, others: [first, rest.find((s) => s !== first)], race: race.value || null });
+    } },
+    h("h2", {}, "Create your character"),
+    h("label", {}, "Name ", name),
+    h("label", {}, "Primary suit ", prim), h("div", { class: "small muted" }, "A, 2, 4, 5, 7, 8, 10: your strongest suit."),
+    h("label", {}, "Secondary suit ", sec), h("div", { class: "small muted" }, "A, 3, 6, 9, 10."),
+    others,
+    h("label", {}, "People ", race), raceInfo,
+    h("button", { class: "primary big" }, "Create"));
+}
+
+// ---- My cards ----
+
+function sheet(view, me) {
   const ch = view.characters[me];
-  const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
-  const parts = [h("div", { class: "panel small" }, h("strong", {}, ch.name), ` · deck ${ch.deckCount} · discard ${ch.discardCount}`,
-    ch.compulsion.length ? h("div", {}, `Compulsion: ${ch.compulsion.join("; ")}`) : null,
-    ch.survival ? h("div", {}, `Survival required: target ${ch.survival.target}`) : null,
-    ch.alive ? null : h("div", {}, h("strong", {}, "Dead.")))];
+  const race = ch.race && RACES[ch.race];
+  const statusCount = (s) => ch.reserveStatuses ? 6 - (ch.reserveStatuses[s] || 0) : null;
+  return h("div", { class: "sheet" },
+    h("div", { class: "panel stack" },
+      h("h2", {}, ch.name), race ? h("p", {}, h("strong", {}, `${race.label || race.name}: ${race.abilityTitle || ""}`), h("br"), h("span", { class: "small" }, (race.rules || []).map(stripTags).join(" "))) : null,
+      ch.compulsion.length ? h("p", { class: "banner panel warn" }, h("strong", {}, "Curse compulsion: "), ch.compulsion.join("; ")) : null,
+      ch.survival ? h("p", { class: "banner panel bad" }, h("strong", {}, "Survival: "), `${ch.survival.M} Injuries near the top of your discard. Your next check's goal is to survive, target ${ch.survival.target}.`) : null,
+      h("div", { class: "row small" }, Object.entries(SUITS).map(([k, s]) => h("span", { class: "pill" }, `${s.status}: ${statusCount(k) ?? "?"} out`)), h("span", { class: "pill" }, `Blessed in reserve: ${ch.reserveBlessed ?? "?"}`))),
+    ch.items.length ? h("div", { class: "panel stack" }, h("h2", {}, "Items"), ch.items.map((id) => {
+      const it = ITEMS[id];
+      return h("details", {}, h("summary", {}, it ? it.label : id),
+        it ? h("div", { class: "small", html: (it.lines || []).join("<br>") }) : null,
+        h("button", { class: "small", onclick: () => act({ type: "useItem", charId: me, itemId: id }) }, "Use it (tell the table)"));
+    })) : null,
+    h("div", { class: "panel" }, h("h2", {}, `Deck (${ch.deckCount})`), h("div", { class: "row" }, (ch.deckCards || []).map((c) => cardFace(c, "sm")))),
+    h("div", { class: "panel" }, h("h2", {}, `Discard (${ch.discardCount})`), h("p", { class: "small muted" }, "Top card last."), h("div", { class: "row" }, (ch.discard || []).map((c) => cardFace(c, "sm")))),
+    h("p", {}, h("a", { href: `/print?room=${room}`, target: "_blank" }, "Print my current cards")));
+}
+
+// ---- Prompts ----
+
+function promptPanel(pr, view, me) {
   const ck = view.check;
-  if (!ck || ck.phase === "closed" || !ck.players[me]) {
-    parts.push(h("div", { class: "panel muted" }, ck && ck.phase !== "closed" ? "You're not in this check." : "Waiting for the GM to start a check."));
-    return main.replaceChildren(...parts);
+  if (pr.type === "recalculate") {
+    return h("div", { class: "panel banner stack" }, h("h2", {}, "Recalculate"), h("p", {}, "You lost with a Diamond. Tap a card to discard; you'll draw one to replace it."),
+      h("div", { class: "hand" }, view.hand.map((c) => cardFace(c, "md", { onclick: () => act({ type: "recalculate", charId: me, cardId: c.id }) }))));
   }
+  if (pr.type === "evolve") {
+    const discard = view.characters[me].discard;
+    const suit = h("select", { "data-key": "ev-suit", "aria-label": "Status to evolve" }, pr.suits.map((s) => h("option", { value: s }, `${SUITS[s].status} (${SUITS[s].name})`)));
+    const card = h("select", { "data-key": "ev-card", "aria-label": "Card to return" }, discard.filter((c) => !c.status && !c.blessed).map((c) => h("option", { value: c.id }, c.label)));
+    return h("div", { class: "panel banner stack" }, h("h2", {}, "Evolve?"),
+      h("p", {}, "Your deck is reshuffling, and your discard holds two matching statuses. You may return one of them to your reserve, then either gain a card of that suit (choose one of three) or return one of that suit's cards from your discard."),
+      h("label", {}, "Status ", suit),
+      h("button", { onclick: () => act({ type: "evolve", charId: me, suit: suit.value, mode: "gain" }) }, "Return one and gain a card"),
+      h("div", { class: "row" }, card, h("button", { onclick: () => act({ type: "evolve", charId: me, suit: suit.value, mode: "return", cardId: card.value }) }, "Return one and this card")),
+      h("button", { class: "ghost", onclick: () => act({ type: "evolve", charId: me, skip: true }) }, "Don't evolve"));
+  }
+  if (pr.type === "evolvePick") {
+    return h("div", { class: "panel banner stack" }, h("h2", {}, "Keep one"), h("p", {}, "It goes into your discard; the others return to reserve."),
+      h("div", { class: "hand" }, pr.options.map((c) => cardFace(c, "lg", { onclick: () => act({ type: "evolvePick", charId: me, cardId: c.id }) }))));
+  }
+  return null;
+}
+
+// ---- The check ----
+
+function checkView(view, info, me) {
+  const ck = view.check;
   const p = ck.players[me];
+  const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
   const w = ck.worldRow[ck.trick];
-  parts.push(h("div", { class: "panel" }, h("div", {}, `Goal: ${p.goal || "—"} · target `, h("strong", {}, p.target ?? "—"), ` · tally `, h("strong", {}, p.total)),
-    p.brace ? h("div", { class: "small" }, `Brace: your next card counts ${p.brace} higher.`) : null,
-    p.mirror ? h("div", { class: "small" }, "Mirror: your next win scores 11 minus the world card.") : null));
+  const out = [];
+  const need = p.target != null ? p.target - p.total : null;
+
+  out.push(h("div", { class: "panel stack" },
+    h("div", { class: "spread" }, h("div", {}, h("div", { class: "small muted" }, p.survival ? "Forced goal" : "Goal"), h("strong", {}, p.goal || "—")),
+      h("div", {}, h("span", { class: "big" }, h("strong", {}, p.total)), h("span", { class: "muted" }, ` of ${p.target ?? "?"}`))),
+    need != null ? h("div", { class: `bar${need < 0 ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / Math.max(1, p.target))}%` })) : null,
+    h("div", { class: "row small" },
+      need != null ? h("span", { class: `pill ${need < 0 ? "bad" : need === 0 ? "good" : ""}` }, need < 0 ? `Over by ${-need}` : need === 0 ? "Exactly on target" : `Need ${need}`) : null,
+      p.approach ? h("span", { class: "pill" }, `Trump ${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
+      p.brace ? h("span", { class: "pill good" }, `Brace +${p.brace}`) : null,
+      p.mirror ? h("span", { class: "pill good" }, "Mirror ready") : null,
+      p.boost ? h("span", { class: "pill good" }, `Next card ${p.boost > 0 ? "+" : ""}${p.boost}`) : null),
+    p.tally.length ? h("div", { class: "row" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm", { title: t.mirrored ? `Mirrored: scores ${t.score}` : undefined }))) : null));
+
+  if (ck.phase !== "setup") {
+    out.push(h("div", { class: "panel" }, h("div", { class: "small muted" }, `The world · trick ${Math.min(ck.trick + 1, ck.tricks)} of ${ck.tricks}`),
+      h("div", { class: "row", style: "margin-top:8px" }, ck.worldRow.map((c, i) => cardFace(c, i === ck.trick && ck.phase !== "resolve" ? "md" : "sm", { class: i === ck.trick && ck.phase !== "resolve" ? "current" : i < ck.trick ? "past" : "" })))));
+  }
 
   if (ck.phase === "setup") {
-    const suit = suitSelect("appr", p.approach || ch.primary);
-    const text = h("input", { placeholder: "How? (e.g. force the door)", value: p.approachText || "", maxlength: 60 });
-    parts.push(h("div", { class: "panel" }, h("h2", {}, "Your approach"),
-      h("div", { class: "row" }, suit, text, h("button", { class: "primary", onclick: () => act({ type: "declareApproach", charId: me, suit: suit.value, approach: text.value }) }, "Declare")),
-      p.approach ? h("p", { class: "small" }, p.approved ? "Approved by the GM." : "Waiting for the GM to approve.") : null));
+    const goal = p.survival ? null : h("input", { "data-key": "goal-text", placeholder: "What are you trying to do?", value: p.goal || "", maxlength: 100, "aria-label": "Your goal" });
+    const suit = h("select", { "data-key": "appr-suit", "aria-label": "Approach suit" }, Object.entries(SUITS).map(([k, s]) => h("option", { value: k, selected: k === (p.approach || view.characters[me].primary) }, `${s.sym} ${s.name}`)));
+    const text = h("input", { "data-key": "appr-text", placeholder: "How? e.g. shoulder the gate shut", value: p.approachText || "", maxlength: 60, "aria-label": "How you go about it" });
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Your goal and approach"),
+      p.survival ? h("p", { class: "pill bad" }, `Your goal is forced: survive. Target ${p.target}.`) : [h("label", {}, h("h3", {}, "Goal"), goal)],
+      h("label", {}, h("h3", {}, "Approach"), h("div", { class: "small muted" }, "Its suit is your trump for this check."), suit),
+      text,
+      h("button", { class: "primary big", onclick: () => {
+        const g = goal ? goal.value.trim() : undefined;
+        if (goal && !g) return toast("Say what you're trying to do.");
+        act({ type: "declareApproach", charId: me, suit: suit.value, approach: text.value, goal: g });
+      } }, p.approach ? "Update" : "Declare"),
+      p.approach ? h("p", { class: `pill ${p.approved ? "good" : "warn"}` }, p.approved ? "Approved by the GM" : "Waiting for the GM to approve and set the target") : null));
   }
 
-  for (const pr of view.prompts || []) parts.push(promptPanel(pr, view, me));
+  for (const pr of view.prompts || []) out.push(promptPanel(pr, view, me));
 
   if (ck.phase === "play" && w) {
-    parts.push(h("div", { class: "panel" }, h("div", { class: "row" }, h("span", {}, `Trick ${ck.trick + 1} of ${ck.tricks}. World card:`), cardEl(w))));
+    const waiting = ck.participants.filter((id) => !ck.players[id].locked && id !== me).map((id) => names[id]);
     if (view.myLock) {
       const c = view.hand.find((x) => x.id === view.myLock.cardId);
-      parts.push(h("div", { class: "panel row" }, "Locked in: ", cardEl(c), h("button", { onclick: () => act({ type: "unlockCard", charId: me }) }, "Change")));
+      out.push(h("div", { class: "panel stack" }, h("h2", {}, "Locked in"), h("div", { class: "row" }, cardFace(c, "lg"), h("div", {},
+        h("p", {}, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
+        h("button", { onclick: () => act({ type: "unlockCard", charId: me }) }, "Change my card")))));
     } else {
       const chosen = view.hand.find((c) => c.id === ui.chosen);
       const needsPrice = chosen && chosen.status && chosen.suit === "D" && view.hand.some((c) => c.id !== chosen.id && !c.status && !c.blessed);
-      parts.push(h("div", { class: "panel" },
-        h("p", { class: "small muted" }, needsPrice && !ui.price ? "Stumble's Price: tap an ordinary card to discard." : "Tap a card, then lock it in."),
-        h("div", { class: "row" }, view.hand.map((c) => {
+      const forced = view.legal.length < view.hand.length;
+      out.push(h("div", { class: "panel stack" },
+        h("div", { class: "spread" }, h("h2", {}, "Your move"), h("span", { class: "small muted" }, `World card: ${w.label}${w.beat != null ? ` (counts ${w.beat})` : ""}`)),
+        forced ? h("p", { class: "pill warn" }, `The situation finds your weakness: you must play your ${SUITS[w.suit].status}.`) : null,
+        needsPrice ? h("p", { class: "pill warn" }, ui.price ? "Price chosen." : "Stumble's Price: tap an ordinary card to discard.") : h("p", { class: "small muted" }, "Tap a card, then lock it in. Nobody sees it until everyone has locked."),
+        h("div", { class: "hand" }, view.hand.map((c) => {
           const legal = view.legal.includes(c.id);
           const pickPrice = needsPrice && c.id !== chosen.id && !c.status && !c.blessed;
-          return h("button", { class: `cardbtn${ui.chosen === c.id || ui.price === c.id ? " chosen" : ""}`, disabled: !(legal || pickPrice), onclick: () => {
-            if (pickPrice) ui.price = c.id; else { ui.chosen = c.id; ui.price = null; }
-            render();
-          } }, cardEl(c));
+          return cardFace(c, "md", {
+            class: [ui.chosen === c.id ? "chosen" : "", ui.price === c.id ? "price" : "", forced && legal ? "forced" : ""].join(" "),
+            disabled: !(legal || pickPrice),
+            onclick: () => { if (pickPrice) ui.price = c.id; else { ui.chosen = ui.chosen === c.id ? null : c.id; ui.price = null; } draw(); },
+          });
         })),
-        h("p", {}, h("button", { class: "primary", disabled: !chosen || (needsPrice && !ui.price), onclick: () => { act({ type: "lockCard", charId: me, cardId: chosen.id, priceCardId: ui.price || undefined }); ui = { chosen: null, price: null }; } }, "Lock in"))));
+        chosen ? h("p", { class: "small" }, h("strong", {}, `${chosen.label}: `), cardText(chosen)) : null,
+        h("button", { class: "primary big", disabled: !chosen || (needsPrice && !ui.price), onclick: () => { act({ type: "lockCard", charId: me, cardId: chosen.id, priceCardId: ui.price || undefined }); ui = { chosen: null, price: null }; } }, chosen ? `Lock in ${chosen.label}` : "Choose a card")));
     }
-  } else if (ck.phase !== "setup" && view.hand) {
-    parts.push(h("div", { class: "panel" }, h("div", { class: "small muted" }, "Your hand"), h("div", { class: "row" }, view.hand.map((c) => cardEl(c)))));
+  } else if (ck.phase !== "setup" && view.hand && ck.phase !== "resolve" && !(view.prompts || []).some((x) => x.type === "recalculate")) {
+    out.push(h("div", { class: "panel" }, h("div", { class: "small muted" }, "Your hand"), h("div", { class: "hand" }, view.hand.map((c) => cardFace(c, "md")))));
   }
 
   const blessed = (view.hand || []).find((c) => c.blessed);
   const nobodyLocked = ck.participants.every((id) => !ck.players[id].locked);
-  if (blessed && (ck.phase === "consolation" || (ck.phase === "play" && nobodyLocked))) {
-    const to = h("select", {}, ck.participants.filter((id) => id !== me).map((id) => h("option", { value: id }, names[id])));
-    parts.push(h("div", { class: "panel row" }, "Give your Blessed to ", to, h("button", { onclick: () => act({ type: "giveBlessed", charId: me, to: to.value, cardId: blessed.id }) }, "Give")));
+  if (blessed && ck.participants.length > 1 && (ck.phase === "consolation" || (ck.phase === "play" && nobodyLocked))) {
+    const to = h("select", { "data-key": "bless-to", "aria-label": "Give to" }, ck.participants.filter((id) => id !== me).map((id) => h("option", { value: id }, names[id])));
+    out.push(h("div", { class: "panel row" }, "Give your Blessed to ", to, h("button", { onclick: () => act({ type: "giveBlessed", charId: me, to: to.value, cardId: blessed.id }) }, "Give"), h("span", { class: "small muted" }, "You draw a card.")));
   }
 
   if (ck.results) {
     const r = ck.results[me];
-    parts.push(h("div", { class: "panel" }, h("h2", {}, RESULT[r.result]), `${r.tally} of ${r.target}.`, r.dies ? h("p", {}, h("strong", {}, "You do not survive.")) : null));
+    out.push(h("div", { class: `panel banner ${r.result === "bust" || r.result === "failure" ? "bad" : ""} stack` }, h("h2", {}, RESULT[r.result]), h("p", { class: "big" }, `${r.tally} of ${r.target}`), h("p", {}, RESULT_NOTE[r.result]),
+      r.dies ? h("p", {}, h("strong", {}, "You do not survive.")) : null, h("p", { class: "small muted" }, "The GM narrates what happens and any consequences.")));
   }
-  if (ck.log.length) parts.push(h("div", { class: "panel log small" }, describeTrick(ck.log[ck.log.length - 1], names)));
-  main.replaceChildren(...parts);
+  if (ck.log.length) out.push(h("div", { class: "panel log" }, [...ck.log].reverse().map((e) => h("div", {}, `${e.trick + 1}. ${trickSentence(e, names)}`))));
+  return out;
 }
 
-function promptPanel(pr, view, me) {
-  if (pr.type === "peek") {
-    if (!pr.top) return h("div", { class: "panel muted" }, "Peek: waiting for another player to Peek first.");
-    const next = view.check.worldRow[view.check.trick];
-    return h("div", { class: "panel" }, h("h2", {}, "Peek"),
-      h("div", { class: "row" }, "Next world card ", cardEl(next), " · top of the world deck ", cardEl(pr.top)),
-      h("div", { class: "row" }, h("button", { class: "primary", onclick: () => act({ type: "peek", charId: me, swap: true }) }, "Swap it in"), h("button", { onclick: () => act({ type: "peek", charId: me, swap: false }) }, "Keep the row")));
-  }
-  if (pr.type === "recalculate") {
-    return h("div", { class: "panel" }, h("h2", {}, "Recalculate"), h("p", { class: "small" }, "Discard a card, then draw one."),
-      h("div", { class: "row" }, view.hand.map((c) => h("button", { class: "cardbtn", onclick: () => act({ type: "recalculate", charId: me, cardId: c.id }) }, cardEl(c)))));
-  }
-  if (pr.type === "evolve") {
-    const discard = view.characters[me].discard;
-    const suit = suitSelect("evs", pr.suits[0]);
-    [...suit.options].forEach((o) => { if (!pr.suits.includes(o.value)) o.remove(); });
-    const card = h("select", {}, discard.filter((c) => !c.status && !c.blessed).map((c) => h("option", { value: c.id }, c.label)));
-    return h("div", { class: "panel" }, h("h2", {}, "Evolve?"), h("p", { class: "small" }, "Your deck is reshuffling. Return one of two matching statuses, then gain or return a card of that suit."),
-      h("div", { class: "row" }, suit,
-        h("button", { onclick: () => act({ type: "evolve", charId: me, suit: suit.value, mode: "gain" }) }, "Gain a card"),
-        card, h("button", { onclick: () => act({ type: "evolve", charId: me, suit: suit.value, mode: "return", cardId: card.value }) }, "Return this card"),
-        h("button", { onclick: () => act({ type: "evolve", charId: me, skip: true }) }, "Skip")));
-  }
-  if (pr.type === "evolvePick") {
-    return h("div", { class: "panel" }, h("h2", {}, "Keep one"), h("div", { class: "row" }, pr.options.map((c) => h("button", { class: "cardbtn", onclick: () => act({ type: "evolvePick", charId: me, cardId: c.id }) }, cardEl(c)))));
-  }
-  return h("div", { class: "panel" }, pr.type);
+// Hands read best sorted: suit by suit, low to high, statuses and Blessed last.
+const ORDER = { S: 0, D: 1, I: 2, W: 3 };
+const sortCards = (cards) => [...cards].sort((a, b) => (a.blessed - b.blessed) || (a.status - b.status) || ((ORDER[a.suit] ?? 9) - (ORDER[b.suit] ?? 9)) || a.v - b.v);
+
+function draw() {
+  if (!last) return;
+  if (last.view.hand) last.view.hand = sortCards(last.view.hand);
+  const { room: info, view } = last;
+  document.getElementById("title").textContent = info.name;
+  const me = info.you.charId;
+  if (!me) return render(main, createForm(info.you));
+  const ch = view.characters[me];
+  const ck = view.check;
+  const inCheck = ck && ck.phase !== "closed" && ck.players[me];
+  const tabs = h("div", { class: "tabs" },
+    h("button", { "aria-pressed": String(tab === "play"), onclick: () => { tab = "play"; draw(); } }, inCheck ? "The check" : "Table"),
+    h("button", { "aria-pressed": String(tab === "cards"), onclick: () => { tab = "cards"; draw(); } }, "My cards"));
+  const parts = [tabs];
+  if (!ch.alive) parts.push(h("div", { class: "panel banner bad" }, h("h2", {}, `${ch.name} is dead`), h("p", {}, "Talk to the GM about a new character.")));
+  if (tab === "cards") parts.push(sheet(view, me));
+  else if (!inCheck) {
+    parts.push(h("div", { class: "panel stack" }, h("h2", {}, ck && ck.phase !== "closed" ? "You're not in this check" : "Waiting for the GM"),
+      h("p", { class: "muted" }, "Talk the scene through. When the GM starts a check, it appears here."),
+      ch.survival ? h("p", { class: "pill bad" }, `Your next check is survival, target ${ch.survival.target}.`) : null));
+    if (view.history.length) {
+      const h0 = view.history[view.history.length - 1];
+      if (h0.results[me]) parts.push(h("div", { class: "panel small" }, `Last check: ${RESULT[h0.results[me].result]} (${h0.results[me].tally} of ${h0.results[me].target}).`));
+    }
+  } else parts.push(...checkView(view, info, me));
+  render(main, parts);
 }
 
 start();

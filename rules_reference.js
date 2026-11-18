@@ -70,7 +70,7 @@ globalThis.TrickRulesCard = {
             {
               "suit": "dexterity",
               "label": "Spades — Peek",
-              "text": "Look at the world deck’s top card. You may swap it for the next world card; the old one goes to the bottom."
+              "text": "Replace the next world card, unseen, from the world deck’s top; the old one goes to the bottom. Once a trick."
             },
             {
               "suit": "intelligence",

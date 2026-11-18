@@ -180,7 +180,7 @@
 
   <div>
     <h2>Consolations</h2>
-    <p class="small muted">From your losing card's printed suit, statuses included. Brace and Mirror apply to your next play only: turn the losing card sideways as a reminder. Several Peeks resolve one at a time, clockwise from the GM. No consolations after the final trick.</p>
+    <p class="small muted">From your losing card's printed suit, statuses included. Brace and Mirror apply to your next play only: turn the losing card sideways as a reminder. Peek replaces the next world card once a trick, however many Spades lost. No consolations after the final trick.</p>
     <div class="cons">
       <div class="con strength">
         <div class="name"><span class="mark sm" data-icon="strength"></span>Brace</div>
@@ -191,8 +191,8 @@
       <div class="con dexterity">
         <div class="name"><span class="mark sm" data-icon="dexterity"></span>Peek</div>
         <div class="suit">Dexterity ♠</div>
-        <div class="eff">Look at the world deck's top card. You may <strong>swap it for the next world card</strong>.</div>
-        <div class="job">Reshape the row: clear a bad card or bring in a better one.</div>
+        <div class="eff"><strong>Replace the next world card, unseen,</strong> with the world deck's top card. Once a trick.</div>
+        <div class="job">Shake up the row: the next prize is a fresh draw.</div>
       </div>
       <div class="con intelligence">
         <div class="name"><span class="mark sm" data-icon="intelligence"></span>Recalculate</div>
@@ -233,7 +233,7 @@
     <table>
       <tr><th>Status</th><th>When it loses</th><th>Its own rule</th></tr>
       <tr><td class="st strength"><span class="mark sm" data-icon="strength"></span><span class="lbl">Injury</span></td><td>Brace for 0, which does nothing.</td><td>Two or more Injuries in your recent discard make <strong>survival</strong> a forced goal.</td></tr>
-      <tr><td class="st dexterity"><span class="mark sm" data-icon="dexterity"></span><span class="lbl">Stumble</span></td><td>Peek at the world deck.</td><td><strong>Price:</strong> when you play Stumble, <strong>discard an ordinary card</strong> from hand, your choice.</td></tr>
+      <tr><td class="st dexterity"><span class="mark sm" data-icon="dexterity"></span><span class="lbl">Stumble</span></td><td>Peek: the next world card is replaced.</td><td><strong>Price:</strong> when you play Stumble, <strong>discard an ordinary card</strong> from hand, your choice.</td></tr>
       <tr><td class="st intelligence"><span class="mark sm" data-icon="intelligence"></span><span class="lbl">Stress</span></td><td>Recalculate. You may discard another status.</td><td>Whenever you <strong>draw</strong> Stress, gain another Stress into discard.</td></tr>
       <tr><td class="st weird"><span class="mark sm" data-icon="weird"></span><span class="lbl">Curse</span></td><td>Mirrors your next win.</td><td>Breaking the compulsion gains one Stress per Curse outside your reserve.</td></tr>
     </table>
@@ -265,7 +265,7 @@
         <li><strong>Pick your prizes.</strong> Find world cards in the row that add up to your target.</li>
         <li><strong>Yield.</strong> If an ally needs this world card, play low. You still get a consolation.</li>
         <li><strong>Block.</strong> If this world card would bust an ally, play over them, even off-suit.</li>
-        <li><strong>Set up.</strong> Brace to reach a big world card; Mirror to turn a small one big; Peek to swap out a card nobody wants.</li>
+        <li><strong>Set up.</strong> Brace to reach a big world card; Mirror to turn a small one big; Peek to redraw a card nobody wants.</li>
       </ul>
     </div>
   </div>
@@ -280,11 +280,11 @@
     <p>In a standard check, the target sets the difficulty. Chance per player, at 2–5 players:</p>
     <table class="diff">
       <tr><th>Target</th><th>Difficulty</th><th>Exact hit</th><th>Failure (7+ short)</th><th>Bust</th></tr>
-      <tr><td class="num">6–8</td><td><strong>Easy</strong></td><td>18–27%</td><td>0–10%</td><td>13–18%</td></tr>
-      <tr><td class="num">9–11</td><td><strong>Moderate</strong></td><td>12–23%</td><td>10–20%</td><td>9–14%</td></tr>
-      <tr><td class="num">12–14</td><td><strong>Hard</strong></td><td>8–16%</td><td>22–39%</td><td>7–10%</td></tr>
-      <tr><td class="num">15–17</td><td><strong>Very hard</strong></td><td>4–11%</td><td>39–59%</td><td>4–6%</td></tr>
-      <tr><td class="num">18–20</td><td><strong>Extreme</strong></td><td>2–7%</td><td>55–74%</td><td>2–4%</td></tr>
+      <tr><td class="num">6–8</td><td><strong>Easy</strong></td><td>17–24%</td><td>0–11%</td><td>13–19%</td></tr>
+      <tr><td class="num">9–11</td><td><strong>Moderate</strong></td><td>10–22%</td><td>11–22%</td><td>10–16%</td></tr>
+      <tr><td class="num">12–14</td><td><strong>Hard</strong></td><td>7–15%</td><td>22–41%</td><td>7–11%</td></tr>
+      <tr><td class="num">15–17</td><td><strong>Very hard</strong></td><td>4–11%</td><td>38–60%</td><td>4–7%</td></tr>
+      <tr><td class="num">18–20</td><td><strong>Extreme</strong></td><td>2–7%</td><td>54–75%</td><td>2–5%</td></tr>
     </table>
     <p class="small muted" style="margin-top:4px">Larger tables hit more often and bust less; 2 players bust most. Below 6, busts rise without making success likelier. Players may have different targets if their tasks differ.</p>
   </div>

@@ -43,6 +43,13 @@
     document.body.classList.add("export-page");
   }
 
+  // The dark alternate: same layout, lamp-black paper, lightened suit inks (deck_cards.css .dark-art).
+  const dark = urlParams.get("theme") === "dark";
+  if (dark) {
+    document.body.classList.add("dark-art");
+    cardRoot.classList.add("dark-art");
+  }
+
   Object.entries(config.cssVars).forEach(([name, value]) => {
     cardRoot.style.setProperty(name, value);
   });
@@ -71,7 +78,7 @@
   if (cardRoot.classList.contains("core-card") && icons && icons.suits[suitKey]) {
     const suit = icons.suits[suitKey];
     const name = title.charAt(0) + title.slice(1).toLowerCase();
-    cardRoot.style.setProperty("--suit-ink", suit.ink);
+    cardRoot.style.setProperty("--suit-ink", dark && suit.inkDark ? suit.inkDark : suit.ink);
     suitIcon.innerHTML = icons.svg(suitKey, suit.name);
     domainLabel.textContent = domain.replace(" / ", " · ");
     rulesText.innerHTML = `<h2 class="core-title">${name}</h2><div class="core-rules">${lines.map((line) => `<p>${line}</p>`).join("")}</div>`;

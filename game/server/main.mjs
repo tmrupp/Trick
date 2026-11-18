@@ -5,7 +5,13 @@ import { startTunnel } from "./tunnel.mjs";
 const args = process.argv.slice(2);
 const opt = (name, fallback) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : fallback; };
 
-const host = createServer({ port: Number(opt("--port", 8787)), savesDir: opt("--saves", undefined) });
+// Cloud hosts set PORT; ADMIN_TOKEN keeps the host link stable across restarts; PUBLIC_URL names the permanent address.
+const host = createServer({
+  port: Number(opt("--port", process.env.PORT || 8787)),
+  savesDir: opt("--saves", process.env.SAVES_DIR || undefined),
+  adminToken: process.env.ADMIN_TOKEN || undefined,
+  publicUrl: process.env.PUBLIC_URL || null,
+});
 const port = await host.listen();
 const local = `http://localhost:${port}`;
 

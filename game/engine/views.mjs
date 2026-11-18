@@ -9,7 +9,7 @@ const pub = (c) => (c ? { id: c.id, label: label(c), suit: c.suit || null, v: c.
 
 function characterPublic(ch) {
   return {
-    id: ch.id, name: ch.name, alive: ch.alive, controller: ch.controller,
+    id: ch.id, name: ch.name, alive: ch.alive, controller: ch.controller, race: ch.race || null, items: (ch.items || []).slice(),
     primary: ch.primary, secondary: ch.secondary,
     deckCount: ch.deck.length, discardCount: ch.discard.length,
     discardTop: pub(ch.discard[ch.discard.length - 1]),
@@ -24,6 +24,8 @@ function characterPrivate(ch) {
   return {
     ...characterPublic(ch),
     discard: ch.discard.map(pub),
+    // The deck's contents, never its order.
+    deckCards: ch.deck.map(pub).sort((a, b) => (a.blessed - b.blessed) || (a.status - b.status) || String(a.suit).localeCompare(String(b.suit)) || a.v - b.v),
     reserveCount: ch.reserve.length,
     reserveStatuses: statuses,
     reserveBlessed: ch.reserve.filter((c) => c.blessed).length,
@@ -39,7 +41,8 @@ function checkPublic(ck) {
       goal: p.goal, target: p.target, survival: p.survival,
       approach: p.approach, approachText: p.approachText || null, approved: p.approved,
       handCount: p.hand.length, played: p.played.map(pub),
-      tally: p.tally.map((t) => ({ card: pub(t.card), mirrored: t.mirrored, score: t.score })),
+      tally: p.tally.map((t) => ({ card: pub(t.card), mirrored: t.mirrored, score: t.score, adjustment: !!t.adjustment, reason: t.reason || null })),
+      boost: p.boost || 0,
       total: p.tally.reduce((a, t) => a + t.score, 0),
       brace: p.brace, mirror: p.mirror,
       locked: !!ck.locks[id],
@@ -48,7 +51,7 @@ function checkPublic(ck) {
   return {
     id: ck.id, kind: ck.kind, tricks: ck.tricks, participants: ck.participants.slice(),
     phase: ck.phase, trick: ck.trick,
-    worldRow: ck.worldRow.map(pub),
+    worldRow: ck.worldRow.map((c) => ({ ...pub(c), beat: c.beat ?? null })),
     worldDeckCount: ck.worldDeck.length,
     worldTaken: ck.worldTaken.map(pub),
     players,
@@ -74,8 +77,7 @@ export function viewFor(state, who) {
     if (who.role === "gm") {
       view.hands = Object.fromEntries(ck.participants.map((id) => [id, ck.players[id].hand.map(pub)]));
       view.locks = Object.fromEntries(Object.entries(ck.locks).map(([id, l]) => [id, { ...l }]));
-      const active = ck.pending.find((y) => y.type === "peek");
-      view.pending = ck.pending.map((x) => (x === active ? { ...x, top: pub(ck.worldDeck[ck.worldDeck.length - 1]) } : { ...x }));
+      view.pending = ck.pending.map((x) => ({ ...x }));
       view.legal = Object.fromEntries(ck.participants.map((id) => [id, ck.phase === "play" ? legalCards(state, id) : []]));
     }
     if (who.role === "player" && ck.players[who.charId]) {
@@ -85,8 +87,6 @@ export function viewFor(state, who) {
       view.myLock = ck.locks[who.charId] || null;
       view.prompts = ck.pending.filter((x) => x.charId === who.charId).map((x) => {
         const out = { ...x };
-        // Only the active Peek sees the world deck's top card.
-        if (x.type === "peek") out.top = ck.pending.find((y) => y.type === "peek") === x ? pub(ck.worldDeck[ck.worldDeck.length - 1]) : null;
         if (x.type === "evolvePick") out.options = x.options.map((id) => pub(state.characters[who.charId].reserve.find((c) => c.id === id)));
         return out;
       });

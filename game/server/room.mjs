@@ -5,7 +5,7 @@ import { newSecret } from "./store.mjs";
 const MAX_SEATS = 10;
 
 // What a player seat may do: act for its own character only. The GM may do anything.
-const PLAYER_ACTIONS = new Set(["createCharacter", "declareApproach", "lockCard", "unlockCard", "peek", "recalculate", "giveBlessed", "evolve", "evolvePick"]);
+const PLAYER_ACTIONS = new Set(["createCharacter", "declareApproach", "lockCard", "unlockCard", "recalculate", "giveBlessed", "evolve", "evolvePick", "useItem"]);
 
 export function authorize(seat, action) {
   if (seat.role === "gm") return;
@@ -19,9 +19,10 @@ export function authorize(seat, action) {
 }
 
 export class Room {
-  constructor(save, store) {
+  constructor(save, store, linkBase = () => "") {
     this.save = save;
     this.store = store;
+    this.linkBase = linkBase;
     this.state = replay({ seed: save.seed, gmSeat: save.gmSeat }, save.actions);
     this.clients = new Set(); // { ws, seat | null, as }
   }
@@ -67,7 +68,7 @@ export class Room {
     let a = { ...action };
     if (a.type === "createCharacter") {
       // The server names the character after its seat, so ids never collide.
-      a = { type: "createCharacter", id: seat.role === "gm" ? "gm" : seat.id, name: String(a.name || seat.name).slice(0, 24), primary: a.primary, secondary: a.secondary, others: a.others, controller: seat.role };
+      a = { type: "createCharacter", id: seat.role === "gm" ? "gm" : seat.id, name: String(a.name || seat.name).slice(0, 24), primary: a.primary, secondary: a.secondary, others: a.others, race: a.race || null, controller: seat.role };
     }
     const { state, events } = apply(this.state, a);
     this.state = state;
@@ -91,6 +92,19 @@ export class Room {
       this.broadcast([{ type: "seatRemoved", seatId: target.id }]);
       return;
     }
+    // Hand a character to another seat, e.g. a player who rejoined on a new phone or a new host.
+    if (op.op === "assign") {
+      const target = this.seatById(op.seatId);
+      if (!target || target.removed || target.role !== "player") throw new RuleError("Choose a player seat.");
+      if (target.charId) throw new RuleError("That seat already has a character.");
+      if (!this.state.characters[op.charId]) throw new RuleError("No such character.");
+      for (const s of this.save.seats) if (s.charId === op.charId && s !== target) { s.charId = null; if (s.role === "player") s.removed = true; }
+      target.charId = op.charId;
+      for (const c of this.clients) if (c.seat && c.seat.removed) { c.send({ type: "removed" }); c.close(); }
+      this.persist();
+      this.broadcast([{ type: "seatAssigned", seatId: target.id, charId: op.charId }]);
+      return;
+    }
     throw new RuleError("Unknown seat operation.");
   }
 
@@ -108,7 +122,7 @@ export class Room {
   roomInfo(seat) {
     const connected = new Set([...this.clients].filter((c) => c.seat).map((c) => c.seat.id));
     return {
-      code: this.code, name: this.save.name,
+      code: this.code, name: this.save.name, joinUrl: `${this.linkBase()}/j/${this.code}`,
       seats: this.save.seats.filter((s) => !s.removed).map((s) => ({ id: s.id, name: s.name, role: s.role, charId: s.charId, connected: connected.has(s.id) })),
       you: seat ? { seatId: seat.id, role: seat.role, charId: seat.charId, name: seat.name } : { role: "table" },
     };

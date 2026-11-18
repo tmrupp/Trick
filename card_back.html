@@ -25,8 +25,13 @@
     for (const suit of ["strength", "dexterity", "intelligence", "weird"]) {
       document.querySelector(`.card-back__icon--${suit}`).innerHTML = globalThis.TrickSuitIcons.svg(suit);
     }
-    if (new URLSearchParams(window.location.search).get("export") === "1") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("export") === "1") {
       document.body.classList.add("export-page");
+    }
+    if (params.get("theme") === "dark") {
+      document.body.classList.add("dark-art");
+      document.querySelector(".card-back").classList.add("dark-art");
     }
   </script>
 </body>

@@ -2,8 +2,8 @@
 // Usage: node scripts/simulate_targets.mjs [trials per point]   (default 5000)
 // Random 21-card decks, trump = each deck's biggest suit; need-seeking bots that never bust by choice.
 // Rules: world leads; simultaneous; the single highest card wins if on-suit; the winner scores the world card
-// (Mirror: 11 minus it); suit-then-trump tie-break; Brace / Recalculate / Mirror; Dexterity is Peek (adopted), or Wait
-// or the old Slip for comparison. Standard checks are 3 tricks per player + 1, quick checks 2 per player + 1, solo 6.
+// (Mirror: 11 minus it); suit-then-trump tie-break; Brace / Recalculate / Mirror; Dexterity is the blind Peek (adopted), or the Peek with a look,
+// Wait or the old Slip for comparison. Standard checks are 3 tricks per player + 1, quick checks 2 per player + 1, solo 6.
 const SUITS = ['S', 'D', 'I', 'W'];
 const sh = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const POOL = []; for (const s of SUITS) for (let v = 1; v <= 10; v++) { POOL.push({ s, v }); POOL.push({ s, v }); }
@@ -83,13 +83,15 @@ function run(P, T, dex, trials, tricks) {
         if (x === win) continue;
         const p = x.p, s = x.c.s;
         if (s === 'S') p.brace = x.c.v;
-        else if (s === 'D') { if (dex === 'slip') p.hand.push(x.c); else if (dex === 'peek') peekers.push(p); else p.wait = true; }
+        else if (s === 'D') { if (dex === 'slip') p.hand.push(x.c); else if (dex === 'peek' || dex === 'blind') peekers.push(p); else p.wait = true; }
         else if (s === 'W') p.mirror = true;
         else if (p.hand.length && p.deck.length) { // Recalculate: drop the highest card (least likely to land exactly), draw 1
           p.hand.sort((a, b) => b.v - a.v); p.hand.shift(); p.hand.push(p.deck.shift());
         }
       }
-      for (const p of peekers) { // Peek: swap the world deck's top card for the next world card if it suits you better
+      if (dex === 'blind') { // Peek, adopted: any losing Spade replaces the next world card, unseen, once
+        if (peekers.length && reserve.length) { const t = row[k + 1]; row[k + 1] = reserve.shift(); reserve.push(t); }
+      } else for (const p of peekers) { // Peek with a look: swap the world deck's top card in if it suits you better
         if (reserve.length && worth(p, reserve[0], T) > worth(p, row[k + 1], T)) { const t = row[k + 1]; row[k + 1] = reserve.shift(); reserve.push(t); }
       }
     });
@@ -105,9 +107,9 @@ function run(P, T, dex, trials, tricks) {
 const TRIALS = Number(process.argv[2]) || 5000;
 const out = { trials: TRIALS, standard: {}, quick: {}, solo: {} };
 const kinds = [
-  ["standard", [2, 3, 4, 5], 20, (P) => 3 * P + 1, ["peek", "wait", "slip"]],
-  ["quick", [2, 3, 4, 5], 12, (P) => 2 * P + 1, ["peek"]],
-  ["solo", [1], 12, () => 6, ["peek"]],
+  ["standard", [2, 3, 4, 5], 20, (P) => 3 * P + 1, ["blind", "peek", "wait", "slip"]],
+  ["quick", [2, 3, 4, 5], 12, (P) => 2 * P + 1, ["blind"]],
+  ["solo", [1], 12, () => 6, ["blind"]],
 ];
 for (const [kind, Ps, maxT, tricks, dexes] of kinds) for (const dex of dexes) {
   out[kind][dex] = {};

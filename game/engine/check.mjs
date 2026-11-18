@@ -85,23 +85,31 @@ export function beginCheck(ctx, { kind = "standard", participants }) {
   ctx.events.push({ type: "checkBegun", kind, tricks, participants: st.check.participants });
 }
 
+// The GM sets the target, which is the difficulty. The goal itself is the player's to state (declareApproach);
+// a goal given here only fills in when the player hasn't stated one.
 export function setGoal(ctx, { charId, goal, target }) {
   const ck = activeCheck(ctx.state, ["setup"]);
   const p = participant(ck, charId);
   if (!Number.isInteger(target) || target < 1) throw rule("A target is a whole number of at least 1.");
   if (p.survival && target !== 3 * p.survival.M) throw rule(`Survival is a forced goal at target ${3 * p.survival.M}.`);
-  p.goal = goal || p.goal || "";
+  if (!p.goal && goal) p.goal = String(goal).slice(0, 100);
   p.target = target;
   const [lo, hi] = CHECK_KINDS[ck.kind].targets;
   ctx.events.push({ type: "goalSet", id: charId, target, outsideRange: target < lo || target > hi });
 }
 
-export function declareApproach(ctx, { charId, suit, approach }) {
+// The player states their goal and their approach; its suit is their trump. A forced goal (survival) can't be restated.
+export function declareApproach(ctx, { charId, suit, approach, goal }) {
   const ck = activeCheck(ctx.state, ["setup"]);
   const p = participant(ck, charId);
   if (!SUITS.includes(suit)) throw rule("An approach's suit is S, D, I or W.");
+  if (goal != null && !p.survival) {
+    const g = String(goal).trim().slice(0, 100);
+    if (!g) throw rule("Say what you're trying to do.");
+    p.goal = g;
+  }
   p.approach = suit;
-  p.approachText = approach || SUIT_INFO[suit].name;
+  p.approachText = (approach && String(approach).slice(0, 60)) || SUIT_INFO[suit].name;
   p.approved = false;
   ctx.events.push({ type: "approachDeclared", id: charId, suit });
 }
@@ -187,8 +195,9 @@ export function trickWinner(w, plays) {
   const blessed = plays.filter((x) => isBlessed(x.card));
   if (blessed.length === 1) return { winner: blessed[0], reason: "blessed" };
   if (blessed.length > 1) return { winner: null, reason: "blessedTie" };
-  const top = Math.max(w.v, ...plays.map((x) => x.bv));
-  if (top <= w.v) return { winner: null, reason: "worldHighest" };
+  const wv = w.beat ?? w.v; // a GM adjustment can change what a world card counts for beating
+  const top = Math.max(wv, ...plays.map((x) => x.bv));
+  if (top <= wv) return { winner: null, reason: "worldHighest" };
   const atTop = plays.filter((x) => x.bv === top);
   if (atTop.length === 1) return atTop[0].onSuit ? { winner: atTop[0], reason: "highest" } : { winner: null, reason: "blocked", by: atTop[0] };
   if (!atTop.every((x) => x.onSuit)) return { winner: null, reason: "blocked", by: atTop.find((x) => !x.onSuit) };
@@ -218,11 +227,13 @@ function resolveTrick(ctx) {
     }
     plays.push({
       id, card, approach: p.approach, mirrored: p.mirror,
-      bv: isBlessed(card) ? null : card.v + p.brace,
+      bv: isBlessed(card) ? null : card.v + p.brace + (p.boost || 0),
+      boost: p.boost || 0, brace: p.brace,
       onSuit: !isBlessed(card) && (card.suit === p.approach || card.suit === w.suit),
     });
     p.brace = 0;
     p.mirror = false;
+    p.boost = 0;
   }
   const { winner, reason, by } = trickWinner(w, plays);
   let score = 0;
@@ -236,8 +247,8 @@ function resolveTrick(ctx) {
     else ck.players[x.id].played.push(x.card);
   }
   ck.log.push({
-    trick: ck.trick, world: w.id,
-    plays: plays.map((x) => ({ id: x.id, card: x.card.id, bv: x.bv, onSuit: x.onSuit })),
+    trick: ck.trick, world: w.id, worldLabel: label(w), worldBeat: w.beat ?? w.v,
+    plays: plays.map((x) => ({ id: x.id, card: x.card.id, label: label(x.card), bv: x.bv, brace: x.brace, boost: x.boost, onSuit: x.onSuit, mirrored: x.mirrored })),
     winner: winner ? winner.id : null, reason, by: by ? by.id : null, score,
   });
   ctx.events.push({
@@ -247,6 +258,15 @@ function resolveTrick(ctx) {
   });
   // Consolations, all at once, for everyone who did not win; none after the final trick.
   if (!last) {
+    // Peek: if any losing card is a Spade, the next world card is replaced, unseen, once.
+    const peekers = plays.filter((x) => x !== winner && !isBlessed(x.card) && x.card.suit === "D").map((x) => x.id);
+    if (peekers.length && ck.worldDeck.length) {
+      const next = ck.trick + 1;
+      const old = ck.worldRow[next];
+      ck.worldRow[next] = ck.worldDeck.pop();
+      ck.worldDeck.unshift(old); // the replaced card goes to the bottom of the world deck
+      ctx.events.push({ type: "peekReplaced", by: peekers, out: label(old), in: label(ck.worldRow[next]) });
+    }
     for (const x of plays) {
       if (x === winner || isBlessed(x.card)) continue;
       const p = ck.players[x.id];
@@ -254,34 +274,12 @@ function resolveTrick(ctx) {
       if (s === "S") p.brace = x.card.v;
       else if (s === "W") p.mirror = true;
       else if (s === "I") { if (p.hand.length) ck.pending.push({ type: "recalculate", charId: x.id }); }
-      else if (s === "D") { if (ck.worldDeck.length) ck.pending.push({ type: "peek", charId: x.id }); }
     }
   }
   ck.locks = {};
   ck.trick++;
   ck.phase = last ? "resolve" : "consolation";
   if (last) computeResults(ctx);
-  advance(ctx);
-}
-
-// Peeks resolve one at a time, clockwise from the GM: only the first waiting Peek is active.
-export function activePeek(ck) {
-  return ck.pending.find((x) => x.type === "peek") || null;
-}
-
-export function peek(ctx, { charId, swap }) {
-  const ck = activeCheck(ctx.state, ["consolation"]);
-  const prompt = activePeek(ck);
-  if (!prompt || prompt.charId !== charId) throw rule("It isn't your Peek.");
-  const next = ck.trick;
-  if (swap && ck.worldDeck.length) {
-    const top = ck.worldDeck.pop();
-    const old = ck.worldRow[next];
-    ck.worldRow[next] = top;
-    ck.worldDeck.unshift(old); // the replaced card goes to the bottom of the world deck
-    ctx.events.push({ type: "peekSwapped", id: charId, out: label(old), in: label(top) });
-  } else ctx.events.push({ type: "peekKept", id: charId });
-  ck.pending.splice(ck.pending.indexOf(prompt), 1);
   advance(ctx);
 }
 
@@ -337,7 +335,7 @@ function advance(ctx) {
 
 // ---- Resolution and cleanup ----
 
-function computeResults(ctx) {
+export function computeResults(ctx) {
   const ck = ctx.state.check;
   ck.results = {};
   for (const id of ck.participants) {
@@ -400,4 +398,61 @@ export function endCheck(ctx) {
   for (const id of injured) scanAfterInjury(ctx, st.characters[id]);
   st.history.push({ id: ck.id, kind: ck.kind, tricks: ck.tricks, results: ck.results, log: ck.log });
   ctx.events.push({ type: "checkClosed", id: ck.id });
+}
+
+// ---- GM adjustments: how item, race and fiction effects are applied during a check ----
+
+// Your next played card counts this much higher (or lower) for beating.
+export function gmBoost(ctx, { charId, amount, reason }) {
+  const ck = activeCheck(ctx.state, ["setup", "deal", "play", "consolation"]);
+  const p = participant(ck, charId);
+  if (!Number.isInteger(amount)) throw rule("A boost is a whole number.");
+  p.boost = (p.boost || 0) + amount;
+  ctx.events.push({ type: "boosted", id: charId, amount, reason: reason || null });
+}
+
+// An unplayed world card counts this value for beating; whoever takes it still scores its printed value.
+export function gmWorldValue(ctx, { index, value, reason }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  if (!Number.isInteger(index) || index < ck.trick || index >= ck.worldRow.length) throw rule("Choose an unplayed world card.");
+  if (!Number.isInteger(value) || value < 0) throw rule("A value for beating is a whole number, 0 or more.");
+  ck.worldRow[index] = { ...ck.worldRow[index], beat: value };
+  ctx.events.push({ type: "worldValueSet", index, value, reason: reason || null });
+}
+
+export function gmAdjustTally(ctx, { charId, delta, reason }) {
+  const ck = activeCheck(ctx.state);
+  const p = participant(ck, charId);
+  if (!Number.isInteger(delta) || !delta) throw rule("Adjust the tally by a whole number.");
+  p.tally.push({ card: null, adjustment: true, mirrored: false, score: delta, reason: reason || null });
+  if (ck.phase === "resolve") computeResults(ctx);
+  ctx.events.push({ type: "tallyAdjusted", id: charId, delta, reason: reason || null });
+}
+
+export function gmAdjustTarget(ctx, { charId, target, reason }) {
+  const ck = activeCheck(ctx.state);
+  const p = participant(ck, charId);
+  if (!Number.isInteger(target) || target < 1) throw rule("A target is a whole number of at least 1.");
+  p.target = target;
+  if (ck.phase === "resolve") computeResults(ctx);
+  ctx.events.push({ type: "targetAdjusted", id: charId, target, reason: reason || null });
+}
+
+export function gmDraw(ctx, { charId, n = 1 }) {
+  const ck = activeCheck(ctx.state, ["play", "consolation"]);
+  const p = participant(ck, charId);
+  if (!Number.isInteger(n) || n < 1 || n > 10) throw rule("Draw 1 to 10 cards.");
+  p.drawOwed += n;
+  drawOwed(ctx, ctx.state.characters[charId], p);
+  ctx.events.push({ type: "gmDrew", id: charId, n });
+}
+
+export function gmDiscard(ctx, { charId, cardId }) {
+  const ck = activeCheck(ctx.state, ["play", "consolation"]);
+  const p = participant(ck, charId);
+  if (ck.locks[charId] && ck.locks[charId].cardId === cardId) throw rule("That card is locked in.");
+  const card = take(p.hand, (c) => c.id === cardId);
+  if (!card) throw rule("That card isn't in their hand.");
+  ctx.state.characters[charId].discard.push(card);
+  ctx.events.push({ type: "gmDiscarded", id: charId, card: label(card) });
 }

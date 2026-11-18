@@ -61,6 +61,22 @@ export class Store {
     return JSON.parse(readFileSync(this.path(id), "utf8"));
   }
 
+  importSave(data, takenCodes) {
+    if (!data || typeof data.seed !== "string" || !Array.isArray(data.actions) || !Array.isArray(data.seats)) throw new Error("That isn't a TRICK save.");
+    const fresh = this.create({ name: `${String(data.name || "Imported").slice(0, 50)} (imported)`, seed: data.seed, takenCodes });
+    Object.assign(fresh, { gmSeat: data.gmSeat || 0, actions: data.actions, seats: data.seats, characterNames: data.characterNames || [] });
+    // Keep the room code when it's free here, so old join links still name the right room.
+    if (/^[A-Z]{5}$/.test(data.code || "") && !takenCodes.has(data.code) && !this.list().some((c) => c.code === data.code)) fresh.code = data.code;
+    this.write(fresh);
+    return fresh;
+  }
+
+  archive(id) {
+    const dir = join(this.dir, "archive");
+    mkdirSync(dir, { recursive: true });
+    renameSync(this.path(id), join(dir, `${id}-${Date.now()}.json`));
+  }
+
   // Write to a temporary file, then rename, so a crash never leaves half a save.
   write(save) {
     save.updatedAt = new Date().toISOString();

@@ -12,25 +12,30 @@ import { Room } from "./room.mjs";
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC = resolve(HERE, "../public");
 const REPO = resolve(HERE, "../..");
-const SHARED_FROM_REPO = new Set(["suit_icons.js"]); // repo-root files the pages may load
+const SHARED_FROM_REPO = new Map([ // repo files the pages may load
+  ["/suit_icons.js", "suit_icons.js"], ["/card_rules.js", "card_rules.js"],
+  ["/items/item_catalog.js", "items/item_catalog.js"], ["/races/race_catalog.js", "races/race_catalog.js"],
+  ["/rules", "rules.html"],
+]);
 
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".json": "application/json" };
-const PAGES = { "/host": "host.html", "/table": "table.html", "/play": "play.html", "/gm": "gm.html" };
+const TYPES = { ".png": "image/png", ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".json": "application/json" };
+const PAGES = { "/host": "host.html", "/table": "table.html", "/watch": "table.html", "/play": "play.html", "/gm": "gm.html", "/print": "print.html" };
 
 export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves"), adminToken = newSecret(), publicUrl = null, log = console.log } = {}) {
+  let base = publicUrl;
+  const linkBase = () => base || `http://localhost:${port}`;
   const store = new Store(savesDir);
   const rooms = new Map(); // code -> Room
   const joinsByIp = new Map(); // ip -> [timestamps]
-  let base = publicUrl;
 
   const openRoom = (id) => {
     const save = store.read(id);
-    if (!rooms.has(save.code)) rooms.set(save.code, new Room(save, store));
+    if (!rooms.has(save.code)) rooms.set(save.code, new Room(save, store, linkBase));
     return rooms.get(save.code);
   };
 
   const info = () => ({
-    publicUrl: base || `http://localhost:${port}`,
+    publicUrl: linkBase(),
     rooms: [...rooms.values()].map((r) => ({ id: r.save.id, name: r.save.name, code: r.code, gmKey: r.save.gmKey, seats: r.roomInfo(null).seats })),
     campaigns: store.list(),
   });
@@ -46,9 +51,10 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
     req.on("end", () => { try { ok(data ? JSON.parse(data) : {}); } catch (e) { fail(e); } });
   });
 
-  async function serveFile(res, file) {
+  async function serveFile(res, file, cache) {
     try {
       const body = await readFile(file);
+      if (cache) { res.writeHead(200, { "content-type": TYPES[extname(file)] || "application/octet-stream", "cache-control": cache }); return res.end(body); }
       send(res, 200, body, TYPES[extname(file)] || "application/octet-stream");
     } catch {
       send(res, 404, { error: "Not found" });
@@ -67,7 +73,9 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
         if (!file.startsWith(PUBLIC + sep)) return send(res, 404, { error: "Not found" });
         return serveFile(res, file);
       }
-      if (SHARED_FROM_REPO.has(path.slice(1))) return serveFile(res, join(REPO, path.slice(1)));
+      if (SHARED_FROM_REPO.has(path)) return serveFile(res, join(REPO, SHARED_FROM_REPO.get(path)));
+      // Card art at web size, light and dark, from npm run export:web-cards.
+      if (/^\/cards\/(light|dark)\/[a-z0-9-]+\.png$/.test(path)) return serveFile(res, join(REPO, "exports", "web", path.slice("/cards/".length)), "public, max-age=86400");
       if (path === "/qr.svg") {
         const text = String(url.searchParams.get("text") || "").slice(0, 300);
         if (!/^https?:\/\//.test(text)) return send(res, 400, { error: "Give a link." });
@@ -85,6 +93,29 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
         if (path === "/api/open" && req.method === "POST") {
           const body = await readJson(req);
           openRoom(String(body.id));
+          return send(res, 200, info());
+        }
+        // Download a campaign's save, to keep or move to another host.
+        if (path === "/api/export" && req.method === "GET") {
+          const id = String(url.searchParams.get("id") || "");
+          const save = store.read(id);
+          const { gmKey, ...shareable } = save; // the GM key stays on this host
+          return send(res, 200, shareable);
+        }
+        // Import a downloaded save as a new campaign (new id, room code and GM key; seats keep their tokens).
+        if (path === "/api/import" && req.method === "POST") {
+          const body = await readJson(req);
+          let save;
+          try { save = store.importSave(body, new Set(rooms.keys())); } catch (e) { return send(res, 400, { error: e.message }); }
+          try { openRoom(save.id); } catch (e) { store.archive(save.id); return send(res, 400, { error: `That save doesn't replay: ${e.message}` }); }
+          return send(res, 200, info());
+        }
+        // Archive: close the room and move the save out of the list.
+        if (path === "/api/archive" && req.method === "POST") {
+          const body = await readJson(req);
+          const id = String(body.id);
+          for (const [code, r] of rooms) if (r.save.id === id) { for (const c of r.clients) c.close(); rooms.delete(code); }
+          store.archive(id);
           return send(res, 200, info());
         }
         return send(res, 404, { error: "Unknown API." });
@@ -180,7 +211,7 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
 
   return {
     server, rooms, store, adminToken,
-    get publicUrl() { return base || `http://localhost:${port}`; },
+    get publicUrl() { return linkBase(); },
     setPublicUrl(u) { base = u; },
     openRoom,
     listen: () => new Promise((ok) => server.listen(port, () => { port = server.address().port; ok(port); })),

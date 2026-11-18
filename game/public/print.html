@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRICK · my cards</title>
+<link rel="stylesheet" href="/shared/style.css">
+<script src="/suit_icons.js"></script>
+<script src="/card_rules.js"></script>
+<style>
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; } .grid .cf { --cw: 90px; }
+  @media print { body { background: #fff; color: #000; padding: 0; } .noprint { display: none; } .panel { border: 0; padding: 0; } .grid .cf { --cw: 45mm; break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="noprint spread"><h1>My cards</h1><button class="primary" onclick="window.print()">Print</button></div>
+<main id="main"><p class="muted">Loading…</p></main>
+<script type="module">
+import { connect, params, h, render, cardFace, cardText } from "/shared/client.js";
+const room = (params.get("room") || "").toUpperCase();
+const main = document.getElementById("main");
+connect({
+  room, as: "player",
+  onError: (e) => render(main, h("p", {}, e, " Open this from your phone's ", h("a", { href: `/play?room=${room}` }, "game page"), " first.")),
+  onView: ({ room: info, view }) => {
+    const me = info.you.charId;
+    if (!me) return render(main, h("p", {}, "Create your character first."));
+    const ch = view.characters[me];
+    const all = [...(ch.deckCards || []), ...(ch.discard || []), ...(view.hand || [])].sort((a, b) => (a.blessed - b.blessed) || (a.status - b.status) || String(a.suit).localeCompare(String(b.suit)) || a.v - b.v);
+    render(main, [
+      h("p", {}, h("strong", {}, ch.name), ` · ${all.length} cards: deck, discard${view.hand ? " and hand" : ""}.`),
+      h("div", { class: "grid" }, all.map((c) => cardFace(c, "lg", { title: cardText(c) }))),
+    ]);
+  },
+});
+</script>
+</body>
+</html>

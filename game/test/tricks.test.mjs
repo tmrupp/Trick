@@ -80,11 +80,9 @@ test("a whole trick: the winner scores the world card's value, losers take conso
 
 test("Mirror: the next winning card scores 11 minus the world card", () => {
   let s = dealt(game());
-  rig(s, { row: ["W5", "W2"], hands: { ana: ["S1", "S2"], ben: ["D1", "D2"], cara: ["W3", "W9"] } });
+  rig(s, { row: ["W5", "W2"], hands: { ana: ["S1", "S2"], ben: ["D1", "D2"], cara: ["W3", "W9"] }, worldDeck: [] }); // an empty world deck: Ben's Spade can't replace the 2
   ({ state: s } = run(s, lock(s, "ana", "S1"), lock(s, "ben", "D1"), lock(s, "cara", "W3")));
   assert.equal(s.check.players.cara.mirror, true);
-  s.check.pending = []; // skip Ben's Peek
-  s.check.phase = "play";
   ({ state: s } = run(s, lock(s, "ana", "S2"), lock(s, "ben", "D2"), lock(s, "cara", "W9")));
   assert.equal(s.check.players.cara.tally[0].score, 9);
   assert.equal(s.check.players.cara.tally[0].mirrored, true);
@@ -109,19 +107,18 @@ test("Stumble's Price: playing Stumble discards an ordinary card of your choice"
   assert.equal(hand(s, "ben").length, 1);
 });
 
-test("Peek: swap the world deck's top card in; the old card goes to the bottom", () => {
+test("Peek: losing Spades replace the next world card, unseen, once a trick", () => {
   let s = dealt(game());
   rig(s, { row: ["S9", "I8"], hands: { ana: ["D1", "S2"], ben: ["D2", "D3"], cara: ["I1", "I2"] }, worldDeck: ["W1", "S6", "S4"] });
-  ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "D2"), lock(s, "cara", "I1")));
+  let events;
+  ({ state: s, events } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "D2"), lock(s, "cara", "I1")));
   const ck = s.check;
-  assert.equal(ck.phase, "consolation");
-  assert.deepEqual(ck.pending.filter((x) => x.type === "peek").map((x) => x.charId), ["ana", "ben"], "Peeks go clockwise from the GM");
-  assert.throws(() => run(s, { type: "peek", charId: "ben", swap: true }), /isn't your Peek/);
-  ({ state: s } = run(s, { type: "peek", charId: "ana", swap: true }));
-  assert.equal(s.check.worldRow[1].suit, "S");
-  assert.equal(s.check.worldRow[1].v, 4);
-  assert.equal(s.check.worldDeck[0].v, 8, "the replaced card is at the bottom");
-  ({ state: s } = run(s, { type: "peek", charId: "ben", swap: false }));
+  assert.equal(ck.worldRow[1].suit, "S", "the top of the world deck replaced the next card");
+  assert.equal(ck.worldRow[1].v, 4);
+  assert.equal(ck.worldDeck[0].v, 8, "the replaced card is at the bottom");
+  assert.equal(ck.worldDeck.length, 3, "two Spades lost, but only one card was replaced");
+  assert.deepEqual(events.find((e) => e.type === "peekReplaced").by, ["ana", "ben"]);
+  assert.ok(!ck.pending.some((x) => x.type === "peek"), "Peek asks nobody anything");
   // Cara's Recalculate still waits.
   assert.equal(s.check.phase, "consolation");
   ({ state: s } = run(s, { type: "recalculate", charId: "cara", cardId: find(s, "cara", "I2").id }));

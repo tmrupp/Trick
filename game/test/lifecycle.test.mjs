@@ -161,7 +161,7 @@ test("cards are never lost or duplicated over many bot checks", () => {
   }
 });
 
-test("views: the table sees no hands; a phone sees only its own hand and its own Peek", () => {
+test("views: the table sees no hands, and no phone sees another hand or the world deck", () => {
   let s = dealt(game());
   rig(s, { row: ["S9", "I8"], hands: { ana: ["D1", "S2"], ben: ["D2", "D3"], cara: ["I1", "I2"] }, worldDeck: ["W1", "S6", "S4"] });
   const anaCards = hand(s, "ana").map((c) => c.id);
@@ -170,9 +170,8 @@ test("views: the table sees no hands; a phone sees only its own hand and its own
   const benView = JSON.stringify(viewFor(s, { role: "player", charId: "ben" }));
   for (const id of anaCards) assert.ok(!benView.includes(id), "another phone never sees Ana's hand");
   ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "D2"), lock(s, "cara", "I1")));
-  const anaPrompts = viewFor(s, { role: "player", charId: "ana" }).prompts;
-  const benPrompts = viewFor(s, { role: "player", charId: "ben" }).prompts;
-  assert.equal(anaPrompts[0].top.label, "4♥");
-  assert.equal(benPrompts[0].top, null, "the second Peek waits its turn");
+  for (const who of [{ role: "player", charId: "ana" }, { role: "player", charId: "ben" }]) {
+    assert.ok(!JSON.stringify(viewFor(s, who)).includes(s.check.worldDeck.at(-1).id), "no phone sees the world deck");
+  }
   assert.ok(!JSON.stringify(viewFor(s, { role: "table" })).includes(s.check.worldDeck.at(-1).id), "the table never sees the world deck");
 });

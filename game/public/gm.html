@@ -4,166 +4,265 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TRICK GM</title>
 <link rel="stylesheet" href="/shared/style.css">
+<script src="/suit_icons.js"></script>
+<script src="/card_rules.js"></script>
+<script src="/items/item_catalog.js"></script>
+<script src="/races/race_catalog.js"></script>
 </head>
 <body>
-<div class="row" style="justify-content: space-between"><h1 id="title">GM</h1><span id="status" class="small muted"></span></div>
-<div id="main"></div>
+<header class="spread"><h1 id="title">GM</h1><div class="row"><span id="status" class="pill">…</span><a class="small" href="/rules" target="_blank">Rules</a><span id="tools"></span></div></header>
+<main id="main"></main>
 <script type="module">
-import { connect, params, h, cardEl, SUITS, RESULT, describeTrick, suitSelect, toast } from "/shared/client.js";
+import { connect, params, h, render, forget, draft, cardFace, SUITS, RESULT, trickSentence, eventText, toast, difficulty, soundToggle, chime, itemsById, racesById, stripTags } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
+const ITEMS = itemsById();
+const RACES = racesById();
+const ITEM_NAMES = Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, v.label]));
+document.getElementById("tools").append(soundToggle());
 let last = null;
-let log = [];
-let chosen = null, price = null;
+let feed = [];
+let tab = "check";
+let mine = { chosen: null, price: null };
+
 const conn = connect({
   room, as: "gm", gmKey: params.get("key"),
   onStatus: (s) => { document.getElementById("status").textContent = s; },
-  onView: (msg) => { last = msg; log = log.concat(msg.events || []).slice(-40); render(); },
+  onView: (msg) => {
+    last = msg;
+    const names = Object.fromEntries(Object.values(msg.view.characters).map((c) => [c.id, c.name]));
+    for (const e of msg.events || []) {
+      const t = e.type === "trickResolved" ? null : eventText(e, names, ITEM_NAMES);
+      if (t) feed.push(t);
+      if (e.type === "itemUsed") { toast(t); chime("turn"); }
+    }
+    feed = feed.slice(-60);
+    draw();
+  },
   onRejected: (r) => toast(r),
   onError: (r) => toast(r),
 });
 const act = (a) => conn.act(a);
-const sel = (opts, value) => h("select", {}, opts.map(([v, t]) => h("option", { value: v, selected: v === value }, t)));
+const sel = (key, opts, value, label) => h("select", { "data-key": key, "aria-label": label || key }, opts.map(([v, t]) => h("option", { value: v, selected: v === value }, t)));
+const num = (key, value, attrs = {}) => h("input", { type: "number", "data-key": key, value, ...attrs });
+const val = (key, fallback = "") => draft(key) ?? fallback;
 
-function render() {
-  const { room: info, view } = last;
-  document.getElementById("title").textContent = `GM · ${info.name} · ${info.code}`;
-  const chars = Object.values(view.characters);
-  const names = Object.fromEntries(chars.map((c) => [c.id, c.name]));
+// What the GM should do next, in one line.
+function nextStep(info, view, names) {
   const ck = view.check && view.check.phase !== "closed" ? view.check : null;
-  const parts = [];
+  const chars = Object.values(view.characters);
+  if (!chars.length) return ["Waiting for players to join and create characters.", `Share the join link: ${info.joinUrl}`];
+  if (!ck) return ["Between checks.", "Set the scene. When an outcome is uncertain, start a check."];
+  if (ck.phase === "setup") {
+    const noTarget = ck.participants.filter((id) => ck.players[id].target == null).map((id) => names[id]);
+    const noAppr = ck.participants.filter((id) => !ck.players[id].approach).map((id) => names[id]);
+    const unapproved = ck.participants.filter((id) => ck.players[id].approach && !ck.players[id].approved).map((id) => names[id]);
+    if (noAppr.length) return ["Waiting for goals and approaches.", `${noAppr.join(", ")} still deciding on their phones. Set targets as goals come in.`];
+    if (noTarget.length) return ["Set a target for each goal.", `Still needed: ${noTarget.join(", ")}.`];
+    if (unapproved.length) return ["Approve approaches that fit the fiction.", `Waiting on you: ${unapproved.join(", ")}.`];
+    return ["Everything is set.", "Deal the world and draw hands."];
+  }
+  if (ck.waitingOn.length) return ["Waiting on players.", ck.waitingOn.map((w) => `${names[w.charId]}: ${w.type}`).join(", ")];
+  if (ck.phase === "play") return [`Trick ${ck.trick + 1} of ${ck.tricks}.`, `Waiting for: ${ck.participants.filter((id) => !ck.players[id].locked && ck.players[id].handCount).map((id) => names[id]).join(", ") || "the reveal"}.`];
+  if (ck.phase === "resolve") return ["The check is resolved.", "Narrate each result from the fiction, add any status consequences, then clean up."];
+  return [ck.phase, ""];
+}
 
-  // Seats
-  parts.push(h("div", { class: "panel" }, h("h2", {}, "Seats"),
-    h("table", {}, h("tbody", {}, info.seats.map((s) => h("tr", {},
-      h("td", {}, h("span", { class: `status-dot${s.connected ? " on" : ""}` }), s.name, s.role === "gm" ? " (you)" : ""),
-      h("td", {}, s.charId ? names[s.charId] : h("span", { class: "muted" }, "no character")),
-      h("td", {}, s.role === "player" ? h("button", { onclick: () => confirmRemove(s) }, "Remove") : null)))))));
+function draw() {
+  if (!last) return;
+  const { room: info, view } = last;
+  document.getElementById("title").textContent = `GM · ${info.name}`;
+  const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
+  const [what, detail] = nextStep(info, view, names);
+  const parts = [
+    h("div", { class: "panel banner" }, h("h2", {}, what), h("p", { class: "muted" }, detail)),
+    h("div", { class: "tabs" }, [["check", "The check"], ["chars", "Characters"], ["room", "Room and seats"]].map(([k, t]) => h("button", { "aria-pressed": String(tab === k), onclick: () => { tab = k; draw(); } }, t))),
+  ];
+  if (tab === "check") parts.push(...checkTab(info, view, names));
+  if (tab === "chars") parts.push(...charsTab(info, view, names));
+  if (tab === "room") parts.push(...roomTab(info, view, names));
+  parts.push(h("details", { class: "panel" }, h("summary", {}, "What's happened"), h("div", { class: "log" }, [...feed].reverse().map((t) => h("div", {}, t)))));
+  render(main, parts);
+}
 
-  // Seating order
-  if (chars.length) {
-    const order = view.seats.slice();
-    const move = (i, d) => { const j = i + d; if (j < 0 || j >= order.length) return; [order[i], order[j]] = [order[j], order[i]]; act({ type: "setSeats", seats: order, gmSeat: view.gmSeat }); };
-    const first = sel(order.map((id, i) => [String(i), names[id]]), String(view.gmSeat));
-    parts.push(h("div", { class: "panel" }, h("h2", {}, "Seating, clockwise"),
-      h("ol", {}, order.map((id, i) => h("li", {}, names[id], " ", h("button", { onclick: () => move(i, -1) }, "↑"), h("button", { onclick: () => move(i, 1) }, "↓")))),
-      h("div", { class: "row" }, "First player clockwise from you:", first, h("button", { onclick: () => act({ type: "setSeats", seats: order, gmSeat: Number(first.value) }) }, "Set"))));
+// ---------------- The check ----------------
+
+function checkTab(info, view, names) {
+  const ck = view.check && view.check.phase !== "closed" ? view.check : null;
+  const out = [];
+  const myChar = info.you.charId;
+  if (!ck) {
+    const alive = Object.values(view.characters).filter((c) => c.alive);
+    const kind = sel("begin-kind", [["standard", "Standard: 3 tricks per player, +1"], ["quick", "Quick: 2 per player, +1"], ["solo", "Solo: 6 tricks"]], "standard", "Check size");
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Start a check"),
+      h("p", { class: "small muted" }, "Choose who takes part. Each player states their own goal and approach on their phone; you set the target and approve."),
+      kind,
+      h("div", { class: "row" }, alive.map((c) => h("label", { class: "pill" }, h("input", { type: "checkbox", "data-key": `begin-${c.id}`, checked: true }), c.name, c.survival ? " (survival)" : ""))),
+      h("button", { class: "primary big", onclick: () => {
+        const ids = alive.filter((c) => (draft(`begin-${c.id}`) ?? true)).map((c) => c.id);
+        act({ type: "beginCheck", kind: draft("begin-kind") || "standard", participants: ids });
+      } }, "Begin")));
+    return out;
   }
 
-  // Your own character
-  if (!info.you.charId) parts.push(createForm());
-
-  if (!ck) parts.push(beginPanel(chars), betweenPanel(chars, view));
-  else parts.push(...checkPanels(ck, view, names, info.you.charId));
-
-  parts.push(h("div", { class: "panel log small" }, h("h3", {}, "Events"), [...log].reverse().map((e) => h("div", {}, JSON.stringify(e)))));
-  main.replaceChildren(...parts);
-}
-
-function confirmRemove(s) {
-  if (confirmBox === s.id) { conn.manage({ op: "remove", seatId: s.id }); confirmBox = null; }
-  else { confirmBox = s.id; toast(`Press Remove again to remove ${s.name}.`); setTimeout(() => { confirmBox = null; }, 4000); }
-}
-let confirmBox = null;
-
-function createForm() {
-  const name = h("input", { placeholder: "Your character's name", maxlength: 24 });
-  const prim = suitSelect("gp", "S"), sec = suitSelect("gs", "D");
-  return h("div", { class: "panel" }, h("h2", {}, "Play a character too (optional)"),
-    h("div", { class: "row" }, name, "Primary", prim, "Secondary", sec,
-      h("button", { onclick: () => {
-        const rest = Object.keys(SUITS).filter((s) => s !== prim.value && s !== sec.value);
-        act({ type: "createCharacter", name: name.value || "GM", primary: prim.value, secondary: sec.value, others: rest });
-      } }, "Create")),
-    h("p", { class: "small muted" }, "Your 2, 3, 6, 9 go to the first remaining suit."));
-}
-
-function beginPanel(chars) {
-  const kind = sel([["standard", "Standard (3 per player + 1)"], ["quick", "Quick (2 per player + 1)"], ["solo", "Solo (6 tricks)"]], "standard");
-  const boxes = chars.filter((c) => c.alive).map((c) => h("label", {}, h("input", { type: "checkbox", value: c.id, checked: true }), ` ${c.name} `));
-  return h("div", { class: "panel" }, h("h2", {}, "Start a check"), h("div", { class: "row" }, kind), h("div", { class: "row" }, boxes),
-    h("p", {}, h("button", { class: "primary", onclick: () => act({ type: "beginCheck", kind: kind.value, participants: boxes.map((b) => b.firstChild).filter((x) => x.checked).map((x) => x.value) }) }, "Begin")));
-}
-
-function betweenPanel(chars, view) {
-  const who = sel(chars.map((c) => [c.id, c.name]));
-  const st = sel(Object.entries(SUITS).map(([k, s]) => [k, s.status]));
-  const comp = h("input", { placeholder: "Compulsion (for a Curse)", maxlength: 80 });
-  const restBox = h("div", { class: "row" });
-  const fillRest = () => {
-    const d = view.characters[who.value]?.discard || [];
-    restBox.replaceChildren(...d.filter((c) => c.status && c.suit !== "W").map((c) => h("label", {}, h("input", { type: "checkbox", value: c.id }), ` ${c.label} `)));
-  };
-  who.onchange = fillRest; fillRest();
-  return h("div", { class: "panel" }, h("h2", {}, "Between checks"), h("div", { class: "row" }, who),
-    h("div", { class: "row" }, st, comp, h("button", { onclick: () => act({ type: "gainStatus", charId: who.value, suit: st.value, compulsion: comp.value || undefined }) }, "Give status")),
-    h("div", { class: "row" }, h("button", { onclick: () => act({ type: "curseViolation", charId: who.value }) }, "Curse violated"), h("button", { onclick: () => act({ type: "grantBlessed", charId: who.value }) }, "Grant Blessed")),
-    h("h3", {}, "Rest: remove statuses"), restBox, h("button", { onclick: () => act({ type: "rest", charId: who.value, cardIds: [...restBox.querySelectorAll("input:checked")].map((x) => x.value) }) }, "Rest"));
-}
-
-function checkPanels(ck, view, names, myChar) {
-  const out = [];
-  out.push(h("div", { class: "panel" }, h("h2", {}, `${ck.kind} check · ${ck.phase} · trick ${Math.min(ck.trick + 1, ck.tricks)} of ${ck.tricks}`),
-    h("div", { class: "row world" }, ck.worldRow.map((c, i) => cardEl(c, { class: `card ${SUITS[c.suit].cls}${i === ck.trick ? " current" : ""}${i < ck.trick ? " past" : ""}` }))),
-    ck.waitingOn.length ? h("p", { class: "small" }, `Waiting on: ${ck.waitingOn.map((w) => `${names[w.charId]} (${w.type})`).join(", ")}`) : null));
+  out.push(h("div", { class: "panel" }, h("div", { class: "spread" }, h("strong", {}, `${ck.kind} check · ${ck.tricks} tricks`), h("span", { class: "small muted" }, ck.phase)),
+    ck.phase !== "setup" ? h("div", { class: "row", style: "margin-top:8px" }, ck.worldRow.map((c, i) => cardFace(c, i === ck.trick && ck.phase !== "resolve" ? "md" : "sm", { class: i === ck.trick && ck.phase !== "resolve" ? "current" : i < ck.trick ? "past" : "" }))) : null));
 
   if (ck.phase === "setup") {
-    out.push(h("div", { class: "panel" }, h("h2", {}, "Goals and approaches"), h("table", {}, h("tbody", {}, ck.participants.map((id) => {
-      const p = ck.players[id];
-      const goal = h("input", { value: p.goal || "", placeholder: "Goal", maxlength: 80 });
-      const target = h("input", { type: "number", min: 1, max: 40, value: p.target ?? (ck.kind === "standard" ? 10 : 6), style: "width: 5em" });
-      return h("tr", {}, h("td", {}, names[id], p.survival ? h("div", { class: "small" }, `Survival: target ${p.target}`) : null),
-        h("td", {}, h("div", { class: "row" }, goal, target, h("button", { onclick: () => act({ type: "setGoal", charId: id, goal: goal.value, target: Number(target.value) }) }, p.target ? "Update" : "Set"))),
-        h("td", {}, p.approach ? h("div", {}, `${SUITS[p.approach].sym} ${p.approachText || ""} `, p.approved ? "✓" : h("span", {}, h("button", { onclick: () => act({ type: "approveApproach", charId: id }) }, "Approve"), h("button", { onclick: () => act({ type: "approveApproach", charId: id, approved: false }) }, "Reject"))) : h("span", { class: "muted" }, "no approach yet")));
-    }))), h("p", {}, h("button", { class: "primary", onclick: () => act({ type: "deal" }) }, "Deal"))));
-    if (myChar && ck.players[myChar]) {
-      const s = suitSelect("ga", ck.players[myChar].approach || "S");
-      out.push(h("div", { class: "panel row" }, "Your approach:", s, h("button", { onclick: () => act({ type: "declareApproach", charId: myChar, suit: s.value }) }, "Declare")));
-    }
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Goals, approaches and targets"),
+      h("p", { class: "small muted" }, ck.kind === "standard" ? "Targets: 6–8 easy · 9–11 moderate · 12–14 hard · 15–17 very hard · 18–20 extreme. Default 10." : "Targets 6–12. Default 6."),
+      ck.participants.map((id) => {
+        const p = ck.players[id];
+        const t = Number(val(`t-${id}`, p.target ?? (ck.kind === "standard" ? 10 : 6)));
+        return h("div", { class: "panel stack" },
+          h("div", { class: "spread" }, h("h2", {}, names[id]), p.survival ? h("span", { class: "pill bad" }, `Survival: target ${p.target}`) : p.target != null ? h("span", { class: "pill good" }, `Target ${p.target}`) : null),
+          p.goal ? h("p", { class: "big", style: "font-family:var(--display);font-size:22px" }, `“${p.goal}”`) : h("p", { class: "muted" }, id === myChar ? "Your goal: state it below." : "Waiting for their goal…"),
+          p.approach ? h("div", { class: "row" }, h("span", {}, `${SUITS[p.approach].sym} ${p.approachText || SUITS[p.approach].name}`),
+            p.approved ? h("span", { class: "pill good" }, "approved") : [h("button", { class: "primary", onclick: () => act({ type: "approveApproach", charId: id }) }, "Approve"), h("button", { onclick: () => act({ type: "approveApproach", charId: id, approved: false }) }, "It doesn't fit")])
+            : id === myChar ? h("div", { class: "stack", style: "width:100%" },
+                h("input", { "data-key": "my-goal", placeholder: "Your goal", maxlength: 100, style: "width:100%" }),
+                h("div", { class: "row" }, sel("my-appr", Object.entries(SUITS).map(([k, s]) => [k, `${s.sym} ${s.name}`]), view.characters[id].primary, "Your approach"),
+                  h("button", { onclick: () => act({ type: "declareApproach", charId: id, suit: draft("my-appr") || view.characters[id].primary, goal: p.survival ? undefined : (draft("my-goal") || "").trim() || undefined }) }, "Declare")))
+            : h("span", { class: "muted small" }, "Waiting for their approach…"),
+          h("div", { class: "row" }, "Target", num(`t-${id}`, p.target ?? (ck.kind === "standard" ? 10 : 6), { min: 1, max: 40, disabled: !!p.survival, oninput: () => draw() }), h("span", { class: "pill" }, difficulty(ck.kind, t)),
+            h("button", { onclick: () => act({ type: "setGoal", charId: id, target: p.survival ? p.target : Number(val(`t-${id}`, t)) }) }, p.target != null ? "Update target" : "Set target")));
+      }),
+      h("button", { class: "primary big", onclick: () => act({ type: "deal" }) }, "Deal")));
   }
 
-  if (view.hands) {
-    out.push(h("div", { class: "panel" }, h("h2", {}, "Hands"), h("table", {}, h("tbody", {}, ck.participants.map((id) => {
+  if (view.hands && ck.phase !== "setup") {
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Hands"), ck.participants.map((id) => {
       const p = ck.players[id];
       const lockId = view.locks && view.locks[id] && view.locks[id].cardId;
-      return h("tr", {}, h("td", {}, names[id], h("div", { class: "small muted" }, `tally ${p.total} / ${p.target}`)),
-        h("td", {}, h("div", { class: "row" }, view.hands[id].map((c) => cardEl(c, c.id === lockId ? { style: "outline: 3px solid currentColor" } : {})))));
-    })))));
+      return h("div", { class: "stack", style: "border-bottom:1px dashed var(--line); padding-bottom:8px" },
+        h("div", { class: "spread" }, h("strong", {}, names[id]), h("span", { class: "small" }, `tally ${p.total} / ${p.target}`, p.brace ? ` · Brace +${p.brace}` : "", p.mirror ? " · Mirror" : "", p.boost ? ` · next ${p.boost > 0 ? "+" : ""}${p.boost}` : "", p.locked ? " · locked" : "")),
+        h("div", { class: "row" }, view.hands[id].map((c) => cardFace(c, "sm", { class: c.id === lockId ? "chosen" : "" }))));
+    })));
   }
 
-  // The GM's own character, if they play one.
-  if (myChar && ck.players[myChar] && ck.phase === "play" && !(view.locks && view.locks[myChar])) {
-    const hand = view.hands[myChar];
-    const legal = view.legal[myChar] || [];
-    const c = hand.find((x) => x.id === chosen);
-    const needsPrice = c && c.status && c.suit === "D" && hand.some((x) => x.id !== c.id && !x.status && !x.blessed);
-    out.push(h("div", { class: "panel" }, h("h2", {}, "Your play"), h("div", { class: "row" }, hand.map((x) => {
-      const pick = needsPrice && x.id !== c.id && !x.status && !x.blessed;
-      return h("button", { class: `cardbtn${chosen === x.id || price === x.id ? " chosen" : ""}`, disabled: !(legal.includes(x.id) || pick), onclick: () => { if (pick) price = x.id; else { chosen = x.id; price = null; } render(); } }, cardEl(x));
-    })), h("button", { class: "primary", disabled: !c || (needsPrice && !price), onclick: () => { act({ type: "lockCard", charId: myChar, cardId: chosen, priceCardId: price || undefined }); chosen = price = null; } }, "Lock in")));
-  }
-  for (const pr of (view.pending || []).filter((x) => x.charId === myChar)) {
-    if (pr.type === "peek" && pr.top) out.push(h("div", { class: "panel row" }, "Your Peek: top card ", cardEl(pr.top), h("button", { onclick: () => act({ type: "peek", charId: myChar, swap: true }) }, "Swap in"), h("button", { onclick: () => act({ type: "peek", charId: myChar, swap: false }) }, "Keep")));
-    if (pr.type === "recalculate") out.push(h("div", { class: "panel row" }, "Your Recalculate: discard ", view.hands[myChar].map((x) => h("button", { class: "cardbtn", onclick: () => act({ type: "recalculate", charId: myChar, cardId: x.id }) }, cardEl(x)))));
-    if (pr.type === "evolve") out.push(h("div", { class: "panel row" }, "Evolution offered.", h("button", { onclick: () => act({ type: "evolve", charId: myChar, skip: true }) }, "Skip")));
-    if (pr.type === "evolvePick") out.push(h("div", { class: "panel row" }, "Keep one: ", pr.options.map((id) => h("button", { onclick: () => act({ type: "evolvePick", charId: myChar, cardId: id }) }, id.split("/")[1]))));
-  }
+  if (myChar && ck.players[myChar]) out.push(...myPlay(view, ck, myChar));
 
-  if (ck.log.length) out.push(h("div", { class: "panel log small" }, [...ck.log].reverse().map((e) => h("div", {}, describeTrick(e, names)))));
+  if (ck.phase !== "setup" && ck.phase !== "resolve") out.push(adjustPanel(view, ck, names));
 
   if (ck.phase === "resolve") {
-    const who = sel(ck.participants.map((id) => [id, names[id]]));
-    const st = sel(Object.entries(SUITS).map(([k, s]) => [k, s.status]));
-    const comp = h("input", { placeholder: "Compulsion (for a Curse)", maxlength: 80 });
-    out.push(h("div", { class: "panel" }, h("h2", {}, "Results"),
-      h("ul", {}, Object.entries(ck.results).map(([id, r]) => h("li", {}, `${names[id]}: ${RESULT[r.result]} — ${r.tally} of ${r.target}${r.dies ? " — dies" : ""}`))),
-      h("p", { class: "small" }, "Narrate criticals and busts from the fiction. Add any statuses as consequences; they go on top of discard with Injuries last."),
-      h("div", { class: "row" }, who, st, comp, h("button", { onclick: () => act({ type: "addConsequence", charId: who.value, suit: st.value, compulsion: comp.value || undefined }) }, "Add consequence")),
-      ck.consequences.length ? h("ul", {}, ck.consequences.map((c) => h("li", {}, `${names[c.charId]}: ${SUITS[c.suit].status}${c.compulsion ? ` (${c.compulsion})` : ""}`))) : null,
-      h("p", {}, h("button", { class: "primary", onclick: () => act({ type: "endCheck" }) }, "Clean up and end the check"))));
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Results"),
+      h("table", {}, h("tbody", {}, Object.entries(ck.results).map(([id, r]) => h("tr", {}, h("td", {}, names[id]), h("td", {}, h("strong", {}, RESULT[r.result])), h("td", {}, `${r.tally} of ${r.target}`), h("td", {}, r.dies ? h("span", { class: "pill bad" }, "dies") : ""))))),
+      h("p", { class: "small" }, "Critical: grant a benefit that fits the fiction. Bust: a loud consequence, which may be a status. 4–6 short: a serious complication, which may be a status. Failure: each exposed participant normally gains a fitting status."),
+      h("div", { class: "row" }, sel("c-who", ck.participants.map((id) => [id, names[id]]), ck.participants[0], "Who"), sel("c-st", Object.entries(SUITS).map(([k, s]) => [k, s.status]), "S", "Status"),
+        h("input", { "data-key": "c-comp", placeholder: "Compulsion (for a Curse)", maxlength: 80 }),
+        h("button", { onclick: () => { act({ type: "addConsequence", charId: draft("c-who") || ck.participants[0], suit: draft("c-st") || "S", compulsion: draft("c-comp") || undefined }); forget("c-comp"); } }, "Add status")),
+      ck.consequences.length ? h("ul", {}, ck.consequences.map((c) => h("li", {}, `${names[c.charId]}: ${SUITS[c.suit].status}${c.compulsion ? ` (${c.compulsion})` : ""}`))) : h("p", { class: "small muted" }, "No status consequences yet."),
+      adjustPanel(view, ck, names, true),
+      h("button", { class: "primary big", onclick: () => act({ type: "endCheck" }) }, "Clean up and end the check")));
+  }
+  if (ck.log.length) out.push(h("div", { class: "panel log" }, [...ck.log].reverse().map((e) => h("div", {}, `${e.trick + 1}. ${trickSentence(e, names)}`))));
+  return out;
+}
+
+// GM adjustments, for items, peoples and fiction.
+function adjustPanel(view, ck, names, late = false) {
+  const who = () => draft("a-who") || ck.participants[0];
+  const whoSel = sel("a-who", ck.participants.map((id) => [id, names[id]]), ck.participants[0], "Who");
+  const reason = h("input", { "data-key": "a-why", placeholder: "Why (shown to the table)", maxlength: 60 });
+  const n = (k, d) => Number(draft(k) ?? d);
+  return h("details", { class: "panel" }, h("summary", {}, late ? "Adjust the result" : "Adjust (items, peoples, fiction)"),
+    h("div", { class: "stack", style: "margin-top:8px" },
+      h("div", { class: "row" }, whoSel, reason),
+      late ? null : h("div", { class: "row" }, "Next card counts", num("a-boost", 2, { min: -10, max: 10 }), "higher", h("button", { onclick: () => act({ type: "gmBoost", charId: who(), amount: n("a-boost", 2), reason: draft("a-why") || undefined }) }, "Apply")),
+      h("div", { class: "row" }, "Tally", num("a-tally", 1, { min: -20, max: 20 }), h("button", { onclick: () => act({ type: "gmAdjustTally", charId: who(), delta: n("a-tally", 1), reason: draft("a-why") || undefined }) }, "Adjust")),
+      h("div", { class: "row" }, "Target", num("a-target", ck.players[ck.participants[0]].target ?? 10, { min: 1, max: 40 }), h("button", { onclick: () => act({ type: "gmAdjustTarget", charId: who(), target: n("a-target", 10), reason: draft("a-why") || undefined }) }, "Set")),
+      late ? null : h("div", { class: "row" }, "World card", sel("a-wi", ck.worldRow.map((c, i) => [String(i), `${i + 1}: ${c.label}`]).slice(ck.trick), String(ck.trick), "World card"), "counts", num("a-wv", 0, { min: 0, max: 20 }), "for beating",
+        h("button", { onclick: () => act({ type: "gmWorldValue", index: Number(draft("a-wi") ?? ck.trick), value: n("a-wv", 0), reason: draft("a-why") || undefined }) }, "Set")),
+      late ? null : h("div", { class: "row" }, h("button", { onclick: () => act({ type: "gmDraw", charId: who(), n: 1 }) }, "They draw 1"),
+        view.hands && view.hands[who()] ? [h("span", { class: "small" }, "Discard from their hand:"), view.hands[who()].map((c) => cardFace(c, "sm", { onclick: () => act({ type: "gmDiscard", charId: who(), cardId: c.id }) }))] : null)));
+}
+
+// The GM's own character.
+function myPlay(view, ck, me) {
+  const out = [];
+  if (ck.phase === "play" && !(view.locks && view.locks[me]) && view.hands[me].length) {
+    const hand = view.hands[me];
+    const legal = view.legal[me] || [];
+    const c = hand.find((x) => x.id === mine.chosen);
+    const needsPrice = c && c.status && c.suit === "D" && hand.some((x) => x.id !== c.id && !x.status && !x.blessed);
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Your play"),
+      needsPrice ? h("p", { class: "pill warn" }, "Stumble's Price: choose an ordinary card to discard.") : null,
+      h("div", { class: "hand" }, hand.map((x) => {
+        const pick = needsPrice && x.id !== c.id && !x.status && !x.blessed;
+        return cardFace(x, "md", { class: `${mine.chosen === x.id ? "chosen" : ""} ${mine.price === x.id ? "price" : ""}`, disabled: !(legal.includes(x.id) || pick), onclick: () => { if (pick) mine.price = x.id; else { mine.chosen = x.id; mine.price = null; } draw(); } });
+      })),
+      h("button", { class: "primary", disabled: !c || (needsPrice && !mine.price), onclick: () => { act({ type: "lockCard", charId: me, cardId: mine.chosen, priceCardId: mine.price || undefined }); mine = { chosen: null, price: null }; } }, "Lock in")));
+  }
+  for (const pr of (view.pending || []).filter((x) => x.charId === me)) {
+    if (pr.type === "recalculate") out.push(h("div", { class: "panel row" }, "Your Recalculate: discard ", view.hands[me].map((x) => cardFace(x, "sm", { onclick: () => act({ type: "recalculate", charId: me, cardId: x.id }) }))));
+    if (pr.type === "evolve") out.push(h("div", { class: "panel row" }, "Evolution offered.", pr.suits.map((s) => h("button", { onclick: () => act({ type: "evolve", charId: me, suit: s, mode: "gain" }) }, `Return a ${SUITS[s].status}, gain a card`)), h("button", { onclick: () => act({ type: "evolve", charId: me, skip: true }) }, "Skip")));
+    if (pr.type === "evolvePick") out.push(h("div", { class: "panel row" }, "Keep one: ", pr.options.map((id) => h("button", { onclick: () => act({ type: "evolvePick", charId: me, cardId: id }) }, id.split("/")[1]))));
   }
   return out;
 }
+
+// ---------------- Characters ----------------
+
+function charsTab(info, view, names) {
+  const chars = Object.values(view.characters);
+  if (!chars.length) return [h("div", { class: "panel muted" }, "No characters yet.")];
+  const inCheck = view.check && view.check.phase !== "closed";
+  return chars.map((c) => {
+    const race = c.race && RACES[c.race];
+    const k = (s) => `${s}-${c.id}`;
+    return h("div", { class: "panel stack" },
+      h("div", { class: "spread" }, h("h2", {}, c.name, c.alive ? "" : " (dead)"), h("span", { class: "small muted" }, `${SUITS[c.primary].sym} primary · ${SUITS[c.secondary].sym} secondary${race ? ` · ${race.label}` : ""}`)),
+      race ? h("p", { class: "small" }, h("strong", {}, `${race.abilityTitle}: `), (race.rules || []).map(stripTags).join(" ")) : null,
+      c.survival ? h("p", { class: "pill bad" }, `Survival required: ${c.survival.M} Injuries, target ${c.survival.target}`) : null,
+      c.compulsion.length ? h("p", { class: "small" }, h("strong", {}, "Compulsion: "), c.compulsion.join("; ")) : null,
+      h("div", { class: "row small" }, `Deck ${c.deckCount} · discard ${c.discardCount} · Blessed in reserve ${c.reserveBlessed}`, Object.entries(SUITS).map(([s, x]) => h("span", { class: "pill" }, `${x.status} out: ${6 - ((c.reserveStatuses || {})[s] || 0)}`))),
+      h("details", {}, h("summary", {}, "Discard"), h("div", { class: "row" }, (c.discard || []).map((x) => cardFace(x, "sm")))),
+      inCheck ? h("p", { class: "small muted" }, "Statuses during a check wait for cleanup: add them as consequences when it resolves.") : h("div", { class: "stack" },
+        h("div", { class: "row" }, sel(k("st"), Object.entries(SUITS).map(([s, x]) => [s, x.status]), "S", "Status"), h("input", { "data-key": k("comp"), placeholder: "Compulsion (for a Curse)", maxlength: 80 }),
+          h("button", { onclick: () => { act({ type: "gainStatus", charId: c.id, suit: draft(k("st")) || "S", compulsion: draft(k("comp")) || undefined }); forget(k("comp")); } }, "Give status")),
+        h("div", { class: "row" }, h("button", { onclick: () => act({ type: "curseViolation", charId: c.id }) }, "Compulsion broken"), h("button", { onclick: () => act({ type: "grantBlessed", charId: c.id }) }, "Grant Blessed")),
+        h("div", { class: "row" }, h("span", { class: "small" }, "Rest (choose statuses to remove):"), (c.discard || []).filter((x) => x.status && x.suit !== "W").map((x) => h("label", { class: "pill" }, h("input", { type: "checkbox", "data-key": k(`r-${x.id}`) }), x.label)),
+          h("button", { onclick: () => act({ type: "rest", charId: c.id, cardIds: (c.discard || []).filter((x) => x.status && x.suit !== "W" && draft(k(`r-${x.id}`))).map((x) => x.id) }) }, "Rest"))),
+      h("div", { class: "row" }, h("span", { class: "small" }, "Items:"), c.items.map((id) => h("span", { class: "pill" }, ITEM_NAMES[id] || id, h("button", { class: "ghost small", "aria-label": `Take ${ITEM_NAMES[id] || id}`, onclick: () => act({ type: "loseItem", charId: c.id, itemId: id }) }, "×"))),
+        sel(k("item"), Object.values(ITEMS).map((it) => [it.id, it.label]), Object.keys(ITEMS)[0], "Item"), h("button", { onclick: () => act({ type: "giveItem", charId: c.id, itemId: draft(k("item")) || Object.keys(ITEMS)[0] }) }, "Give item")));
+  });
+}
+
+// ---------------- Room ----------------
+
+function roomTab(info, view, names) {
+  const out = [];
+  out.push(h("div", { class: "panel stack" }, h("h2", {}, "Join"), h("p", {}, "Players join at ", h("a", { href: info.joinUrl, target: "_blank" }, info.joinUrl), " or with code ", h("strong", {}, info.code), "."),
+    h("p", {}, h("a", { href: `/table?room=${info.code}`, target: "_blank" }, "Open the table screen"))));
+  out.push(h("div", { class: "panel" }, h("h2", {}, "Seats"), h("table", {}, h("tbody", {}, info.seats.map((s) => h("tr", {},
+    h("td", {}, h("span", { class: `dot${s.connected ? " on" : ""}` }), " ", s.name, s.role === "gm" ? " (you)" : ""),
+    h("td", {}, s.charId ? names[s.charId] : s.role === "player" && Object.keys(names).length ? h("span", { class: "row" }, h("span", { class: "muted small" }, "no character"),
+      sel(`as-${s.id}`, Object.entries(names).map(([id, nm]) => [id, nm]), Object.keys(names)[0], "Character"),
+      h("button", { class: "small", onclick: () => conn.manage({ op: "assign", seatId: s.id, charId: draft(`as-${s.id}`) || Object.keys(names)[0] }) }, "Give them this character")) : h("span", { class: "muted" }, "no character")),
+    h("td", {}, s.role === "player" ? h("button", { class: "small", onclick: () => { if (confirmRemove === s.id) { conn.manage({ op: "remove", seatId: s.id }); confirmRemove = null; } else { confirmRemove = s.id; toast(`Press Remove again to remove ${s.name}.`); setTimeout(() => { confirmRemove = null; }, 4000); } } }, "Remove") : null)))))));
+  const order = view.seats.slice();
+  if (order.length) {
+    const move = (i, d) => { const j = i + d; if (j < 0 || j >= order.length) return; [order[i], order[j]] = [order[j], order[i]]; act({ type: "setSeats", seats: order, gmSeat: view.gmSeat }); };
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Seating, clockwise"), 
+      h("ol", {}, order.map((id, i) => h("li", {}, names[id], " ", h("button", { class: "small", onclick: () => move(i, -1) }, "↑"), h("button", { class: "small", onclick: () => move(i, 1) }, "↓")))),
+      h("div", { class: "row" }, "First player clockwise from you:", sel("gm-seat", order.map((id, i) => [String(i), names[id]]), String(view.gmSeat), "First player"),
+        h("button", { onclick: () => act({ type: "setSeats", seats: order, gmSeat: Number(draft("gm-seat") ?? view.gmSeat) }) }, "Set"))));
+  }
+  if (!info.you.charId) {
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Play a character too"),
+      h("input", { "data-key": "my-name", placeholder: "Character name", maxlength: 24 }),
+      h("div", { class: "row" }, "Primary", sel("my-prim", Object.entries(SUITS).map(([k, s]) => [k, `${s.sym} ${s.name}`]), "S"), "Secondary", sel("my-sec", Object.entries(SUITS).map(([k, s]) => [k, `${s.sym} ${s.name}`]), "D")),
+      h("div", { class: "row" }, "People", sel("my-race", [["", "Human"], ...Object.values(RACES).map((r) => [r.id, r.label])], "")),
+      h("button", { onclick: () => {
+        const prim = draft("my-prim") || "S", sec = draft("my-sec") || "D";
+        if (prim === sec) return toast("Pick a different secondary suit.");
+        const rest = Object.keys(SUITS).filter((s) => s !== prim && s !== sec);
+        act({ type: "createCharacter", name: draft("my-name") || "GM", primary: prim, secondary: sec, others: rest, race: draft("my-race") || null });
+      } }, "Create"), h("p", { class: "small muted" }, "Your 2, 3, 6, 9 go to the first remaining suit in ♥ ♠ ♦ ♣ order.")));
+  }
+  return out;
+}
+let confirmRemove = null;
 </script>
 </body>
 </html>

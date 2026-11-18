@@ -1,12 +1,13 @@
-// The engine's bots should land where the published simulations do (TALLY_SIMULATIONS.md, situation 1).
+// The engine's bots should land where the simulator does for situation 1 under the current rules
+// (node scripts/simulate_tally.mjs 20000 "^1\. Default": blind Peek, two-of-each starter).
 import test from "node:test";
 import assert from "node:assert/strict";
 import { runScene, DEFAULT_SCENE } from "../sim/engine_bots.mjs";
 
 const PUBLISHED = {
-  ana: { critical: 21, failure: 7, bust: 10 },
-  ben: { critical: 15, failure: 16, bust: 9 },
-  cara: { critical: 15, failure: 11, bust: 19 },
+  ana: { critical: 20, failure: 8, bust: 11 },
+  ben: { critical: 13, failure: 17, bust: 10 },
+  cara: { critical: 12, failure: 12, bust: 20 },
 };
 
 test("engine bots match the published default scene within 3 points", () => {

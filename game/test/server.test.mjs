@@ -39,7 +39,7 @@ function client(port, hello) {
     ws.send(JSON.stringify({ type: "manage", seq, ...op }));
     return answer;
   };
-  c.close = () => new Promise((ok) => { ws.on("close", ok); ws.close(); });
+  c.close = () => new Promise((ok) => { if (ws.readyState === WebSocket.CLOSED) return ok(); ws.on("close", ok); ws.close(); });
   return c;
 }
 
@@ -121,8 +121,7 @@ test("a room plays a whole check over WebSockets, keeps hands private, survives 
       if (prompt) {
         const c = players[ids.indexOf(prompt.charId)];
         const hand = g.hands[prompt.charId];
-        const a = prompt.type === "peek" ? { type: "peek", charId: prompt.charId, swap: false }
-          : prompt.type === "recalculate" ? { type: "recalculate", charId: prompt.charId, cardId: hand[0].id }
+        const a = prompt.type === "recalculate" ? { type: "recalculate", charId: prompt.charId, cardId: hand[0].id }
           : prompt.type === "evolve" ? { type: "evolve", charId: prompt.charId, skip: true }
           : { type: "evolvePick", charId: prompt.charId, cardId: prompt.options[0] };
         assert.equal((await c.act(a)).type, "ok");
@@ -174,11 +173,51 @@ test("a room plays a whole check over WebSockets, keeps hands private, survives 
   }
 });
 
+test("campaigns download, import with their code, archive, and hand characters to new seats", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  const { host, port, api } = await startHost(dir);
+  try {
+    const created = await api("/api/campaigns", { name: "Moving", seed: "move" });
+    const { code, gmKey, id } = created.body.rooms[0];
+    const gm = client(port, { room: code, as: "gm", gmKey });
+    const ana = client(port, { room: code, as: "player", name: "Ana" });
+    await gm.ready; await ana.ready;
+    await ana.act({ type: "createCharacter", name: "Ana", primary: "S", secondary: "D", others: ["I", "W"] });
+    // Ana switches phones: a new seat joins by name, and the GM gives it her character.
+    const phone2 = client(port, { room: code, as: "player", name: "Ana again" });
+    const w2 = await phone2.ready;
+    const removed = ana.waitFor((m) => m.type === "removed");
+    assert.equal((await gm.manage({ op: "assign", seatId: w2.seatId, charId: "p1" })).type, "ok");
+    await removed;
+    await settle();
+    assert.equal(phone2.latest().room.you.charId, "p1");
+    assert.equal((await phone2.act({ type: "useItem", charId: "p1", itemId: "nope" })).type, "rejected", "items are checked");
+
+    const exported = await api(`/api/export?id=${id}`);
+    assert.equal(exported.status, 200);
+    assert.equal(exported.body.gmKey, undefined, "downloads never include the GM key");
+    // Archive closes the room; importing the download brings the campaign back with its code.
+    const closed = new Promise((ok) => gm.ws.on("close", ok));
+    await api("/api/archive", { id });
+    await closed;
+    const imported = await api("/api/import", exported.body);
+    assert.equal(imported.status, 200);
+    const room = imported.body.rooms.find((r) => r.name.startsWith("Moving"));
+    assert.equal(room.code, code, "the room code is kept when free");
+    assert.notEqual(room.gmKey, gmKey);
+    assert.equal((await api("/api/import", { nonsense: true })).status, 400);
+    for (const c of [gm, ana, phone2]) await c.close();
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("pages and the join link are served", async () => {
   const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
   const { host, port } = await startHost(dir);
   try {
-    for (const path of ["/play", "/table", "/gm", "/host", "/shared/client.js", "/shared/style.css"]) {
+    for (const path of ["/play", "/table", "/watch", "/gm", "/host", "/print", "/rules", "/shared/client.js", "/shared/style.css", "/suit_icons.js", "/card_rules.js", "/items/item_catalog.js", "/races/race_catalog.js"]) {
       const r = await fetch(`http://localhost:${port}${path}`);
       assert.equal(r.status, 200, path);
     }

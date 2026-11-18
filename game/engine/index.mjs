@@ -9,7 +9,7 @@ import * as check from "./check.mjs";
 
 export { RuleError } from "./campaign.mjs";
 export { label, SUITS, SUIT_INFO, STARTER, isStatus, isBlessed, isOrdinary } from "./cards.mjs";
-export { CHECK_KINDS, RESULT_RANK, resultFor, compareGoals, legalCards, trickWinner, activePeek } from "./check.mjs";
+export { CHECK_KINDS, RESULT_RANK, resultFor, compareGoals, legalCards, trickWinner } from "./check.mjs";
 export { viewFor } from "./views.mjs";
 
 export const ENGINE_VERSION = 1;
@@ -46,6 +46,9 @@ const HANDLERS = {
   gainStatus: campaign.gainStatusBetweenChecks,
   curseViolation: campaign.curseViolation,
   rest: campaign.rest,
+  giveItem: campaign.giveItem,
+  loseItem: campaign.loseItem,
+  useItem: campaign.useItem,
   grantBlessed: campaign.grantBlessed,
   evolve: (ctx, a) => { campaign.evolve(ctx, a); check.settle(ctx); },
   evolvePick: (ctx, a) => { campaign.evolvePick(ctx, a); check.settle(ctx); },
@@ -57,11 +60,16 @@ const HANDLERS = {
   deal: check.deal,
   lockCard: check.lockCard,
   unlockCard: check.unlockCard,
-  peek: check.peek,
   recalculate: check.recalculate,
   giveBlessed: check.giveBlessed,
   addConsequence: check.addConsequence,
   endCheck: check.endCheck,
+  gmBoost: check.gmBoost,
+  gmWorldValue: check.gmWorldValue,
+  gmAdjustTally: check.gmAdjustTally,
+  gmAdjustTarget: check.gmAdjustTarget,
+  gmDraw: (ctx, a) => { check.gmDraw(ctx, a); check.settle(ctx); },
+  gmDiscard: check.gmDiscard,
 };
 
 export const ACTION_TYPES = Object.keys(HANDLERS);

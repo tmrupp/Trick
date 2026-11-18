@@ -15,7 +15,7 @@ export function character(state, id) {
 
 const take = (pile, pred) => { const i = pile.findIndex(pred); return i < 0 ? null : pile.splice(i, 1)[0]; };
 
-export function createCharacter(ctx, { id, name, primary, secondary, others, controller = "player" }) {
+export function createCharacter(ctx, { id, name, primary, secondary, others, controller = "player", race = null }) {
   const st = ctx.state;
   if (!id || !/^[A-Za-z0-9_-]{1,32}$/.test(id)) throw rule("A character needs an id of letters, digits, - or _.");
   if (st.characters[id]) throw rule(`A character "${id}" already exists.`);
@@ -23,6 +23,7 @@ export function createCharacter(ctx, { id, name, primary, secondary, others, con
   if (suits.length !== 4 || suits.some((s) => !SUITS.includes(s)) || new Set(suits).size !== 4) {
     throw rule("Choose a primary suit, a different secondary suit, and which other suit takes 2, 3, 6, 9.");
   }
+  if (race != null && !/^[a-z0-9-]{1,40}$/.test(race)) throw rule("Unknown people.");
   const { deck, reserve } = buildStarter(id, primary, secondary, others);
   ctx.rng.shuffle(deck);
   st.characters[id] = {
@@ -30,6 +31,8 @@ export function createCharacter(ctx, { id, name, primary, secondary, others, con
     deck, discard: [], reserve, alive: true,
     compulsion: [], // the terms of the shared Curse compulsion
     survival: null, // a recorded survival requirement: { M, N }
+    race: race || null,
+    items: [], // item ids from items/item_catalog.js
   };
   if (!st.seats.includes(id)) st.seats.push(id);
   ctx.events.push({ type: "characterCreated", id, name: name || id });
@@ -210,4 +213,31 @@ export function evolvePick(ctx, { charId, cardId }) {
     if (!ch.deck.length && ch.discard.length) reshuffle(ctx, ch, p);
     drawOwed(ctx, ch, p);
   }
+}
+
+// ---- Items (items/item_catalog.js). Their effects are applied by the GM with the adjustment actions. ----
+
+const ITEM_ID = /^[a-z0-9-]{1,48}$/;
+
+export function giveItem(ctx, { charId, itemId }) {
+  const ch = character(ctx.state, charId);
+  if (!ITEM_ID.test(itemId || "")) throw rule("Unknown item.");
+  if (ch.items.includes(itemId)) throw rule(`${ch.name} already has that item.`);
+  ch.items.push(itemId);
+  ctx.events.push({ type: "itemGiven", id: charId, itemId });
+}
+
+export function loseItem(ctx, { charId, itemId }) {
+  const ch = character(ctx.state, charId);
+  const i = ch.items.indexOf(itemId);
+  if (i < 0) throw rule(`${ch.name} doesn't have that item.`);
+  ch.items.splice(i, 1);
+  ctx.events.push({ type: "itemLost", id: charId, itemId });
+}
+
+// A player wakes or uses an item: everyone sees it, and the GM applies its effect and cost.
+export function useItem(ctx, { charId, itemId, note }) {
+  const ch = character(ctx.state, charId);
+  if (!ch.items.includes(itemId)) throw rule("You don't have that item.");
+  ctx.events.push({ type: "itemUsed", id: charId, itemId, note: note ? String(note).slice(0, 120) : null });
 }

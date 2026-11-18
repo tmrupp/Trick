@@ -15,7 +15,9 @@
     "test": "node --test \"game/test/*.test.mjs\"",
     "sim:engine": "node game/sim/engine_bots.mjs",
     "start": "node game/server/main.mjs --tunnel",
-    "start:local": "node game/server/main.mjs"
+    "start:local": "node game/server/main.mjs",
+    "export:cards:dark": "node export_cards.mjs --dark",
+    "export:web-cards": "node export_web_cards.mjs"
   },
   "dependencies": {
     "playwright": "^1.54.1",

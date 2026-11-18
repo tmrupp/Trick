@@ -47,11 +47,11 @@ The **target sets the difficulty**. Each player may have their own target if the
 
 | Target | Difficulty | Exact hit | 7 or more short | Bust |
 | --- | --- | --- | --- | --- |
-| 6–8 | Easy | 18–27% | 0–10% | 13–18% |
-| 9–11 | Moderate | 12–23% | 10–20% | 9–14% |
-| 12–14 | Hard | 8–16% | 22–39% | 7–10% |
-| 15–17 | Very hard | 4–11% | 39–59% | 4–6% |
-| 18–20 | Extreme | 2–7% | 55–74% | 2–4% |
+| 6–8 | Easy | 17–24% | 0–11% | 13–19% |
+| 9–11 | Moderate | 10–22% | 11–22% | 10–16% |
+| 12–14 | Hard | 7–15% | 22–41% | 7–11% |
+| 15–17 | Very hard | 4–11% | 38–60% | 4–7% |
+| 18–20 | Extreme | 2–7% | 54–75% | 2–5% |
 
 Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
 
@@ -77,11 +77,11 @@ On a **trick loss**, take your losing card's consolation, including when an ally
 | Suit | Effect |
 | --- | --- |
 | **Strength — Brace** | Your next card counts this card's printed value higher for beating. It never changes what you score. |
-| **Dexterity — Peek** | Look at the top card of the world deck. You may swap it for the next world card in the row; the replaced card goes to the bottom of the world deck. |
+| **Dexterity — Peek** | Replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost. |
 | **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. |
 | **Weird — Mirror** | If your next card wins, the world card scores 11 minus its value. |
 
-Brace and Mirror last for your next play only: turn the losing card sideways as a reminder. Peek happens at once. If several players Peek, resolve them one at a time, clockwise from the GM, each seeing the row as the last one left it. The card you Peek at stays secret unless you swap it in, and the no-coordination rule still applies. Turn a Mirrored world card upside down in your tally pile so its changed score stays visible.
+Brace and Mirror last for your next play only: turn the losing card sideways as a reminder. Peek happens at once and blind: nobody looks at the new card before it lands, and nobody chooses whether to replace. If several players lose with Spades in one trick, the next world card is still replaced only once. Turn a Mirrored world card upside down in your tally pile so its changed score stays visible.
 
 ## Statuses
 

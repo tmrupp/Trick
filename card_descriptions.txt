@@ -4,7 +4,7 @@ BRACE (Hearts — Strength)
 Your next card counts this card's printed value higher for beating. It never changes what you score.
 
 PEEK (Spades — Dexterity)
-Look at the top card of the world deck. You may swap it for the next world card in the row; the replaced card goes to the bottom of the world deck.
+Replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost.
 
 RECALCULATE (Diamonds — Intelligence)
 Discard one card from hand, then draw one. You need a card to discard.

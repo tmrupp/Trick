@@ -7,63 +7,78 @@
 </head>
 <body>
 <h1>TRICK host</h1>
-<p class="muted small">Keep this page's address private: it can open campaigns and shows the GM link.</p>
-<div id="error" class="panel" hidden></div>
-<div class="panel">
+<p class="muted small">Keep this page's address private: it opens campaigns and shows each GM link.</p>
+<div id="error" class="panel banner bad" hidden></div>
+<div class="panel stack">
   <h2>New campaign</h2>
   <form id="create" class="row">
-    <input id="name" placeholder="Campaign name" required maxlength="60">
+    <input id="name" placeholder="Campaign name" required maxlength="60" aria-label="Campaign name">
     <button class="primary">Create and open</button>
   </form>
+  <div class="row small"><label>Import a downloaded save <input type="file" id="import" accept="application/json,.json"></label></div>
 </div>
 <div id="open"></div>
 <h2>Saved campaigns</h2>
 <div id="saved" class="panel"></div>
 <script type="module">
-import { h, params } from "/shared/client.js";
+import { h, params, render } from "/shared/client.js";
 const admin = params.get("admin");
-const api = async (path, body) => {
-  const r = await fetch(path, { method: body ? "POST" : "GET", headers: { "x-admin": admin, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+const api = async (path, body, method) => {
+  const r = await fetch(path, { method: method || (body ? "POST" : "GET"), headers: { "x-admin": admin, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
   const data = await r.json();
   if (!r.ok) throw new Error(data.error || "Request failed");
   return data;
 };
 const err = document.getElementById("error");
-function render(info) {
+const show = (e) => { err.hidden = false; err.textContent = e.message; };
+const qrCache = new Map();
+
+async function download(id, name) {
+  const data = await api(`/api/export?id=${encodeURIComponent(id)}`);
+  const a = h("a", { href: URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: "application/json" })), download: `${id}.json` });
+  document.body.append(a); a.click(); a.remove();
+}
+
+function renderInfo(info) {
   err.hidden = true;
-  const open = document.getElementById("open");
-  open.replaceChildren(...info.rooms.map((r) => {
+  render(document.getElementById("open"), info.rooms.map((r) => {
     const join = `${info.publicUrl}/j/${r.code}`;
     const gm = `${info.publicUrl}/gm?room=${r.code}&key=${encodeURIComponent(r.gmKey)}`;
-    return h("div", { class: "panel" },
+    const qr = h("div", { class: "qr" });
+    if (qrCache.has(join)) qr.innerHTML = qrCache.get(join);
+    else fetch(`/qr.svg?text=${encodeURIComponent(join)}`).then((x) => x.text()).then((svg) => { qrCache.set(join, svg); qr.innerHTML = svg; });
+    return h("div", { class: "panel stack" },
       h("h2", {}, r.name),
-      h("div", { class: "row" },
-        h("div", { class: "qr", id: `qr-${r.code}` }),
-        h("div", {},
-          h("div", { class: "muted small" }, "Room code"), h("div", { class: "code" }, r.code),
-          h("p", {}, "Players join at ", h("a", { href: join, target: "_blank" }, join)),
-          h("p", {}, h("a", { href: `/table?room=${r.code}`, target: "_blank" }, "Open the table screen"), " · ", h("a", { href: gm, target: "_blank" }, "Open the GM controls")),
-          h("p", { class: "muted small" }, "The GM link is secret: anyone with it runs the game."))),
+      h("div", { class: "row", style: "align-items:flex-start; gap:18px" }, qr,
+        h("div", { class: "stack" },
+          h("div", {}, h("div", { class: "muted small" }, "Room code"), h("div", { class: "code" }, r.code)),
+          h("div", {}, "Players join at ", h("a", { href: join, target: "_blank" }, join)),
+          h("div", { class: "row" }, h("a", { href: `/table?room=${r.code}`, target: "_blank" }, "Table screen"), "·", h("a", { href: gm, target: "_blank" }, "GM controls"), "·", h("a", { href: `${info.publicUrl}/watch?room=${r.code}`, target: "_blank" }, "Spectator link")),
+          h("div", { class: "row small" }, h("span", { class: "muted" }, "GM link (secret):"), h("code", {}, gm.replace(/^https?:\/\//, "")), h("button", { class: "small", onclick: () => navigator.clipboard.writeText(gm).then(() => {}, () => {}) }, "Copy")))),
       h("h3", {}, "Seats"),
-      h("ul", {}, r.seats.length ? r.seats.map((s) => h("li", {}, h("span", { class: `status-dot${s.connected ? " on" : ""}` }), `${s.name}${s.role === "gm" ? " (GM)" : ""}${s.charId ? "" : " — no character yet"}`)) : h("li", { class: "muted" }, "Nobody has joined yet.")));
+      r.seats.length ? h("div", { class: "row" }, r.seats.map((s) => h("span", { class: "pill" }, h("span", { class: `dot${s.connected ? " on" : ""}` }), `${s.name}${s.role === "gm" ? " (GM)" : ""}${s.charId ? "" : " · no character"}`))) : h("p", { class: "muted" }, "Nobody has joined yet."));
   }));
-  for (const r of info.rooms) {
-    const join = `${info.publicUrl}/j/${r.code}`;
-    fetch(`/qr.svg?text=${encodeURIComponent(join)}`).then((x) => x.text()).then((svg) => { const el = document.getElementById(`qr-${r.code}`); if (el) el.innerHTML = svg; });
-  }
   const openIds = new Set(info.rooms.map((r) => r.id));
-  const saved = document.getElementById("saved");
-  saved.replaceChildren(info.campaigns.length ? h("table", {}, h("tbody", {}, info.campaigns.map((c) =>
-    h("tr", {}, h("td", {}, h("strong", {}, c.name), h("div", { class: "muted small" }, c.characters.join(", ") || "No characters")),
+  render(document.getElementById("saved"), info.campaigns.length ? h("div", { class: "scroll" }, h("table", {}, h("tbody", {}, info.campaigns.map((c) =>
+    h("tr", {}, h("td", {}, h("strong", {}, c.name), h("div", { class: "muted small" }, c.characters.join(", ") || "No characters yet")),
       h("td", { class: "muted small" }, new Date(c.updatedAt).toLocaleString()),
-      h("td", {}, openIds.has(c.id) ? h("span", { class: "muted" }, "Open") : h("button", { onclick: () => api("/api/open", { id: c.id }).then(render).catch(show) }, "Open")))))) : h("p", { class: "muted" }, "No saved campaigns yet."));
+      h("td", { class: "row" },
+        openIds.has(c.id) ? h("span", { class: "pill good" }, "Open") : h("button", { onclick: () => api("/api/open", { id: c.id }).then(renderInfo).catch(show) }, "Open"),
+        h("button", { class: "small", onclick: () => download(c.id, c.name).catch(show) }, "Download"),
+        h("button", { class: "small", onclick: () => { if (confirm(`Archive ${c.name}? It closes the room and moves the save to saves/archive.`)) api("/api/archive", { id: c.id }).then(renderInfo).catch(show); } }, "Archive"))))))) : h("p", { class: "muted" }, "No saved campaigns yet."));
 }
-const show = (e) => { err.hidden = false; err.textContent = e.message; };
+
 document.getElementById("create").addEventListener("submit", (e) => {
   e.preventDefault();
-  api("/api/campaigns", { name: document.getElementById("name").value }).then(render).catch(show);
+  api("/api/campaigns", { name: document.getElementById("name").value }).then((info) => { document.getElementById("name").value = ""; renderInfo(info); }).catch(show);
 });
-const refresh = () => api("/api/info").then(render).catch(show);
+document.getElementById("import").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try { renderInfo(await api("/api/import", JSON.parse(await file.text()))); } catch (x) { show(x); }
+  e.target.value = "";
+});
+const refresh = () => api("/api/info").then(renderInfo).catch(show);
 refresh();
 setInterval(refresh, 4000);
 </script>

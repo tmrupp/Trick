@@ -47,7 +47,7 @@ function evolvedDeck() {
 const worldDeck = () => { const d = []; for (const s of SUITS) for (let v = 1; v <= 10; v++) d.push(card(s, v)); return shuffle(d); };
 
 // Dexterity candidates that change the world row instead of the player's next play.
-const WORLD_DEX = new Set(["reroll", "reroll-each", "peek", "sidestep", "shove"]);
+const WORLD_DEX = new Set(["blind", "reroll", "reroll-each", "peek", "sidestep", "shove"]);
 // How much a player wants this world card next: 3 lands them exactly, 2 fits, 0 is no use, -2 would force a win that busts them.
 function worth(p, wc) {
   const need = p.target - p.tally;
@@ -136,10 +136,10 @@ function chooseSeen(p, w, plays, wb, spec) {
   return { ...winners[0], want: false, forced: true };
 }
 
-// The adopted rules (RULES.md): suit-then-trump ties, forced statuses, Peek. A spec overrides any of them:
+// The adopted rules (RULES.md): suit-then-trump ties, forced statuses, blind Peek. A spec overrides any of them:
 // tieBreak "none" means the world takes every tie; dex "return" is the old Slip, "wait" the replaced Wait;
 // mustStatus false lets statuses be held.
-const RULES_DEFAULTS = { tieBreak: "suit+trump", mustStatus: true, dex: "peek" };
+const RULES_DEFAULTS = { tieBreak: "suit+trump", mustStatus: true, dex: "blind" };
 
 function runCheck(rawSpec) {
   const spec = { ...RULES_DEFAULTS, ...rawSpec };
@@ -362,7 +362,9 @@ function runCheck(rawSpec) {
     // World-row candidates, in seat order. Each acts on the row as the previous one left it.
     const nx = k + 1;
     if (movers.length && nx < N) {
-      if (spec.dex === "reroll") { // Reroll: if anyone asks, the next world card is discarded and replaced, once
+      if (spec.dex === "blind") { // Peek, adopted: any losing Spade replaces the next world card, unseen, once
+        if (reserve.length) { const t = row[nx]; row[nx] = reserve.shift(); reserve.push(t); movers[0].dexPays++; }
+      } else if (spec.dex === "reroll") { // Reroll: if anyone asks, the next world card is discarded and replaced, once
         const asker = movers.find((p) => worth(p, row[nx]) <= 0);
         if (asker && reserve.length) { row[nx] = reserve.shift(); asker.dexPays++; }
       } else for (const p of movers) {
@@ -516,7 +518,7 @@ const situations = [
       ["solo", 6, () => [P("Ana alone (Strength)", "S", "D", 6)]],
     ];
     const out = [];
-    for (const dex of ["wait", "reroll", "reroll-each", "peek", "sidestep", "shove", "none"]) for (const [scene, tricks, players] of scenes) {
+    for (const dex of ["blind", "wait", "reroll", "reroll-each", "peek", "sidestep", "shove", "none"]) for (const [scene, tricks, players] of scenes) {
       out.push(situation(`World ${dex}: ${scene}`, { tricks, dex, players: players() }, "World-row Dexterity experiment."));
     }
     return out;

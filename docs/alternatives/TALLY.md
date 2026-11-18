@@ -36,15 +36,15 @@ Among incompatible goals, the better step wins. Within the same step, the tally 
 
 | Target | Difficulty | Exact hit | Failure: 7+ short | Bust |
 | --- | --- | --- | --- | --- |
-| 6–8 | Easy | 18–27% | 0–10% | 13–18% |
-| 9–11 | Moderate | 12–23% | 10–20% | 9–14% |
-| 12–14 | Hard | 8–16% | 22–39% | 7–10% |
-| 15–17 | Very hard | 4–11% | 39–59% | 4–6% |
-| 18–20 | Extreme | 2–7% | 55–74% | 2–4% |
+| 6–8 | Easy | 17–24% | 0–11% | 13–19% |
+| 9–11 | Moderate | 10–22% | 11–22% | 10–16% |
+| 12–14 | Hard | 7–15% | 22–41% | 7–11% |
+| 15–17 | Very hard | 4–11% | 38–60% | 4–7% |
+| 18–20 | Extreme | 2–7% | 54–75% | 2–5% |
 
-These use Peek as Dexterity's consolation. **6 is the lowest useful target:** below it, busts keep rising (to 22–32% at target 1) while success or better barely moves.
+These use the blind Peek as Dexterity's consolation. **6 is the lowest useful target:** below it, busts keep rising (to 23–34% at target 1) while success or better barely moves.
 
-- **Busts are a low-target, small-table risk.** At target 6, 18% of results bust at 2 players and 14% at 5. At target 20, 2–3% do. Under the old Slip, busts stayed at 0–13%, because every returned Spade was a spare card that couldn't win.
+- **Busts are a low-target, small-table risk.** At target 6, 19% of results bust at 2 players and 14% at 5. At target 20, 2–3% do. Under the old Slip, busts stayed at 0–13%, because every returned Spade was a spare card that couldn't win.
 - **Larger tables hit more often.** At any given target, 5 players hit exactly about 10 points more often than 2.
 - **The difficulty climbs smoothly.** Each step up in target is a little harder than the last, with no cliff.
 - **Below 3, exact hits get harder again.** At targets 1 and 2 you must take exactly one low world card and then nothing else.
@@ -74,11 +74,11 @@ Your losing card's printed suit gives its consolation, statuses included. There 
 | Suit | Consolation |
 | --- | --- |
 | **Strength: Brace** | Your next card counts this card's value higher **for beating**. |
-| **Dexterity: Peek** | Look at the top card of the world deck. You may **swap it for the next world card**; the replaced card goes to the bottom of the world deck. Several Peeks resolve one at a time, clockwise from the GM. |
+| **Dexterity: Peek** | **Replace the next world card, unseen,** with the top card of the world deck; the replaced card goes to the bottom. It happens once a trick, however many Spades lost, and nobody chooses or looks first. |
 | **Intelligence: Recalculate** | Discard one card from hand, then draw one. |
 | **Weird: Mirror** | If your next card wins, **the world card scores 11 minus its value.** |
 
-Brace and Mirror last for your next play only; Peek happens at once. Turn the losing card sideways as a reminder, and straighten it when you play.
+Brace and Mirror last for your next play only; Peek happens at once, blind. Turn the losing card sideways as a reminder, and straighten it when you play.
 
 Each suit does one job:
 
@@ -89,7 +89,7 @@ Each suit does one job:
 
 **Losing on purpose** sets you up:
 - **A losing Strength card is a Brace:** next trick, reach for a bigger world card than your hand could otherwise take.
-- **A losing Dexterity card is a Peek:** throw out a world card that would bust you or that nobody can use, or bring in one that fits.
+- **A losing Dexterity card is a Peek:** the next world card is redrawn, for better or worse. Lose with a Spade when the next prize is one nobody wants.
 - **A losing Weird card is a Mirror:** a low world card coming up becomes a big score, or a big one a small, safe score.
 
 **Changes from the old consolations:**
@@ -105,7 +105,8 @@ Each suit does one job:
 | **Weird** | **Mirror** *(recommended)* | The next world card you win scores 11 minus its value. | Plannable, double-edged. |
 | | **Shift** | If any losing card this trick is Weird, discard the next world card and flip a replacement. | Changes the whole table's next trick, at random. |
 | | **Echo** | If your next card wins, the world card scores double. | Big swings, real bust risk. |
-| **Dexterity** | **Peek** *(adopted)* | Look at the world deck's top card; you may swap it for the next world card. | Helps at every table size, solo included; acts about once in three losses. |
+| **Dexterity** | **Peek** *(adopted)* | Replace the next world card, unseen, once a trick. | Simple, no choices or prompts; works at any table size. |
+| | **Peek with a look** *(replaced)* | Look at the world deck's top card; you may swap it in. | Slightly better results, but a private choice per loser and an order to resolve them. |
 | | **Wait** *(replaced)* | Choose your next card after everyone else reveals. | Cuts collisions between allies by about 30%, but useless solo. |
 | | **Slip** *(replaced)* | Return this card to your hand. | Losing costs nothing; the spare cards hide most busts. |
 | | **Reposition** | Next card can win whatever its suit. | Familiar, but overlaps Brace. |
@@ -124,8 +125,8 @@ Target 10, a standard check.
 - **On the 4♣:** her 5♣ wins, and the world card scores 11 − 4 = 7: **exactly 10**.
 
 **Ben** (Dexterity trump) is on 6 and needs 4. The next world card is a 9♦, which nobody can use without busting.
-- **This trick:** his 2♠ loses, so he Peeks: the world deck's top card is 4♠. He swaps it in, and the 9♦ goes to the bottom of the world deck.
-- **Next trick:** his 7♠ takes the 4♠: **exactly 10**.
+- **This trick:** he loses on purpose with his 2♠, so the 9♦ is replaced, unseen: the world deck's top card is dealt in its place. It's a 4♠.
+- **Next trick:** his 7♠ takes the 4♠: **exactly 10**. It could as easily have been an 8; a Peek is a fresh draw, not a choice.
 
 ## Statuses
 
@@ -134,7 +135,7 @@ Target 10, a standard check.
 | Status | When it loses | Its own rule |
 | --- | --- | --- |
 | **Injury, Strength** | Brace for 0, which does nothing. | Two or more Injuries in your recent discard make survival a forced goal. |
-| **Stumble, Dexterity** | Peek at the world deck. | **Price:** when you play Stumble, discard an ordinary card from hand, your choice. |
+| **Stumble, Dexterity** | Peek: the next world card is replaced. | **Price:** when you play Stumble, discard an ordinary card from hand, your choice. |
 | **Stress, Intelligence** | Recalculate. You may discard another status. | Whenever you draw Stress, gain another Stress into discard. |
 | **Curse, Weird** | Mirrors your next win. | Breaking the compulsion gains one Stress per Curse outside your reserve. |
 
@@ -209,7 +210,7 @@ The current numbers, under every adopted rule, are in [TALLY_SIMULATIONS.md](TAL
 - Does scoring only the world card make players feel their own cards matter enough?
 - Is Peek worth enough? The Dexterity-trump player still lags the others by a few points of success or better in simulation.
 - Solo checks still bust about a quarter of the time at targets 6–8. Do they need larger targets?
-- Peek changes the row for everyone. Does a swap that takes away a card an ally wanted feel like a collision of its own?
+- Peek redraws the next world card for everyone. Does a replacement that takes away a card an ally wanted feel like a collision of its own?
 - Is Price steep enough to stop Stumble being a free pass?
 - Are fiction-based criticals and busts consistent enough between GMs? Groups may want a short table of examples per approach.
 - Visible row or suspense: which feels better at the table?

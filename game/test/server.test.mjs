@@ -70,8 +70,14 @@ test("a room plays a whole check over WebSockets, keeps hands private, survives 
 
     const gm = client(port, { room: code, as: "gm", gmKey });
     const table = client(port, { room: code, as: "table" });
-    const players = ["Ana", "Ben", "Cara"].map((name) => client(port, { room: code, as: "player", name }));
-    for (const c of [gm, table, ...players]) assert.equal((await c.ready).type, "welcome");
+    for (const c of [gm, table]) assert.equal((await c.ready).type, "welcome");
+    // Join one at a time so seat ids follow join order.
+    const players = [];
+    for (const name of ["Ana", "Ben", "Cara"]) {
+      const c = client(port, { room: code, as: "player", name });
+      assert.equal((await c.ready).type, "welcome");
+      players.push(c);
+    }
 
     const suits = [["S", "D", ["I", "W"]], ["D", "I", ["S", "W"]], ["I", "W", ["S", "D"]]];
     for (const [i, c] of players.entries()) {

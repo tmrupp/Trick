@@ -20,8 +20,8 @@ export function createGame({ seed = Date.now(), gmSeat = 0 } = {}) {
     seed: String(seed),
     rng: seedFrom(seed),
     characters: {},
-    seats: [], // character ids, clockwise
-    gmSeat, // index in seats of the first player clockwise from the GM
+    seats: [], // character ids, in join order (display order only)
+    gmSeat, // index in seats of the first player listed
     check: null,
     checkCount: 0,
     lastCheckTricks: null,

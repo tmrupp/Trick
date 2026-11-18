@@ -240,14 +240,6 @@ function roomTab(info, view, names) {
       sel(`as-${s.id}`, Object.entries(names).map(([id, nm]) => [id, nm]), Object.keys(names)[0], "Character"),
       h("button", { class: "small", onclick: () => conn.manage({ op: "assign", seatId: s.id, charId: draft(`as-${s.id}`) || Object.keys(names)[0] }) }, "Give them this character")) : h("span", { class: "muted" }, "no character")),
     h("td", {}, s.role === "player" ? h("button", { class: "small", onclick: () => { if (confirmRemove === s.id) { conn.manage({ op: "remove", seatId: s.id }); confirmRemove = null; } else { confirmRemove = s.id; toast(`Press Remove again to remove ${s.name}.`); setTimeout(() => { confirmRemove = null; }, 4000); } } }, "Remove") : null)))))));
-  const order = view.seats.slice();
-  if (order.length) {
-    const move = (i, d) => { const j = i + d; if (j < 0 || j >= order.length) return; [order[i], order[j]] = [order[j], order[i]]; act({ type: "setSeats", seats: order, gmSeat: view.gmSeat }); };
-    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Seating, clockwise"), 
-      h("ol", {}, order.map((id, i) => h("li", {}, names[id], " ", h("button", { class: "small", onclick: () => move(i, -1) }, "↑"), h("button", { class: "small", onclick: () => move(i, 1) }, "↓")))),
-      h("div", { class: "row" }, "First player clockwise from you:", sel("gm-seat", order.map((id, i) => [String(i), names[id]]), String(view.gmSeat), "First player"),
-        h("button", { onclick: () => act({ type: "setSeats", seats: order, gmSeat: Number(draft("gm-seat") ?? view.gmSeat) }) }, "Set"))));
-  }
   if (!info.you.charId) {
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Play a character too"),
       h("input", { "data-key": "my-name", placeholder: "Character name", maxlength: 24 }),

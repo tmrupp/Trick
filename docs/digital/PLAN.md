@@ -79,7 +79,7 @@ Pure functions over plain data, with a seeded random number generator so any gam
 **Rules the engine must settle in code.** Each needs a test, and some need a sentence added to RULES.md:
 - the forced status choice when several match the world card's suit;
 - Stumble's Price on the final trick, when it costs nothing;
-- the Peek order (clockwise from the GM), which means seats have an order;
+- the Peek order (no longer needed: Peek is blind and happens once a trick, so seats have no order in play);
 - a reshuffle mid-trick, with evolution, set-aside statuses and Stress draws chaining;
 - a Blessed given between tricks, and the giver's replacement draw;
 - incompatible goals and stalemates when results tie;

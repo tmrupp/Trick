@@ -15,13 +15,13 @@ npm run sim:engine   # bots play the default scene through the engine (add a num
 2. **Run `npm start`.** It prints a private host page link (with an admin token) and a public `trycloudflare.com` link. The public link changes each time you start.
 3. **On the host page,** create a campaign or open a saved one. Each campaign shows its room code, a QR code and join link for players, a link to the table screen, and the secret GM link.
 4. **Players** scan the QR code or open the join link, enter a name, and create their character on their phone. A phone that sleeps or drops rejoins its seat automatically.
-5. **The GM** opens the GM link, on a phone or the laptop. A banner always says what to do next. Players state their own goals and approaches on their phones; the GM sets each target, approves approaches, and can also play a character, set the seating, add consequences, give items, grant rest and Blessed, remove a seat, and hand a character to a new seat.
+5. **The GM** opens the GM link, on a phone or the laptop. A banner always says what to do next. Players state their own goals and approaches on their phones; the GM sets each target, approves approaches, and can also play a character, add consequences, give items, grant rest and Blessed, remove a seat, and hand a character to a new seat.
 
 ## The screens
 
 - **Phone (`/play`).** Character creation with suits and a people; your goal and approach for each check; a hand of the printed cards with forced statuses marked and each card's text a tap away; prompts that explain Recalculate, Stumble's Price and evolution; your tally against your target; a **My cards** tab with deck contents, discard, statuses, compulsion, survival warnings and items (with a **Use** button that tells the table); a link to print your cards.
 - **Table (`/table`, or `/watch` for spectators).** The join QR code, the world row, each player's tally and progress to target, who has locked in (face down), a reveal at every trick with a one-line reason, waiting reminders, and results.
-- **GM (`/gm`).** Tabs for the check (setup with the difficulty beside each target, hands, adjustments, results and consequences), characters (statuses, Curses, rest, Blessed, items) and the room (join link, seats, seating order, assigning characters, playing a character).
+- **GM (`/gm`).** Tabs for the check (setup with the difficulty beside each target, hands, adjustments, results and consequences), characters (statuses, Curses, rest, Blessed, items) and the room (join link, seats, assigning characters, playing a character).
 - **Host (`/host`).** Create, open, download, import and archive campaigns.
 - **Rules (`/rules`)** and **print (`/print`)** pages.
 
@@ -68,7 +68,7 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | Action | When | Who |
 | --- | --- | --- |
 | `createCharacter { id, name, primary, secondary, others }` | Any time | A player. `others` lists the two remaining suits; the first takes 2, 3, 6, 9 |
-| `setSeats { seats, gmSeat }` | Any time | GM |
+| `setSeats { seats, gmSeat }` | Any time | GM. No longer in the pages: it only sets display order. Kept so older saves replay |
 | `beginCheck { kind, participants }` | No check running | GM. Runs the survival scan |
 | `declareApproach { charId, goal, suit, approach }` | Setup | The player states their goal and approach (a survival goal is fixed) |
 | `setGoal { charId, target }`, `approveApproach { charId, approved }` | Setup | GM: the target, and whether the approach fits. A survival target is fixed at 3 × M |

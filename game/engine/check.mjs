@@ -35,7 +35,7 @@ function participant(ck, charId) {
   return p;
 }
 
-// Participants in seat order, clockwise from the GM.
+// Participants in seat order (display order only; no rule depends on it).
 function seatOrder(st, ids) {
   const n = st.seats.length;
   const from = ((st.gmSeat % n) + n) % n;

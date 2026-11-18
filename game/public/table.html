@@ -106,7 +106,7 @@ function draw(info, view, names) {
       return cardFace(c, cur ? "xl" : "md", { class: cur ? "current" : i < ck.trick ? "past" : "" });
     }))));
   }
-  const waiting = ck.waitingOn.length ? ck.waitingOn.map((w) => `${names[w.charId]} (${w.type === "recalculate" ? "Recalculate" : w.type === "evolve" ? "evolving" : "choosing"})`)
+  const waiting = ck.waitingOn.length ? ck.waitingOn.map((w) => `${names[w.charId]} (${w.type === "peek" ? "Peek" : w.type === "recalculate" ? "Recalculate" : w.type === "evolve" ? "evolving" : "choosing"})`)
     : ck.phase === "play" ? ck.participants.filter((id) => !ck.players[id].locked && ck.players[id].handCount).map((id) => names[id]) : [];
   if (waiting.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel banner" }, h("span", { class: "reason" }, `Waiting for ${waiting.join(", ")}`)));
   if (ck.log.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel" }, h("div", { class: "reason" }, trickSentence(ck.log[ck.log.length - 1], names))));

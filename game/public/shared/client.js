@@ -222,10 +222,13 @@ export function eventText(e, names, items = {}) {
     case "statusUnavailable": return `${n(e.id)} has no ${e.status} left in reserve.`;
     case "survivalRequired": return `${n(e.id)} must survive: target ${e.target}.`;
     case "died": return `${n(e.id)} does not survive.`;
+    case "resurrected": return `${n(e.id)} is back.`;
+    case "characterCreated": return `${e.name} joins the campaign.`;
     case "blessedGranted": return `${n(e.id)} is granted a Blessed.`;
     case "blessedGiven": return `${n(e.from)} gives a Blessed to ${n(e.to)}.`;
     case "pricePaid": return `${n(e.id)} pays Stumble's Price.`;
-    case "peekReplaced": return `Peek (${e.by.map(n).join(", ")}): the next world card, ${e.out}, is replaced by the ${e.in}.`;
+    case "peekReplaced": return `Peek: the next world card, ${e.out}, is replaced by the ${e.in}.`;
+    case "peekKept": return `Peek: the ${e.world} stays.`;
     case "itemUsed": return `${n(e.id)} uses ${items[e.itemId] || e.itemId}${e.note ? `: ${e.note}` : ""}.`;
     case "itemGiven": return `${n(e.id)} gains ${items[e.itemId] || e.itemId}.`;
     case "curseViolated": return `${n(e.id)} breaks the compulsion and gains ${e.stress} Stress.`;

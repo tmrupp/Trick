@@ -83,13 +83,15 @@ function run(P, T, dex, trials, tricks) {
         if (x === win) continue;
         const p = x.p, s = x.c.s;
         if (s === 'S') p.brace = x.c.v;
-        else if (s === 'D') { if (dex === 'slip') p.hand.push(x.c); else if (dex === 'peek' || dex === 'blind') peekers.push(p); else p.wait = true; }
+        else if (s === 'D') { if (dex === 'slip') p.hand.push(x.c); else if (dex === 'peek' || dex === 'blind' || dex === 'choose') peekers.push(p); else p.wait = true; }
         else if (s === 'W') p.mirror = true;
         else if (p.hand.length && p.deck.length) { // Recalculate: drop the highest card (least likely to land exactly), draw 1
           p.hand.sort((a, b) => b.v - a.v); p.hand.shift(); p.hand.push(p.deck.shift());
         }
       }
-      if (dex === 'blind') { // Peek, adopted: any losing Spade replaces the next world card, unseen, once
+      if (dex === 'choose') { // Peek, adopted: each losing Spade chooses blind; replaced once if anyone wants a different card
+        if (reserve.length && peekers.some((p) => worth(p, row[k + 1], T) <= 0)) { const t = row[k + 1]; row[k + 1] = reserve.shift(); reserve.push(t); }
+      } else if (dex === 'blind') { // Peek, automatic (replaced): any losing Spade replaces the next world card, unseen, once
         if (peekers.length && reserve.length) { const t = row[k + 1]; row[k + 1] = reserve.shift(); reserve.push(t); }
       } else for (const p of peekers) { // Peek with a look: swap the world deck's top card in if it suits you better
         if (reserve.length && worth(p, reserve[0], T) > worth(p, row[k + 1], T)) { const t = row[k + 1]; row[k + 1] = reserve.shift(); reserve.push(t); }
@@ -107,9 +109,9 @@ function run(P, T, dex, trials, tricks) {
 const TRIALS = Number(process.argv[2]) || 5000;
 const out = { trials: TRIALS, standard: {}, quick: {}, solo: {} };
 const kinds = [
-  ["standard", [2, 3, 4, 5], 20, (P) => 3 * P + 1, ["blind", "peek", "wait", "slip"]],
-  ["quick", [2, 3, 4, 5], 12, (P) => 2 * P + 1, ["blind"]],
-  ["solo", [1], 12, () => 6, ["blind"]],
+  ["standard", [2, 3, 4, 5], 20, (P) => 3 * P + 1, ["choose", "blind", "peek", "wait", "slip"]],
+  ["quick", [2, 3, 4, 5], 12, (P) => 2 * P + 1, ["choose"]],
+  ["solo", [1], 12, () => 6, ["choose"]],
 ];
 for (const [kind, Ps, maxT, tricks, dexes] of kinds) for (const dex of dexes) {
   out[kind][dex] = {};

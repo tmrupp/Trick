@@ -64,6 +64,12 @@ export function answerPrompt(state, prompt) {
     const drop = status || [...p.hand].filter((c) => !isBlessed(c)).sort((a, b) => a.v - b.v)[0] || p.hand[0];
     return { type: "recalculate", charId: prompt.charId, cardId: drop.id };
   }
+  if (prompt.type === "peek") {
+    // Replace the next world card when taking it would overshoot the target.
+    const w = ck.worldRow[ck.trick];
+    const total = p.tally.reduce((a, t) => a + t.score, 0);
+    return { type: "peek", charId: prompt.charId, replace: !!w && p.target != null && total + w.v > p.target };
+  }
   if (prompt.type === "evolve") return { type: "evolve", charId: prompt.charId, skip: true };
   if (prompt.type === "evolvePick") return { type: "evolvePick", charId: prompt.charId, cardId: prompt.options[0] };
   throw new Error(`No bot answer for ${prompt.type}`);

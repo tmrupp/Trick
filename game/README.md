@@ -16,7 +16,7 @@ npm run sim:engine   # bots play the default scene through the engine (add a num
 1. **Install cloudflared once** for the public link: on Windows, `winget install --id Cloudflare.cloudflared`. Without it, `npm start` still runs, local only.
 2. **Run `npm start`.** It prints a private host page link (with an admin token) and a public `trycloudflare.com` link. The public link changes each time you start. `npm run restart` does all of this in one go: it stops an older host on the same port (only if it is Node), opens your most recently played campaign, and opens the host, table and GM pages in Chrome or Edge windows. Add a campaign id to open a different one: `npm run restart -- --open black-valley`.
 3. **On the host page,** create a campaign or open a saved one. Each campaign shows its room code, a QR code and join link for players, a link to the table screen, and the secret GM link.
-4. **Players** scan the QR code or open the join link, enter a name, and create their character on their phone. A phone that sleeps or drops rejoins its seat automatically. A player on a new browser or a new link (every quick-tunnel restart is a new link) picks their character under **Coming back?** on the join screen; it lists characters whose phone isn't connected, and the old browser stops working for that seat. If the host restarted, a room opens by itself when a phone asks for its code.
+4. **Players** scan the QR code or open the join link, enter a name, and create their character on their phone. A phone that sleeps or drops rejoins its seat automatically. A player on a new browser or a new link (every quick-tunnel restart is a new link) picks their character under **Coming back?** on the join screen; it lists characters whose phone isn't connected, and the old browser stops working for that seat. If the host restarted, a room opens by itself when a phone asks for its code. A player can make another character between checks (from **My cards**, or straight from the banner when theirs dies) and switch between their characters there; the others stay in the campaign. The GM can bring a dead character back from the Characters tab (`resurrect`); their cards stay as they were.
 5. **The GM** opens the GM link, on a phone or the laptop. A banner always says what to do next. Players state their own goals on their phones, with the suit each leans on; the GM sets each target from the goal, which accepts it, and can also play a character, add consequences, give items, grant rest and Blessed, remove a seat, and hand a character to a new seat.
 
 ## The screens
@@ -74,6 +74,8 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | `beginCheck { kind, participants }` | No check running | GM. Runs the survival scan |
 | `declareApproach { charId, goal, suit, suggested }` | Setup | The player states their goal, the suit it leans on (their trump), and optionally a suggested target. A survival goal is fixed and accepted at once; restating a goal sends it back to the GM |
 | `setGoal { charId, target }` | Setup | GM: the target, set from the goal. Setting it accepts the goal and its suit. A survival target is fixed at 3 × M. (`approveApproach` remains only so older saves replay) |
+| `peek { charId, replace }` | After a trick | A player who lost with a Spade: replace the next world card unseen, or keep it |
+| `resurrect { charId }` | Between checks | GM: bring a dead character back |
 | `deal` | Setup | GM. Deals the world row and draws every hand |
 | `lockCard { charId, cardId, priceCardId }`, `unlockCard { charId }` | Play | A player. The trick resolves when everyone with cards has locked |
 | `recalculate { charId, cardId }` | Consolation | A player who lost with a Diamond |
@@ -91,7 +93,7 @@ The server checks who may send which action: see *The server* above.
 
 Where RULES.md leaves a detail open, the engine decides as follows. Each is covered by a test, and any of them can change:
 
-- **Peek is automatic.** When any losing card in a trick is a Spade (a Stumble included), the next world card goes to the bottom of the world deck and the top card takes its place, once, with nobody choosing or looking. It is skipped when the world deck is empty.
+- **Peek is a blind choice.** Everyone who lost with a Spade (a Stumble included) answers a `peek` prompt, `replace: true` or `false`, without seeing the world deck or each other's answers. When all have answered, the next world card goes to the bottom of the world deck and the top card takes its place, once, if anyone chose to replace. It is skipped when the world deck is empty. Saves from while Peek was automatic replay with `rules.peek: "auto"`.
 - **A played Blessed returns to its owner's reserve,** even after being given to another player.
 - **A player's card equal to the world card doesn't beat it:** the world takes the trick.
 - **Evolution in preparation follows the main procedure:** the remaining status, and a gained card, stay in discard and shuffle in. **Mid-check**, they are set aside and land on top of the new discard, as the rules describe for a shuffle during play.

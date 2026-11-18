@@ -14,9 +14,9 @@ globalThis.TrickCoreCards = {
     "domain": "Spades / Consolation",
     "title": "PEEK",
     "lines": [
-      "Replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost."
+      "You may replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost."
     ],
-    "description": "Replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost."
+    "description": "You may replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost."
   },
   "intelligence": {
     "suitLabel": "Diamonds — Intelligence",

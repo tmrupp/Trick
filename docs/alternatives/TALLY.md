@@ -74,11 +74,11 @@ Your losing card's printed suit gives its consolation, statuses included. There 
 | Suit | Consolation |
 | --- | --- |
 | **Strength: Brace** | Your next card counts this card's value higher **for beating**. |
-| **Dexterity: Peek** | **Replace the next world card, unseen,** with the top card of the world deck; the replaced card goes to the bottom. It happens once a trick, however many Spades lost, and nobody chooses or looks first. |
+| **Dexterity: Peek** | **You may replace the next world card, unseen,** with the top card of the world deck; the replaced card goes to the bottom. Everyone who lost with a Spade chooses in secret; if anyone chooses to, it's replaced once. Nobody looks first. |
 | **Intelligence: Recalculate** | Discard one card from hand, then draw one. |
 | **Weird: Mirror** | If your next card wins, **the world card scores 11 minus its value.** |
 
-Brace and Mirror last for your next play only; Peek happens at once, blind. Turn the losing card sideways as a reminder, and straighten it when you play.
+Brace and Mirror last for your next play only; Peek is decided at once, blind. Turn the losing card sideways as a reminder, and straighten it when you play.
 
 Each suit does one job:
 
@@ -105,7 +105,8 @@ Each suit does one job:
 | **Weird** | **Mirror** *(recommended)* | The next world card you win scores 11 minus its value. | Plannable, double-edged. |
 | | **Shift** | If any losing card this trick is Weird, discard the next world card and flip a replacement. | Changes the whole table's next trick, at random. |
 | | **Echo** | If your next card wins, the world card scores double. | Big swings, real bust risk. |
-| **Dexterity** | **Peek** *(adopted)* | Replace the next world card, unseen, once a trick. | Simple, no choices or prompts; works at any table size. |
+| **Dexterity** | **Peek** *(adopted)* | Choose, blind, whether to replace the next world card; once a trick if anyone does. | One secret yes-or-no per loser; works at any table size. |
+| | **Peek, automatic** *(replaced)* | Any losing Spade replaces the next world card, unseen. | No choices, but scored like no consolation and took the decision away from the player. |
 | | **Peek with a look** *(replaced)* | Look at the world deck's top card; you may swap it in. | Slightly better results, but a private choice per loser and an order to resolve them. |
 | | **Wait** *(replaced)* | Choose your next card after everyone else reveals. | Cuts collisions between allies by about 30%, but useless solo. |
 | | **Slip** *(replaced)* | Return this card to your hand. | Losing costs nothing; the spare cards hide most busts. |
@@ -125,8 +126,8 @@ Target 10, a standard check.
 - **On the 4♣:** her 5♣ wins, and the world card scores 11 − 4 = 7: **exactly 10**.
 
 **Ben** (Dexterity trump) is on 6 and needs 4. The next world card is a 9♦, which nobody can use without busting.
-- **This trick:** he loses on purpose with his 2♠, so the 9♦ is replaced, unseen: the world deck's top card is dealt in its place. It's a 4♠.
-- **Next trick:** his 7♠ takes the 4♠: **exactly 10**. It could as easily have been an 8; a Peek is a fresh draw, not a choice.
+- **This trick:** he loses on purpose with his 2♠ and chooses to replace the 9♦, unseen: the world deck's top card is dealt in its place. It's a 4♠.
+- **Next trick:** his 7♠ takes the 4♠: **exactly 10**. It could as easily have been an 8; Ben chooses whether to redraw, not what comes.
 
 ## Statuses
 

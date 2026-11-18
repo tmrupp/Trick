@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { trickWinner, legalCards, RuleError } from "../engine/index.mjs";
+import { trickWinner, legalCards, RuleError, viewFor } from "../engine/index.mjs";
 import { game, dealt, rig, run, lock, find, hand, card } from "./helpers.mjs";
 
 const W = (spec) => card(spec, "world");
@@ -107,23 +107,50 @@ test("Stumble's Price: playing Stumble discards an ordinary card of your choice"
   assert.equal(hand(s, "ben").length, 1);
 });
 
-test("Peek: losing Spades replace the next world card, unseen, once a trick", () => {
+test("Peek: each losing Spade chooses blind; the next world card is replaced once if anyone chooses to", () => {
   let s = dealt(game());
   rig(s, { row: ["S9", "I8"], hands: { ana: ["D1", "S2"], ben: ["D2", "D3"], cara: ["I1", "I2"] }, worldDeck: ["W1", "S6", "S4"] });
+  ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "D2"), lock(s, "cara", "I1")));
+  let ck = s.check;
+  assert.deepEqual(ck.pending.filter((x) => x.type === "peek").map((x) => x.charId).sort(), ["ana", "ben"], "both losing Spades are asked");
+  assert.equal(ck.worldRow[1].v, 8, "nothing changes until every Peek is answered");
+  assert.equal(viewFor(s, { role: "player", charId: "ana" }).worldDeckTop, undefined, "nobody sees the top of the world deck");
+  // Ana keeps, Ben replaces: one replacement. Nobody learns the other's answer before the end.
   let events;
-  ({ state: s, events } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "D2"), lock(s, "cara", "I1")));
-  const ck = s.check;
+  ({ state: s, events } = run(s, { type: "peek", charId: "ana", replace: false }));
+  assert.equal(events.some((e) => e.type === "peekReplaced" || e.type === "peekKept"), false);
+  assert.equal(JSON.stringify(viewFor(s, { role: "player", charId: "ben" })).includes("peekVotes"), false, "answers stay secret");
+  ({ state: s, events } = run(s, { type: "peek", charId: "ben", replace: true }));
+  ck = s.check;
   assert.equal(ck.worldRow[1].suit, "S", "the top of the world deck replaced the next card");
   assert.equal(ck.worldRow[1].v, 4);
   assert.equal(ck.worldDeck[0].v, 8, "the replaced card is at the bottom");
-  assert.equal(ck.worldDeck.length, 3, "two Spades lost, but only one card was replaced");
-  assert.deepEqual(events.find((e) => e.type === "peekReplaced").by, ["ana", "ben"]);
-  assert.ok(!ck.pending.some((x) => x.type === "peek"), "Peek asks nobody anything");
+  assert.equal(ck.worldDeck.length, 3, "replaced once");
+  assert.deepEqual(events.find((e) => e.type === "peekReplaced").by, ["ben"]);
+  assert.throws(() => run(s, { type: "peek", charId: "ben", replace: true }), /no Peek/);
   // Cara's Recalculate still waits.
   assert.equal(s.check.phase, "consolation");
   ({ state: s } = run(s, { type: "recalculate", charId: "cara", cardId: find(s, "cara", "I2").id }));
   assert.equal(s.check.phase, "play");
   assert.equal(hand(s, "cara").length, 1, "Recalculate discards one and draws one");
+});
+
+test("Peek: if every losing Spade keeps, the row stays; saves from the automatic Peek still replay", () => {
+  let s = dealt(game(["ana", "ben"]));
+  rig(s, { row: ["S9", "I8"], hands: { ana: ["D1", "S2"], ben: ["S3", "S4"] }, worldDeck: ["W1", "S4"] });
+  let events;
+  ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "S3")));
+  ({ state: s, events } = run(s, { type: "peek", charId: "ana", replace: false }));
+  assert.equal(s.check.worldRow[1].v, 8);
+  assert.ok(events.some((e) => e.type === "peekKept"));
+  assert.equal(s.check.phase, "play");
+  // Under the older automatic rule the same trick replaces at once and asks nobody.
+  let a = dealt(game(["ana", "ben"]));
+  a.rules = { peek: "auto" };
+  rig(a, { row: ["S9", "I8"], hands: { ana: ["D1", "S2"], ben: ["S3", "S4"] }, worldDeck: ["W1", "S4"] });
+  ({ state: a } = run(a, lock(a, "ana", "D1"), lock(a, "ben", "S3")));
+  assert.equal(a.check.worldRow[1].v, 4);
+  assert.equal(a.check.phase, "play");
 });
 
 test("no consolations after the final trick", () => {

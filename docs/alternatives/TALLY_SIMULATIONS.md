@@ -2,7 +2,7 @@
 
 Thirteen table situations and seven experiments, run under the current [RULES.md](../../RULES.md):
 - the 20-card starter has two of each value;
-- Peek is Dexterity's consolation, as a blind replace once a trick;
+- Peek is Dexterity's consolation: each losing Spade chooses, blind, whether to replace the next world card, once a trick;
 - ties go by suit, then trump;
 - a status in the world card's suit must be played;
 - survival targets 3 × Injuries.
@@ -19,7 +19,7 @@ node scripts/simulate_targets.mjs 6000
 **The bots are simple.**
 - A bot takes a world card when it can beat it without busting, using its lowest winning card.
 - Otherwise it passes with the card it values least, in this order: statuses, then Dexterity and Weird, then Strength, then Intelligence, then Stumble last.
-- Peek needs no decisions: any losing Spade replaces the next world card, unseen, once a trick. (The tables below the *Dexterity's consolation* section were run with the earlier Peek, where a bot looked at the top card and swapped it in only when it suited them; the blind Peek lands within about a point of them, as that section shows.)
+- A Peeking bot asks to replace the next world card when it can't use it; the card is replaced once if any bot asks. (The tables below the *Dexterity's consolation* section were run with the earlier Peek, where a bot looked at the top card and swapped it in only when it suited them; the blind Peek lands within about a point of them, as that section shows.)
 - Cooperative bots in situation 2 also skip a world card that would land an ally exactly.
 
 No bot reads another player's hand or plans more than one trick ahead. So **compare situations with each other rather than treating any number as table odds.** People should land exactly more often.
@@ -188,7 +188,8 @@ Slip returned a losing Dexterity card to hand, so losing was free. These runs co
 | Duck | 21% | 8% | 4% | 2.4 | 65% / 73% | — |
 | Pull | 16% | 13% | 13% | 2.3 | 53% / 57% | — |
 | Feint | 16% | 8% | 17% | 2.5 | 57% / 57% | — |
-| **Peek, blind** *(adopted)* | 15% | 13% | 14% | 2.3 | 52% / 56% | 22% / 27% |
+| **Peek, choose blind** *(adopted)* | 16% | 12% | 13% | 2.6 | 52% / 57% | 25% / 27% |
+| Peek, automatic | 15% | 13% | 14% | 2.3 | 51% / 56% | 22% / 27% |
 | Peek with a look | 16% | 11% | 13% | 2.6 | 53% / 58% | 26% / 25% |
 | Reroll | 16% | 12% | 12% | 2.7 | 52% / 58% | 25% / 27% |
 | Reroll each | 17% | 11% | 13% | 2.7 | 54% / 58% | 25% / 26% |
@@ -201,7 +202,8 @@ Slip returned a losing Dexterity card to hand, so losing was free. These runs co
 
 - **Slip's power was spare cards, not Dexterity.** The Dexterity player did no better than the others under Slip. Every deck holds Spades, and each one that came back was a card that could always lose. Every rule that keeps no card lands within a point or two of giving Dexterity nothing.
 - **So the choice is about feel.** Wait was the only rule that cut collisions, by about a quarter, but did nothing solo. Peek puts the world deck in play at any table size.
-- **The blind Peek scores like giving Dexterity nothing** (15% critical against 16% with a look, and 27% solo busts against 25%), because a random redraw has no average value. Its value is in timing: a person can lose with a Spade on purpose when the next prize is one nobody wants. The bots don't play that way. It needs no choices, prompts or turn order, which is why it was adopted.
+- **Choosing makes Peek worth something.** Replacing only a card you can't use lifts criticals about a point and solo criticals three, at the cost of a few more collisions (2.6 a check against 2.3) because a redraw can take away a card an ally wanted. It is adopted for that choice, not the numbers.
+- **The automatic Peek scored like giving Dexterity nothing** (15% critical against 16% with a look, and 27% solo busts against 25%), because a random redraw has no average value. Its value is in timing: a person can lose with a Spade on purpose when the next prize is one nobody wants. The bots don't play that way. It needs no choices, prompts or turn order, which is why it was adopted.
 - **Reroll and Shove churn the table.** They act one to two times a check per player, and the bots ignore allies, so a reroll can throw away a card a friend wanted.
 - **Extra starting cards would restore the spare cards** and bring busts back to 2–4%. They weren't adopted: the harder checks were judged better for the game.
 

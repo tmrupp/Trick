@@ -61,7 +61,7 @@ function nextStep(info, view, names) {
     if (unset.length || noTarget.length) return ["Set a target for each goal.", `Still needed: ${[...new Set([...unset, ...noTarget])].join(", ")}.`];
     return ["Everything is set.", "Deal the world and draw hands."];
   }
-  if (ck.waitingOn.length) return ["Waiting on players.", ck.waitingOn.map((w) => `${names[w.charId]}: ${w.type}`).join(", ")];
+  if (ck.waitingOn.length) return ["Waiting on players.", ck.waitingOn.map((w) => `${names[w.charId]}: ${w.type === "peek" ? "Peek (replace or keep the next world card)" : w.type}`).join(", ")];
   if (ck.phase === "play") return [`Trick ${ck.trick + 1} of ${ck.tricks}.`, `Waiting for: ${ck.participants.filter((id) => !ck.players[id].locked && ck.players[id].handCount).map((id) => names[id]).join(", ") || "the reveal"}.`];
   if (ck.phase === "resolve") return ["The check is resolved.", "Narrate each result from the fiction, add any status consequences, then clean up."];
   return [ck.phase, ""];
@@ -201,6 +201,8 @@ function myPlay(view, ck, me) {
       h("button", { class: "primary", disabled: !c || (needsPrice && !mine.price), onclick: () => { act({ type: "lockCard", charId: me, cardId: mine.chosen, priceCardId: mine.price || undefined }); mine = { chosen: null, price: null }; } }, "Lock in")));
   }
   for (const pr of (view.pending || []).filter((x) => x.charId === me)) {
+    if (pr.type === "peek") out.push(h("div", { class: "panel row" }, `Your Peek: replace the next world card (${view.check.worldRow[view.check.trick].label}) unseen?`,
+      h("button", { onclick: () => act({ type: "peek", charId: me, replace: true }) }, "Replace it"), h("button", { onclick: () => act({ type: "peek", charId: me, replace: false }) }, "Keep it")));
     if (pr.type === "recalculate") out.push(h("div", { class: "panel row" }, "Your Recalculate: discard ", view.hands[me].map((x) => cardFace(x, "sm", { onclick: () => act({ type: "recalculate", charId: me, cardId: x.id }) }))));
     if (pr.type === "evolve") out.push(h("div", { class: "panel row" }, "Evolution offered.", pr.suits.map((s) => h("button", { onclick: () => act({ type: "evolve", charId: me, suit: s, mode: "gain" }) }, `Return a ${SUITS[s].status}, gain a card`)), h("button", { onclick: () => act({ type: "evolve", charId: me, skip: true }) }, "Skip")));
     if (pr.type === "evolvePick") out.push(h("div", { class: "panel row" }, "Keep one: ", pr.options.map((id) => h("button", { onclick: () => act({ type: "evolvePick", charId: me, cardId: id }) }, id.split("/")[1]))));
@@ -227,6 +229,7 @@ function charsTab(info, view, names) {
       inCheck ? h("p", { class: "small muted" }, "Statuses during a check wait for cleanup: add them as consequences when it resolves.") : h("div", { class: "stack" },
         h("div", { class: "row" }, sel(k("st"), Object.entries(SUITS).map(([s, x]) => [s, x.status]), "S", "Status"), h("input", { "data-key": k("comp"), placeholder: "Compulsion (for a Curse)", maxlength: 80 }),
           h("button", { onclick: () => { act({ type: "gainStatus", charId: c.id, suit: draft(k("st")) || "S", compulsion: draft(k("comp")) || undefined }); forget(k("comp")); } }, "Give status")),
+        c.alive ? null : h("div", { class: "row" }, h("button", { class: "primary", onclick: () => act({ type: "resurrect", charId: c.id }) }, `Bring ${c.name} back`), h("span", { class: "small muted" }, "Their cards stay as they are, so survival may come up again.")),
         h("div", { class: "row" }, h("button", { onclick: () => act({ type: "curseViolation", charId: c.id }) }, "Compulsion broken"), h("button", { onclick: () => act({ type: "grantBlessed", charId: c.id }) }, "Grant Blessed")),
         h("div", { class: "row" }, h("span", { class: "small" }, "Rest (choose statuses to remove):"), (c.discard || []).filter((x) => x.status && x.suit !== "W").map((x) => h("label", { class: "pill" }, h("input", { type: "checkbox", "data-key": k(`r-${x.id}`) }), x.label)),
           h("button", { onclick: () => act({ type: "rest", charId: c.id, cardIds: (c.discard || []).filter((x) => x.status && x.suit !== "W" && draft(k(`r-${x.id}`))).map((x) => x.id) }) }, "Rest"))),

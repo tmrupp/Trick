@@ -14,9 +14,11 @@ export { viewFor } from "./views.mjs";
 
 export const ENGINE_VERSION = 1;
 
-export function createGame({ seed = Date.now(), gmSeat = 0 } = {}) {
+// rules.peek: "choose" (each losing Spade chooses, blind) or "auto" (saves from when Peek always replaced).
+export function createGame({ seed = Date.now(), gmSeat = 0, rules = {} } = {}) {
   return {
     version: ENGINE_VERSION,
+    rules: { peek: "choose", ...rules },
     seed: String(seed),
     rng: seedFrom(seed),
     characters: {},
@@ -50,6 +52,7 @@ const HANDLERS = {
   loseItem: campaign.loseItem,
   useItem: campaign.useItem,
   grantBlessed: campaign.grantBlessed,
+  resurrect: campaign.resurrect,
   evolve: (ctx, a) => { campaign.evolve(ctx, a); check.settle(ctx); },
   evolvePick: (ctx, a) => { campaign.evolvePick(ctx, a); check.settle(ctx); },
   // a check
@@ -57,8 +60,7 @@ const HANDLERS = {
   setGoal: check.setGoal,
   declareApproach: check.declareApproach,
   approveApproach: check.approveApproach,
-  // Older saves asked the Peeking player whether to swap; Peek is now automatic, so the old answer is ignored.
-  peek: () => {},
+  peek: check.peek,
   deal: check.deal,
   lockCard: check.lockCard,
   unlockCard: check.unlockCard,
@@ -87,8 +89,8 @@ export function apply(state, action, { inPlace = false } = {}) {
 }
 
 // Rebuild a game from its seed and actions.
-export function replay({ seed, gmSeat = 0 }, actions) {
-  let st = createGame({ seed, gmSeat });
+export function replay({ seed, gmSeat = 0, rules }, actions) {
+  let st = createGame({ seed, gmSeat, rules });
   for (const a of actions) st = apply(st, a, { inPlace: true }).state;
   return st;
 }

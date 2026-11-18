@@ -266,14 +266,16 @@ function resolveTrick(ctx) {
   });
   // Consolations, all at once, for everyone who did not win; none after the final trick.
   if (!last) {
-    // Peek: if any losing card is a Spade, the next world card is replaced, unseen, once.
+    // Peek: each player who lost with a Spade chooses, in secret, whether to replace the next world card
+    // with the world deck's unseen top card. It is replaced once if any of them chooses to.
+    // Saves made while Peek was automatic replay with rules.peek "auto".
     const peekers = plays.filter((x) => x !== winner && !isBlessed(x.card) && x.card.suit === "D").map((x) => x.id);
     if (peekers.length && ck.worldDeck.length) {
-      const next = ck.trick + 1;
-      const old = ck.worldRow[next];
-      ck.worldRow[next] = ck.worldDeck.pop();
-      ck.worldDeck.unshift(old); // the replaced card goes to the bottom of the world deck
-      ctx.events.push({ type: "peekReplaced", by: peekers, out: label(old), in: label(ck.worldRow[next]) });
+      if ((st.rules && st.rules.peek) === "auto") replaceNext(ctx, peekers, ck.trick + 1);
+      else {
+        ck.peekVotes = [];
+        for (const id of peekers) ck.pending.push({ type: "peek", charId: id });
+      }
     }
     for (const x of plays) {
       if (x === winner || isBlessed(x.card)) continue;
@@ -288,6 +290,33 @@ function resolveTrick(ctx) {
   ck.trick++;
   ck.phase = last ? "resolve" : "consolation";
   if (last) computeResults(ctx);
+  advance(ctx);
+}
+
+// Put world row card i on the bottom of the world deck and deal the top card face up in its place.
+function replaceNext(ctx, by, i) {
+  const ck = ctx.state.check;
+  const old = ck.worldRow[i];
+  ck.worldRow[i] = ck.worldDeck.pop();
+  ck.worldDeck.unshift(old);
+  ctx.events.push({ type: "peekReplaced", by, out: label(old), in: label(ck.worldRow[i]) });
+}
+
+// Answer a Peek: replace the next world card, unseen, or keep it. Nobody sees anyone else's answer;
+// once every Peek is in, the card is replaced once if anyone chose to. (`swap` is the older saves' name.)
+export function peek(ctx, { charId, replace, swap }) {
+  const ck = activeCheck(ctx.state, ["consolation"]);
+  const pi = ck.pending.findIndex((x) => x.type === "peek" && x.charId === charId);
+  if (pi < 0) throw rule("You have no Peek to answer.");
+  ck.pending.splice(pi, 1);
+  if (replace ?? swap) ck.peekVotes.push(charId);
+  ctx.events.push({ type: "peekAnswered", id: charId });
+  if (!ck.pending.some((x) => x.type === "peek")) {
+    const voters = ck.peekVotes;
+    delete ck.peekVotes;
+    if (voters.length && ck.worldDeck.length) replaceNext(ctx, voters, ck.trick); // ck.trick has already moved on to the next trick
+    else ctx.events.push({ type: "peekKept", world: label(ck.worldRow[ck.trick]) });
+  }
   advance(ctx);
 }
 

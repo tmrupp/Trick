@@ -5,25 +5,32 @@ import { newSecret } from "./store.mjs";
 const MAX_SEATS = 10;
 
 // What a player seat may do: act for its own character only. The GM may do anything.
-const PLAYER_ACTIONS = new Set(["createCharacter", "declareApproach", "lockCard", "unlockCard", "recalculate", "giveBlessed", "evolve", "evolvePick", "useItem"]);
+const PLAYER_ACTIONS = new Set(["createCharacter", "declareApproach", "lockCard", "unlockCard", "recalculate", "peek", "giveBlessed", "evolve", "evolvePick", "useItem"]);
 
 export function authorize(seat, action) {
   if (seat.role === "gm") return;
   if (!PLAYER_ACTIONS.has(action.type)) throw new RuleError("Only the GM can do that.");
-  if (action.type === "createCharacter") {
-    if (seat.charId) throw new RuleError("You already have a character.");
-    return;
-  }
+  if (action.type === "createCharacter") return; // the room checks the seat isn't mid-check
   if (!seat.charId) throw new RuleError("Create your character first.");
   if (action.charId !== seat.charId) throw new RuleError("You can only act for your own character.");
 }
+
+// A seat's characters: the one it plays now (charId) and any others it has made or played.
+export const charsOf = (seat) => [...new Set([...(seat.chars || []), ...(seat.charId ? [seat.charId] : [])])];
 
 export class Room {
   constructor(save, store, linkBase = () => "") {
     this.save = save;
     this.store = store;
     this.linkBase = linkBase;
-    this.state = replay({ seed: save.seed, gmSeat: save.gmSeat }, save.actions);
+    try {
+      this.state = replay({ seed: save.seed, gmSeat: save.gmSeat, rules: save.rules }, save.actions);
+    } catch (e) {
+      // Saves from while Peek happened automatically won't replay with the Peek choice: keep them on that rule.
+      if (save.rules) throw e;
+      this.state = replay({ seed: save.seed, gmSeat: save.gmSeat, rules: { peek: "auto" } }, save.actions);
+      save.rules = { peek: "auto" };
+    }
     this.clients = new Set(); // { ws, seat | null, as }
   }
 
@@ -83,21 +90,39 @@ export class Room {
     authorize(seat, action);
     let a = { ...action };
     if (a.type === "createCharacter") {
-      // The server names the character after its seat, so ids never collide.
-      a = { type: "createCharacter", id: seat.role === "gm" ? "gm" : seat.id, name: String(a.name || seat.name).slice(0, 24), primary: a.primary, secondary: a.secondary, others: a.others, race: a.race || null, controller: seat.role };
+      if (seat.charId && this.inCheck(seat.charId)) throw new RuleError("Finish this check before making a new character.");
+      // The server names the character after its seat (p1, then p1-2, p1-3…), so ids never collide.
+      const base = seat.role === "gm" ? "gm" : seat.id;
+      let id = base;
+      for (let n = 2; this.state.characters[id]; n++) id = `${base}-${n}`;
+      a = { type: "createCharacter", id, name: String(a.name || seat.name).slice(0, 24), primary: a.primary, secondary: a.secondary, others: a.others, race: a.race || null, controller: seat.role };
     }
     const { state, events } = apply(this.state, a);
     this.state = state;
     this.save.actions = state.actions;
-    if (a.type === "createCharacter") seat.charId = a.id;
+    if (a.type === "createCharacter") { seat.chars = [...charsOf(seat), a.id]; seat.charId = a.id; }
     this.save.characterNames = Object.values(state.characters).map((c) => c.name);
     this.persist();
     this.broadcast(events);
     return events;
   }
 
-  // GM-only seat management, outside the engine.
+  inCheck(charId) {
+    const ck = this.state.check;
+    return !!(ck && ck.phase !== "closed" && ck.players[charId]);
+  }
+
+  // Seat management, outside the engine. Any seat may switch between its own characters; the rest is the GM's.
   manage(seat, op) {
+    if (seat && op.op === "switch") {
+      if (!charsOf(seat).includes(op.charId) || !this.state.characters[op.charId]) throw new RuleError("That isn't one of your characters.");
+      if (seat.charId && seat.charId !== op.charId && this.inCheck(seat.charId)) throw new RuleError("Finish this check before switching characters.");
+      seat.chars = charsOf(seat);
+      seat.charId = op.charId;
+      this.persist();
+      this.broadcast([{ type: "seatSwitched", seatId: seat.id, charId: op.charId }]);
+      return;
+    }
     if (!seat || seat.role !== "gm") throw new RuleError("Only the GM can manage seats.");
     if (op.op === "remove") {
       const target = this.seatById(op.seatId);
@@ -112,9 +137,16 @@ export class Room {
     if (op.op === "assign") {
       const target = this.seatById(op.seatId);
       if (!target || target.removed || target.role !== "player") throw new RuleError("Choose a player seat.");
-      if (target.charId) throw new RuleError("That seat already has a character.");
+      if (target.charId && this.inCheck(target.charId)) throw new RuleError("That seat is in a check.");
       if (!this.state.characters[op.charId]) throw new RuleError("No such character.");
-      for (const s of this.save.seats) if (s.charId === op.charId && s !== target) { s.charId = null; if (s.role === "player") s.removed = true; }
+      // The character leaves its old seat; a player seat left with no characters is removed.
+      for (const s of this.save.seats) {
+        if (s === target || !charsOf(s).includes(op.charId)) continue;
+        s.chars = charsOf(s).filter((id) => id !== op.charId);
+        if (s.charId === op.charId) s.charId = s.chars[s.chars.length - 1] || null;
+        if (s.role === "player" && !s.chars.length) s.removed = true;
+      }
+      target.chars = [...charsOf(target), op.charId];
       target.charId = op.charId;
       for (const c of this.clients) if (c.seat && c.seat.removed) { c.send({ type: "removed" }); c.close(); }
       this.persist();
@@ -140,7 +172,7 @@ export class Room {
     return {
       code: this.code, name: this.save.name, joinUrl: `${this.linkBase()}/j/${this.code}`,
       seats: this.save.seats.filter((s) => !s.removed).map((s) => ({ id: s.id, name: s.name, role: s.role, charId: s.charId, connected: connected.has(s.id) })),
-      you: seat ? { seatId: seat.id, role: seat.role, charId: seat.charId, name: seat.name } : { role: "table" },
+      you: seat ? { seatId: seat.id, role: seat.role, charId: seat.charId, chars: charsOf(seat), name: seat.name } : { role: "table" },
     };
   }
 

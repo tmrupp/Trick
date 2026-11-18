@@ -106,6 +106,17 @@ export function rest(ctx, { charId, cardIds }) {
   ctx.events.push({ type: "rested", id: ch.id, removed: (cardIds || []).length });
 }
 
+// The GM brings a dead character back. Their cards stay as they were, so a survival scan may come up again.
+export function resurrect(ctx, { charId }) {
+  const st = ctx.state;
+  const ch = character(st, charId);
+  if (ch.alive) throw rule(`${ch.name} is alive.`);
+  if (st.check && st.check.phase !== "closed") throw rule("Bring a character back between checks.");
+  ch.alive = true;
+  ch.survival = null;
+  ctx.events.push({ type: "resurrected", id: ch.id });
+}
+
 // The GM grants a Blessed: it moves from reserve to the top of the deck.
 export function grantBlessed(ctx, { charId }) {
   const ch = character(ctx.state, charId);

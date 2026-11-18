@@ -87,11 +87,12 @@ test("a room plays a whole check over WebSockets, keeps hands private, survives 
     await settle();
     const ids = players.map((c) => c.latest().room.you.charId);
     assert.deepEqual(ids, ["p1", "p2", "p3"]);
-    assert.equal((await players[0].act({ type: "createCharacter", name: "Again", primary: "S", secondary: "D", others: ["I", "W"] })).type, "rejected");
 
     // Only the GM runs setup, and players act only for themselves.
     assert.equal((await players[0].act({ type: "beginCheck", participants: ids })).type, "rejected");
     assert.equal((await gm.act({ type: "beginCheck", participants: ids })).type, "ok");
+    const again = await players[0].act({ type: "createCharacter", name: "Again", primary: "S", secondary: "D", others: ["I", "W"] });
+    assert.equal(again.reason, "Finish this check before making a new character.");
     assert.equal((await players[0].act({ type: "declareApproach", charId: "p2", suit: "S", goal: "Cross the river" })).reason, "You can only act for your own character.");
     for (const [i, c] of players.entries()) assert.equal((await c.act({ type: "declareApproach", charId: ids[i], suit: suits[i][0], goal: "Cross the river" })).type, "ok");
     assert.equal((await players[0].act({ type: "setGoal", charId: ids[0], target: 6 })).type, "rejected", "only the GM sets targets");
@@ -128,6 +129,7 @@ test("a room plays a whole check over WebSockets, keeps hands private, survives 
         const c = players[ids.indexOf(prompt.charId)];
         const hand = g.hands[prompt.charId];
         const a = prompt.type === "recalculate" ? { type: "recalculate", charId: prompt.charId, cardId: hand[0].id }
+          : prompt.type === "peek" ? { type: "peek", charId: prompt.charId, replace: prompt.charId === "p2" }
           : prompt.type === "evolve" ? { type: "evolve", charId: prompt.charId, skip: true }
           : { type: "evolvePick", charId: prompt.charId, cardId: prompt.options[0] };
         assert.equal((await c.act(a)).type, "ok");
@@ -256,6 +258,40 @@ test("a player on a new browser takes their character back; a restarted host ope
     const stale = client(port, { room: code, as: "player", token: oldToken });
     assert.match((await stale.ready).reason, /Enter your name/);
     for (const c of [back, stale]) await c.close();
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a player makes another character after a death, switches between them, and the GM brings one back", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  const { host, port, api } = await startHost(dir);
+  try {
+    const { code, gmKey } = (await api("/api/campaigns", { name: "Lives", seed: "lives" })).body.rooms[0];
+    const gm = client(port, { room: code, as: "gm", gmKey });
+    const ana = client(port, { room: code, as: "player", name: "Tess" });
+    await gm.ready; await ana.ready;
+    await ana.act({ type: "createCharacter", name: "Ana", primary: "S", secondary: "D", others: ["I", "W"] });
+    await settle();
+    // Ana dies (the room's state is edited directly, as a survival bust would leave it).
+    host.rooms.get(code).state.characters.p1.alive = false;
+    assert.equal((await ana.act({ type: "createCharacter", name: "Bea", primary: "D", secondary: "I", others: ["S", "W"] })).type, "ok");
+    await settle();
+    let you = ana.latest().room.you;
+    assert.equal(you.charId, "p1-2", "the new character gets its own id and becomes the one played");
+    assert.deepEqual(you.chars, ["p1", "p1-2"]);
+    assert.equal((await ana.act({ type: "resurrect", charId: "p1" })).reason, "Only the GM can do that.");
+    assert.equal((await gm.act({ type: "resurrect", charId: "p1" })).type, "ok");
+    assert.equal((await gm.act({ type: "resurrect", charId: "p1" })).type, "rejected", "only the dead come back");
+    assert.equal((await ana.manage({ op: "switch", charId: "p1" })).type, "ok");
+    await settle();
+    you = ana.latest().room.you;
+    assert.equal(you.charId, "p1");
+    assert.equal(ana.latest().view.characters.p1.alive, true);
+    assert.equal((await ana.manage({ op: "switch", charId: "gm" })).type, "rejected", "only your own characters");
+    assert.equal((await ana.act({ type: "lockCard", charId: "p1-2", cardId: "x" })).reason, "You can only act for your own character.", "you act as the one you're playing");
+    for (const c of [gm, ana]) await c.close();
   } finally {
     await host.close();
     rmSync(dir, { recursive: true, force: true });

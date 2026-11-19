@@ -440,7 +440,10 @@ export function endCheck(ctx) {
   ck.phase = "closed";
   st.lastCheckTricks = ck.tricks;
   for (const id of injured) scanAfterInjury(ctx, st.characters[id]);
-  st.history.push({ id: ck.id, kind: ck.kind, tricks: ck.tricks, results: ck.results, log: ck.log });
+  st.history.push({ id: ck.id, kind: ck.kind, tricks: ck.tricks, results: ck.results, log: ck.log,
+    // What each participant set out to do, and the statuses the GM gave at cleanup.
+    players: Object.fromEntries(ck.participants.map((id) => { const p = ck.players[id]; return [id, { goal: p.goal || null, approach: p.approach || null, target: p.target, survival: !!p.survival }]; })),
+    consequences: ck.consequences.map((c) => ({ ...c })) });
   ctx.events.push({ type: "checkClosed", id: ck.id });
 }
 

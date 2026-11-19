@@ -219,10 +219,10 @@ export function evolve(ctx, { charId, skip, suit, mode, cardId }) {
         // In preparation the kept card joins the discard before the shuffle, so the draw waits for the pick.
         const beforeShuffle = ck.phase === "deal";
         ck.pending.push({ type: "evolvePick", charId, options, beforeShuffle });
-        ctx.events.push({ type: "evolved", id: charId, suit, mode });
+        ctx.events.push({ type: "evolved", id: charId, suit, mode, status: label(s1), returned: back ? label(back) : null });
         if (beforeShuffle) { ck.pending.splice(pi, 1); p.evolveAsked = true; return; }
       }
-    } else ctx.events.push({ type: "evolved", id: charId, suit, mode });
+    } else ctx.events.push({ type: "evolved", id: charId, suit, mode, status: label(s1), returned: back ? label(back) : null });
   }
   ck.pending.splice(pi, 1);
   p.evolveAsked = true; // decided for this shuffle

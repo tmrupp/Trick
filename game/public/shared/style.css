@@ -433,3 +433,49 @@ button.toned-btn:hover { background: color-mix(in srgb, var(--tone) 14%, var(--c
 .panel.benched { opacity: .62; }
 .mt-xs { margin-top: 4px; }
 .results .pill.res { margin: 0 4px 0 2px; }
+
+/* ---- The campaign's history ---- */
+.history { display: grid; gap: 12px; }
+.history h2 { font-size: 22px; }
+.history-results td { padding: 6px 8px; } .history-results td:first-child { white-space: nowrap; }
+.history-goal { color: var(--muted); } .history-goal .pill { margin-right: 6px; font-style: normal; }
+.history-events { margin: 0; padding-left: 20px; } .history-events li { padding: 2px 0; }
+.history-between { border-style: dashed; }
+.history-notes { white-space: pre-wrap; font-size: 15px; border-left: 4px solid var(--track); padding-left: 10px; }
+.cast { display: grid; gap: 6px; }
+.cast-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--rule-soft); }
+.cast-row.benched { opacity: .7; }
+.res-strip { display: inline-flex; flex-wrap: wrap; gap: 3px; margin-left: auto; }
+.res-dot { width: 14px; height: 14px; display: inline-block; border: 1.5px solid currentColor; }
+.res-dot.res-critical { background: var(--good-fill); color: var(--good-fill); } .res-dot.res-success { color: var(--good); background: color-mix(in srgb, var(--good) 25%, var(--card)); }
+.res-dot.res-partial { background: var(--warn-fill); color: var(--warn-fill); } .res-dot.res-failure { color: var(--bad); background: color-mix(in srgb, var(--bad) 25%, var(--card)); }
+.res-dot.res-bust { background: var(--bad-fill); color: var(--bad-fill); }
+@media (max-width: 600px) {
+  .history-results tr { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--rule-soft); }
+  .history-results td { border: 0; padding: 2px 0; } .history-results td:empty { display: none; }
+  .history-goal { grid-column: 1 / -1; }
+}
+/* Who plays a character: a person's name, or "bot" in a filled tag. */
+.who-tag { display: inline-block; font: 700 11px/1.5 var(--label); text-transform: uppercase; letter-spacing: .04em; padding: 0 5px; border: 1.5px solid var(--rule-soft); color: var(--muted); vertical-align: 2px; }
+.who-tag.is-bot { background: var(--ink); color: var(--card); border-color: var(--ink); }
+/* Statuses and Blessed out: a meter of squares in the card's colour, one per card out. */
+.out-pill { gap: 7px; color: var(--tone-ink); border-color: var(--tone); }
+.out-pill b { font-weight: 800; }
+.out-pill.none { color: var(--muted); border-color: var(--rule-soft); }
+.out-pill .meter { display: inline-flex; gap: 2px; }
+.out-pill .meter i { width: 7px; height: 11px; border: 1.5px solid var(--tone); }
+.out-pill .meter i.on { background: var(--tone); }
+.out-pill.none .meter i { border-color: var(--rule-soft); }
+.out-pill.lvl-1 { background: color-mix(in srgb, var(--tone) 10%, var(--card)); }
+.out-pill.lvl-2 { background: color-mix(in srgb, var(--tone) 28%, var(--card)); }
+.out-pill.lvl-3 { background: var(--tone); color: #fff; }
+.out-pill.lvl-3 .meter i { border-color: #fff; } .out-pill.lvl-3 .meter i.on { background: #fff; }
+.out-pill.tone-B.lvl-3 { color: var(--b-ink); } .out-pill.tone-B.lvl-3 .meter i { border-color: var(--b-ink); } .out-pill.tone-B.lvl-3 .meter i.on { background: var(--b-ink); }
+@media (prefers-color-scheme: dark) { .out-pill.lvl-2 { background: color-mix(in srgb, var(--tone) 40%, var(--card)); color: #fff; } }
+.res-dot.res-out { background: var(--track); color: var(--track); }
+.res-dot.res-away { border-color: transparent; }
+/* Cast squares go to their check. */
+.res-dot[role=button] { cursor: pointer; } .res-dot[role=button]:hover, .res-dot[role=button]:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.history-check { scroll-margin-top: 12px; }
+@media (prefers-reduced-motion: no-preference) { .history-check.flash { animation: flash 1.4s ease; } }
+@media (prefers-reduced-motion: reduce) { .history-check.flash { outline: 4px solid var(--ink); } }

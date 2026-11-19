@@ -1,8 +1,8 @@
 // Shared browser code: the room connection, rendering that keeps what people are typing, card faces,
 // readable event text, sounds and small helpers. Load /suit_icons.js and /card_rules.js before this module.
 
-import { SUIT_INFO, countsAs } from "/engine/cards.mjs";
-import { DIFFICULTY, difficulty as difficultyWord } from "/engine/rules.mjs";
+import { SUIT_INFO, countsAs, STATUSES_PER_SUIT, BLESSED_PER_PLAYER } from "/engine/cards.mjs";
+import { DIFFICULTY, CHECK_KINDS, difficulty as difficultyWord } from "/engine/rules.mjs";
 
 // The suits come from the engine; the pages add only what they need to draw them (art and rule-text keys).
 const SUIT_UI = { S: { key: "strength", statusKey: "injury" }, D: { key: "dexterity", statusKey: "dazed" }, I: { key: "intelligence", statusKey: "stress" }, W: { key: "weird", statusKey: "curse" } };
@@ -443,6 +443,21 @@ export function difficultyPill(kind, target, attrs = {}) {
 }
 // A result in its colour: green for success, amber for partial, red for failure and bust.
 export const resultPill = (result, attrs = {}) => h("span", { ...attrs, class: `pill res res-${result} ${attrs.class || ""}` }, RESULT[result]);
+// How many of a character's statuses and Blessed are out (in their deck, discard or hand) of all they own:
+// the same words and the same meter for each, on every screen, so a glance shows who is loaded with what.
+// extraTip(key) adds to a pill's tooltip; key is a suit or "B".
+export function inPlayPills(ch, extraTip = () => "") {
+  if (!ch || !ch.reserveStatuses) return null;
+  // How heavy: none, a few, about half, most or all. The pill's colour deepens with it.
+  const level = (n, of) => (!n ? "none" : n / of <= 1 / 3 ? "lvl-1" : n / of <= 2 / 3 ? "lvl-2" : "lvl-3");
+  const pill = (key, name, n, of, cls) => h("span", { class: `pill out-pill ${cls} ${level(n, of)}`,
+    "data-tip": `${n} of their ${of} ${name} cards are out: in their deck, discard or hand. ${extraTip(key) || ""}`.trim() },
+    name, h("span", { class: "meter", "aria-hidden": "true" }, Array.from({ length: of }, (_, i) => h("i", { class: i < n ? "on" : "" }))), h("b", {}, `${n} out`));
+  return h("div", { class: "row in-play" },
+    Object.keys(SUITS).map((s) => pill(s, SUITS[s].status, STATUSES_PER_SUIT - (ch.reserveStatuses[s] || 0), STATUSES_PER_SUIT, tone(s))),
+    pill("B", "Blessed", BLESSED_PER_PLAYER - (ch.reserveBlessed || 0), BLESSED_PER_PLAYER, "tone-B"));
+}
+
 // A running total against its target: on target, close, over.
 export const tallyClass = (total, target) => (target == null ? "" : total > target ? "tally-over" : total === target ? "tally-hit" : target - total <= 3 ? "tally-close" : "");
 
@@ -485,8 +500,10 @@ export function eventText(e, names, items = {}) {
     case "renamed": return `${e.from} is now ${e.to}.`;
     case "unretired": return `${n(e.id)} comes out of retirement.`;
     case "checkCancelled": return "The GM cancels the check. Everyone is back where they were.";
-    case "gmCardMoved": return `GM: ${n(e.id)}'s ${e.card} moves from ${e.from} to ${PLACE_NAMES[e.to] || e.to}.`;
-    case "gmCardAdded": return `GM: ${n(e.id)} gains ${/^[AEIOU]/.test(e.card) ? "an" : "a"} ${e.card} (${PLACE_NAMES[e.to] || e.to})${e.extra ? ", an extra card" : ""}.`;
+    case "gmCardMoved": return e.to === "reserve" ? `GM: removes ${n(e.id)}'s ${e.card} from their ${e.from} (back to reserve).`
+      : e.from === "reserve" ? `GM: brings ${n(e.id)}'s ${e.card} in from reserve, to ${PLACE_NAMES[e.to] || e.to}.`
+      : `GM: ${n(e.id)}'s ${e.card} moves from ${e.from} to ${PLACE_NAMES[e.to] || e.to}.`;
+    case "gmCardAdded": return `GM: ${n(e.id)} gains ${/^[AEIOU8]/.test(e.card) ? "an" : "a"} ${e.card} (${PLACE_NAMES[e.to] || e.to})${e.extra ? ", an extra card" : ""}.`;
     case "gmDeckShuffled": return `GM: ${n(e.id)}'s deck is shuffled.`;
     case "characterCreated": return `${e.name} joins the campaign.`;
     case "blessedGranted": return `${n(e.id)} is granted a Blessed.`;
@@ -498,7 +515,13 @@ export function eventText(e, names, items = {}) {
     case "itemGiven": return `${n(e.id)} gains ${items[e.itemId] || e.itemId}.`;
     case "curseViolated": return `${n(e.id)} breaks the compulsion and gains ${e.stress} Stress.`;
     case "rested": return `${n(e.id)} rests.`;
-    case "evolved": return `${n(e.id)} evolves.`;
+    case "evolved": {
+      const status = SUITS[e.suit] ? SUITS[e.suit].status : "status";
+      // Older events don't name the cards.
+      return `${n(e.id)} evolves: ${e.status ? `one ${status} goes back to reserve` : `two ${status} cards are set aside`}${e.returned ? `, and so does their ${e.returned}` : e.mode === "return" ? ", with a card" : ""}${e.mode === "gain" ? `, and they draw ${SUITS[e.suit] ? SUITS[e.suit].name : ""} cards to keep one` : ""}.`;
+    }
+    case "evolveKept": return `${n(e.id)} keeps the ${e.card} from evolving.`;
+    case "itemLost": return `${n(e.id)} loses ${items[e.itemId] || e.itemId}.`;
     case "reshuffled": return `${n(e.id)} reshuffles.`;
     case "boosted": return `${n(e.id)}'s next card counts ${e.amount > 0 ? "+" : ""}${e.amount}${e.reason ? ` (${e.reason})` : ""}.`;
     case "tallyAdjusted": return `${n(e.id)}'s tally ${e.delta > 0 ? "+" : ""}${e.delta}${e.reason ? ` (${e.reason})` : ""}.`;
@@ -703,6 +726,7 @@ export function notesPanel({ send, editable = true }) {
     else save();
   }
   return {
+    current: () => notes,
     // New text from the host. While you're typing in the same notes, your text stays; your next save wins.
     receive(incoming) {
       Object.assign(notes, incoming);
@@ -729,6 +753,142 @@ export const trickLog = (log, names, { open = false } = {}) => (log && log.lengt
 // Each participant's result, with what it calls for.
 export const resultsList = (results, names) => h("ul", { class: "results" }, Object.entries(results).map(([id, r]) =>
   h("li", {}, h("strong", {}, `${names[id]} `), resultPill(r.result), " ", h("span", { class: "muted" }, `(${r.tally} of ${r.target}). `), RESULT_NOTE[r.result], r.dies ? h("strong", {}, " Does not survive.") : null)));
+
+// ---- The campaign's history ----
+
+const when = (t) => (t ? new Date(t).toLocaleString([], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "");
+
+// Split the journal into chapters: each check, and what happened before and between them. Checks recorded before
+// the journal existed (older saves) come first, from state.history alone.
+function chapters(view) {
+  const out = [];
+  let cur = null;
+  for (const e of view.journal || []) {
+    if (e.type === "checkBegun") { cur = { kind: "check", id: e.check, start: e, events: [] }; out.push(cur); continue; }
+    if ((e.type === "checkClosed" || e.type === "checkCancelled") && cur && cur.kind === "check") { cur.end = e; cur = null; continue; }
+    if (e.type === "journalStarted") { cur = { kind: "between", start: e, events: [], late: true }; out.push(cur); continue; }
+    if (!cur) { cur = { kind: "between", start: e, events: [] }; out.push(cur); }
+    cur.events.push(e);
+  }
+  const seen = new Set(out.filter((c) => c.kind === "check").map((c) => c.id));
+  const older = (view.history || []).filter((x) => !seen.has(x.id)).map((x) => ({ kind: "check", id: x.id, events: [], end: { type: "checkClosed" } }));
+  return [...older, ...out];
+}
+
+// Event lines for a chapter, with repeats folded together: "Wren gains Stumble. ×2".
+function eventLines(events, names, items) {
+  const out = [];
+  for (const t of events.map((e) => eventText(e, names, items)).filter(Boolean)) {
+    const prev = out[out.length - 1];
+    if (prev && prev.text === t) prev.n++; else out.push({ text: t, n: 1 });
+  }
+  return out.length ? h("ul", { class: "history-events" }, out.map((x) => h("li", {}, x.text, x.n > 1 ? h("span", { class: "muted" }, ` ×${x.n}`) : null))) : null;
+}
+
+// Who plays a character, in a few words: "Priya", "greedy bot", "the GM". From the seats when the page has them.
+function playedBy(c, seats) {
+  if (c.bot) return c.bot === "ltr" ? "left-to-right bot" : "greedy bot";
+  const seat = (seats || []).find((s) => s.role !== "bot" && (s.chars || [s.charId]).includes(c.id));
+  if (seat) return seat.role === "gm" ? "the GM" : seat.name;
+  return c.controller === "gm" ? "the GM" : "player";
+}
+const whoTag = (c, seats) => (c ? h("span", { class: `who-tag${c.bot ? " is-bot" : ""}`, "data-tip": c.bot ? "Played by a bot." : "Played by a person." }, c.bot ? "bot" : playedBy(c, seats)) : null);
+
+// A cast square goes to its check: it scrolls into view and flashes, so the eye lands on it.
+function jumpTo(id) {
+  const go = () => {
+    const el = document.getElementById(`history-check-${id}`);
+    if (!el) return;
+    // Stop below whatever stays pinned to the top of the screen (the GM's banner, the phone's score bar).
+    const pinned = Math.max(0, ...[...document.querySelectorAll(".next-step, .hud")].filter((x) => getComputedStyle(x).position === "sticky").map((x) => x.getBoundingClientRect().height));
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY - pinned - 12, behavior: reducedMotion() ? "auto" : "smooth" });
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+    setTimeout(() => el.classList.remove("flash"), 1500);
+  };
+  return { role: "button", tabindex: "0", "aria-label": `Go to check ${id}`, onclick: go, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } } };
+}
+
+// Who has played, how each check went for them, and whether they're still with us.
+function cast(view, seats) {
+  const chars = Object.values(view.characters);
+  if (!chars.length) return null;
+  const diedIn = Object.fromEntries((view.journal || []).filter((e) => e.type === "died").map((e) => [e.id, e.check]));
+  // When each character joined, for those who came in after the first check: a replacement reads as one.
+  const joinedAfter = Object.fromEntries((view.journal || []).filter((e) => e.type === "characterCreated" && e.check > 0).map((e) => [e.id, e.check]));
+  const retiredAfter = {};
+  for (const e of view.journal || []) { if (e.type === "retired") retiredAfter[e.id] = e.check; if (e.type === "unretired") delete retiredAfter[e.id]; }
+  return h("div", { class: "panel stack" }, h("h2", {}, "The cast"),
+    h("div", { class: "cast" }, chars.map((c) => h("div", { class: `cast-row${!c.alive || c.retired ? " benched" : ""}` },
+      h("strong", {}, c.name),
+      h("span", { class: "small muted" }, c.bot ? playedBy(c, seats) : `played by ${playedBy(c, seats)}`, joinedAfter[c.id] ? ` · joined after check ${joinedAfter[c.id]}` : ""),
+      !c.alive ? h("span", { class: "pill bad" }, diedIn[c.id] ? `died in check ${diedIn[c.id]}` : "dead") : c.retired ? h("span", { class: "pill warn" }, "retired") : null,
+      // One square per check, so every row lines up: the result, grey where they sat out, empty before they
+      // joined or after they died or retired.
+      h("span", { class: "res-strip" }, (view.history || []).map((x) => {
+        const r = x.results && x.results[c.id];
+        if (r) return h("span", { class: `res-dot res-${r.result}`, ...jumpTo(x.id), "data-tip": `Check ${x.id}: ${RESULT[r.result]}, ${r.tally} of ${r.target}. Select to go to it.` });
+        const away = (joinedAfter[c.id] && x.id <= joinedAfter[c.id]) || (diedIn[c.id] && x.id > diedIn[c.id]) || (retiredAfter[c.id] && x.id > retiredAfter[c.id]);
+        return away ? h("span", { class: "res-dot res-away", "aria-hidden": "true" }) : h("span", { class: "res-dot res-out", ...jumpTo(x.id), "data-tip": `Check ${x.id}: sat out. Select to go to it.` });
+      }))))));
+}
+
+function checkChapter(ch, view, names, items, seats) {
+  const rec = (view.history || []).find((x) => x.id === ch.id);
+  const state = !ch.end ? "under way" : ch.end.type === "checkCancelled" ? "cancelled" : null;
+  const kind = rec ? rec.kind : ch.start && ch.start.kind;
+  const tricks = rec ? rec.tricks : ch.start && ch.start.tricks;
+  const ids = rec && rec.results ? Object.keys(rec.results) : (ch.start && ch.start.participants) || [];
+  const head = h("div", { class: "headrow" }, h("h2", {}, `Check ${ch.id}`),
+    h("span", { class: "pill" }, [kind ? `${(CHECK_KINDS[kind] && CHECK_KINDS[kind].label) || kind}` : null, tricks ? `${tricks} tricks` : null].filter(Boolean).join(" · ")),
+    state ? h("span", { class: `pill${state === "cancelled" ? " warn" : ""}` }, state) : null,
+    h("span", { class: "small muted push" }, when(ch.start && ch.start.at)));
+  const rows = rec && rec.results ? h("table", { class: "history-results" }, h("tbody", {}, ids.map((id) => {
+    const r = rec.results[id];
+    const p = (rec.players && rec.players[id]) || {};
+    return h("tr", {},
+      h("td", {}, h("strong", {}, names[id] || id), " ", whoTag(view.characters[id], seats)),
+      // The trump belongs to this goal, not to the person: it sits with the goal, in its suit's colour.
+      h("td", { class: "history-goal" },
+        p.approach ? h("span", { class: `pill tinted ${tone(p.approach)}`, "data-tip": "The trump for this goal." }, `${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null, " ",
+        p.survival ? h("strong", {}, "Survive") : p.goal ? h("em", {}, `“${p.goal}”`) : h("span", { class: "muted" }, rec.players ? "spoken at the table" : "")),
+      h("td", {}, resultPill(r.result)),
+      h("td", { class: tallyClass(r.tally, r.target) }, `${r.tally} of ${r.target}`),
+      h("td", {}, r.dies ? h("span", { class: "pill bad" }, "died") : null));
+  }))) : h("p", { class: "small muted" }, ids.length ? `With ${ids.map((id) => names[id] || id).join(", ")}.` : "");
+  const cons = rec && rec.consequences && rec.consequences.length ? h("div", { class: "row" }, h("span", { class: "small muted" }, "Consequences"),
+    rec.consequences.map((c) => h("span", { class: `pill tinted ${tone(c.suit)}` }, `${names[c.charId] || c.charId}: ${SUITS[c.suit].sym} ${SUITS[c.suit].status}${c.compulsion ? ` (${c.compulsion})` : ""}`))) : null;
+  return h("section", { id: `history-check-${ch.id}`, class: `panel stack history-check${state === "cancelled" ? " benched" : ""}` }, head, rows, cons,
+    eventLines(ch.events, names, items),
+    rec && rec.log && rec.log.length ? h("details", {}, h("summary", { class: "small" }, `The ${rec.log.length} tricks`),
+      h("div", { class: "log log-full" }, rec.log.map((e) => h("div", { class: e.winner ? "won" : "kept" }, `${e.trick + 1}. ${trickSentence(e, names)}`)))) : null);
+}
+
+function betweenChapter(ch, first, names, items) {
+  const list = eventLines(ch.events, names, items);
+  if (!list && !ch.late) return null;
+  return h("section", { class: "panel stack history-between" },
+    h("div", { class: "headrow" }, h("h3", { class: "flush" }, ch.late ? "From here on, the history is complete" : first ? "Before the first check" : "Between checks"),
+      h("span", { class: "small muted push" }, when(ch.start && ch.start.at))),
+    ch.late ? h("p", { class: "small muted" }, "This campaign began before the app kept a history, so earlier checks show only their results.") : null,
+    list);
+}
+
+// The whole campaign, newest first: the cast, then each check and what happened around it, then the notes this
+// screen may read. The same block on every screen; what it shows comes from that screen's view.
+export function historyPanel(view, { items = {}, notes = null, seats = [] } = {}) {
+  const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
+  const chs = chapters(view);
+  const firstCheck = chs.findIndex((c) => c.kind === "check");
+  const blocks = chs.map((c, i) => (c.kind === "check" ? checkChapter(c, view, names, items, seats) : betweenChapter(c, firstCheck < 0 || i < firstCheck, names, items))).filter(Boolean).reverse();
+  const noteBlocks = notes ? Object.entries(notes).filter(([, n]) => n && n.text).map(([k, n]) => h("div", { class: "stack-tight" },
+    h("div", { class: "headrow" }, h("strong", {}, NOTE_TABS[k] ? NOTE_TABS[k][0] : k), n.at ? h("span", { class: "small muted" }, `last edited by ${n.by}, ${when(n.at)}`) : null),
+    h("div", { class: "history-notes" }, n.text))) : [];
+  return [
+    cast(view, seats),
+    blocks.length ? h("div", { class: "history" }, blocks) : h("div", { class: "panel muted" }, "Nothing has happened yet. The history fills in as characters join and checks are played."),
+    noteBlocks.length ? h("div", { class: "panel stack" }, h("h2", {}, "Notes"), noteBlocks) : null,
+  ].filter(Boolean);
+}
 
 // Whether someone is still choosing this trick, shown inline with their name: a pulsing "choosing…" or "locked in".
 // A chip that has just turned from choosing to locked in glows briefly, so the change is noticed without reading.

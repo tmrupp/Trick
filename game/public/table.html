@@ -58,14 +58,16 @@
 <main id="main"></main>
 <div id="reveal"></div>
 <script type="module">
-import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, itemsById, reducedMotion, markSuits, difficulty, cardFromLabel, mountHeader, setRedraw, announce, trickLog, resultsList, choosingChip, layoutSwitch, notesPanel, presence, tone, difficultyPill, resultPill, tallyClass } from "/shared/client.js";
+import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, itemsById, reducedMotion, markSuits, difficulty, cardFromLabel, mountHeader, setRedraw, announce, trickLog, resultsList, choosingChip, layoutSwitch, notesPanel, presence, tone, difficultyPill, resultPill, tallyClass, historyPanel } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEM_NAMES = Object.fromEntries(Object.entries(itemsById()).map(([k, v]) => [k, v.label]));
 document.getElementById("code").textContent = room;
 const layout = layoutSwitch("table");
 const notes = notesPanel({ send: () => {}, editable: false });
-const header = mountHeader({ items: () => [layout.item(), notes.item()] });
+let showHistory = false;
+const header = mountHeader({ items: () => [layout.item(), notes.item(),
+  { label: showHistory ? "Back to the table" : "Campaign history", tip: "Every check so far, who joined, who fell, and the notes.", onclick: () => { showHistory = !showHistory; redrawLast(); } }] });
 let qrFor = "";
 let seenTricks = null;
 let revealTimer = null;
@@ -105,14 +107,21 @@ connect({
       if (seenTricks !== null && ck.log.length > seenTricks) showReveal(ck.log[ck.log.length - 1], view, names);
       seenTricks = ck.log.length;
     } else seenTricks = 0;
+    lastView = [info, view, names];
     draw(info, view, names);
   },
 });
+let lastView = null;
+function redrawLast() { if (lastView) draw(...lastView); }
 
 function draw(info, view, names) {
   const ck = view.check && view.check.phase !== "closed" ? view.check : null;
   const parts = [];
   const sub = document.getElementById("sub");
+  if (showHistory) {
+    sub.textContent = "Campaign history";
+    return render(main, [h("div", { class: "row" }, h("button", { onclick: () => { showHistory = false; redrawLast(); } }, "Back to the table")), ...historyPanel(view, { items: ITEM_NAMES, notes: notes.current(), seats: info.seats })]);
+  }
   if (!ck) {
     sub.textContent = "Between checks";
     parts.push(h("div", { class: "lanes" }, info.seats.filter((s) => s.role === "player" || s.charId).map((s) => {

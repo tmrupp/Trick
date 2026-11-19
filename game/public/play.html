@@ -18,7 +18,7 @@
 </header>
 <main id="main" aria-live="polite"></main>
 <script type="module">
-import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, racesById, stripTags, difficultyHint, draft, menu, zoomCard, cardFromLabel, markSuits, mountHeader, setRedraw, announce, trickLog, handDock, consolationText, choosingList, layoutSwitch, notesPanel, suitChoice, picked, setPicked, tone, resultPill, segmented } from "/shared/client.js";
+import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, racesById, stripTags, difficultyHint, draft, menu, zoomCard, cardFromLabel, markSuits, mountHeader, setRedraw, announce, trickLog, handDock, consolationText, choosingList, layoutSwitch, notesPanel, suitChoice, picked, setPicked, tone, resultPill, historyPanel, inPlayPills, segmented } from "/shared/client.js";
 
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -27,7 +27,7 @@ const ITEM_NAMES = Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, 
 let room = (params.get("room") || "").toUpperCase();
 let conn = null;
 let last = null;
-let tab = "play"; // play | cards
+let tab = "play"; // play | cards | history
 let ui = { chosen: null, price: null, info: false, creating: false };
 let lastTrickSeen = null; // the newest trick this phone has shown; null until the first view
 let lastPromptKey = "";
@@ -212,13 +212,12 @@ function charactersPanel(info, view, me, busy) {
 function sheet(view, me) {
   const ch = view.characters[me];
   const race = ch.race && RACES[ch.race];
-  const statusCount = (s) => ch.reserveStatuses ? 6 - (ch.reserveStatuses[s] || 0) : null;
   return h("div", { class: "sheet" },
     h("div", { class: "panel stack" },
       h("h2", {}, ch.name), race ? h("p", {}, h("strong", {}, `${race.label || race.name}: ${race.abilityTitle || ""}`), h("br"), h("span", { class: "small" }, (race.rules || []).map(stripTags).join(" "))) : null,
       ch.compulsion.length ? h("p", { class: "banner panel warn" }, h("strong", {}, "Curse compulsion: "), ch.compulsion.join("; ")) : null,
       ch.survival ? h("p", { class: "banner panel bad" }, h("strong", {}, "Survival: "), `${ch.survival.M} Injuries near the top of your discard. Your next check's goal is to survive, target ${ch.survival.target}.`) : null,
-      h("div", { class: "row small" }, Object.entries(SUITS).map(([k, s]) => h("span", { class: "pill" }, `${s.status}: ${statusCount(k) ?? "?"} out`)), h("span", { class: "pill" }, `Blessed in reserve: ${ch.reserveBlessed ?? "?"}`))),
+      inPlayPills(ch, (k) => cardText(k === "B" ? { blessed: true } : { suit: k, status: true }))),
     ch.items.length ? h("div", { class: "panel stack" }, h("h2", {}, "Items"), ch.items.map((id) => {
       const it = ITEMS[id];
       return h("details", {}, h("summary", {}, it ? it.label : id),
@@ -393,13 +392,15 @@ function draw() {
   const inCheck = ck && ck.phase !== "closed" && ck.players[me];
   const tabs = h("div", { class: "tabs small-tabs" },
     h("button", { class: "small", "aria-pressed": String(tab === "play"), onclick: () => { tab = "play"; draw(); } }, inCheck ? "The check" : "Table"),
-    h("button", { class: "small", "aria-pressed": String(tab === "cards"), onclick: () => { tab = "cards"; draw(); } }, "My cards"));
+    h("button", { class: "small", "aria-pressed": String(tab === "cards"), onclick: () => { tab = "cards"; draw(); } }, "My cards"),
+    h("button", { class: "small", "aria-pressed": String(tab === "history"), onclick: () => { tab = "history"; draw(); } }, "History"));
   const parts = [tabs];
   if (ch.alive && ch.retired) parts.push(h("div", { class: "panel banner warn stack" }, h("h2", {}, `${ch.name} is retired`), h("p", {}, "The GM has retired this character. Make a new one, switch to another in My cards, or ask the GM to bring them back."),
     h("button", { class: "primary", onclick: () => { ui.creating = true; draw(); } }, "Make a new character")));
   if (!ch.alive) parts.push(h("div", { class: "panel banner bad stack" }, h("h2", {}, `${ch.name} is dead`), h("p", {}, "Make a new character, or ask the GM to bring them back."),
     h("button", { class: "primary", onclick: () => { ui.creating = true; draw(); } }, "Make a new character")));
   if (tab === "cards") parts.push(charactersPanel(info, view, me, !!inCheck), sheet(view, me));
+  else if (tab === "history") parts.push(...historyPanel(view, { items: ITEM_NAMES, notes: notes.current(), seats: info.seats }));
   else if (!inCheck) {
     parts.push(h("div", { class: "panel stack" }, h("h2", {}, ck && ck.phase !== "closed" ? "You're not in this check" : "Waiting for the GM"),
       h("p", { class: "muted" }, "Talk the scene through. When the GM starts a check, it appears here."),

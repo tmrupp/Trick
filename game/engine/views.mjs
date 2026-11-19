@@ -65,12 +65,21 @@ function checkPublic(ck, state) {
   };
 }
 
+// Journal entries that name a character's cards: only the GM and that character's player see them,
+// as when they happen (room.viewMessage). who.charIds lists every character a player has had; else who.charId.
+const PRIVATE_JOURNAL = new Set(["gmCardAdded", "gmCardMoved"]);
+function journalFor(state, who) {
+  const mine = (id) => who.role === "gm" || (who.role === "player" && (who.charIds || [who.charId]).includes(id));
+  return (state.journal || []).filter((e) => !PRIVATE_JOURNAL.has(e.type) || mine(e.id)).map((e) => ({ ...e }));
+}
+
 export function viewFor(state, who) {
   const view = {
     seats: state.seats.slice(), gmSeat: state.gmSeat,
     characters: {},
     check: checkPublic(state.check, state),
-    history: state.history.map((h) => ({ id: h.id, kind: h.kind, results: h.results })),
+    history: state.history.map((h) => ({ id: h.id, kind: h.kind, tricks: h.tricks, results: h.results, log: h.log || [], players: h.players || null, consequences: h.consequences || [] })),
+    journal: journalFor(state, who),
   };
   for (const ch of Object.values(state.characters)) {
     view.characters[ch.id] = who.role === "gm" || (who.role === "player" && who.charId === ch.id) ? characterPrivate(ch) : characterPublic(ch);

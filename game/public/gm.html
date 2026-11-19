@@ -13,7 +13,7 @@
 <header class="phone-head"><h1 id="title">GM</h1><span id="status" class="dot" data-tip="Connecting…"></span><span id="tools"></span></header>
 <main id="main"></main>
 <script type="module">
-import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, eventText, toast, chime, itemsById, racesById, stripTags, menu, openMenuAt, presetTricks, CHECK_KINDS, num, segmented, picked, confirmButton, mountHeader, setRedraw, trickLog, consolationText, choosingChip, layoutSwitch, notesPanel, suitChoice, tone, difficultyPill, resultPill, tallyClass } from "/shared/client.js";
+import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, eventText, toast, chime, itemsById, racesById, stripTags, menu, openMenuAt, presetTricks, CHECK_KINDS, num, segmented, picked, confirmButton, mountHeader, setRedraw, trickLog, consolationText, choosingChip, layoutSwitch, notesPanel, suitChoice, tone, difficultyPill, resultPill, tallyClass, historyPanel, inPlayPills } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -152,11 +152,12 @@ function draw() {
   const parts = [
     h("div", { class: `panel banner next-step phase-${phase}` }, h("div", { class: "row" }, h("div", {}, h("h2", {}, what), h("p", { class: "muted note-gap" }, detail)),
       step ? h("button", { class: "primary", onclick: step.run }, step.label) : null)),
-    h("div", { class: "tabs" }, [["check", "The check"], ["chars", "Characters"], ["room", "Room and seats"]].map(([k, t]) => h("button", { "aria-pressed": String(tab === k), onclick: () => { tab = k; draw(); } }, t))),
+    h("div", { class: "tabs" }, [["check", "The check"], ["chars", "Characters"], ["history", "History"], ["room", "Room and seats"]].map(([k, t]) => h("button", { "aria-pressed": String(tab === k), onclick: () => { tab = k; draw(); } }, t))),
   ];
   if (tab === "check") parts.push(...checkTab(info, view, names));
   if (tab === "chars") parts.push(...charsTab(info, view, names));
   if (tab === "room") parts.push(...roomTab(info, view, names));
+  if (tab === "history") parts.push(...historyPanel(view, { items: ITEM_NAMES, notes: notes.current(), seats: info.seats }));
   parts.push(h("details", { class: "panel" }, h("summary", {}, "What's happened"), h("div", { class: "log" }, [...feed].reverse().map((t) => h("div", {}, t)))));
   render(main, parts);
 }
@@ -259,9 +260,9 @@ function checkTab(info, view, names) {
       const lockId = view.locks && view.locks[id] && view.locks[id].cardId;
       const canHand = ["play", "consolation"].includes(ck.phase);
       return h("div", { class: `stack divided toned ${tone(p.approach)}` },
-        h("div", { class: "headrow" }, h("strong", { "data-tip": p.approach ? `Trump: ${SUITS[p.approach].name}. Cards in it can win any trick.` : undefined }, p.approach ? `${SUITS[p.approach].sym} ` : "", names[id]),
+        h("div", { class: "headrow" }, h("strong", {}, names[id]),
           h("div", { class: "facts small" },
-            h("span", { class: `pill ${tallyClass(p.total, p.target)}`, "data-tip": "What they've scored, against their target." }, `${p.total} / ${p.target}`),
+            h("span", { class: `pill ${tallyClass(p.total, p.target)}`, "data-tip": `${p.approach ? `Trump ${SUITS[p.approach].name}. ` : ""}What they've scored, against their target.` }, p.approach ? `${SUITS[p.approach].sym} ` : "", `${p.total} / ${p.target}`),
             p.brace ? h("span", { class: `pill tinted ${tone("S")}`, "data-tip": consolationText("S") }, `Brace +${p.brace}`) : null,
             p.mirror ? h("span", { class: `pill tinted ${tone("W")}`, "data-tip": consolationText("W") }, "Mirror") : null,
             p.boost ? h("span", { class: "pill good", "data-tip": "Your adjustment to their next card, for beating." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null,
@@ -350,7 +351,6 @@ function charsTab(info, view, names) {
   const inCheck = !!(view.check && view.check.phase !== "closed");
   return [h("div", { class: "people" }, chars.map((c) => {
     const race = c.race && RACES[c.race];
-    const out = (s) => 6 - ((c.reserveStatuses || {})[s] || 0);
     return h("div", { class: `panel stack toned ${tone(c.primary)}${!c.alive || c.retired ? " benched" : ""}` },
       h("div", { class: "headrow" }, h("h2", {}, c.name),
         c.alive ? null : h("span", { class: "pill bad", "data-tip": "Dead. Bring them back from Actions, or the player can make a new character." }, "dead"),
@@ -362,10 +362,8 @@ function charsTab(info, view, names) {
         h("span", { class: "muted" }, `· deck ${c.deckCount} · discard ${c.discardCount}`)),
       c.survival ? h("p", { class: "pill bad", "data-tip": "2 or more Injuries near the top of their discard: their next goal is to survive." }, `Survival: ${c.survival.M} Injuries, target ${c.survival.target}`) : null,
       c.compulsion.length ? h("p", { class: "small" }, h("strong", { "data-tip": STATUS_TIP("W") }, "Compulsion: "), c.compulsion.join("; ")) : null,
-      h("div", { class: "facts" },
-        ["S", "D", "I", "W"].map((s) => out(s) ? h("span", { class: `pill tinted ${tone(s)}`, "data-tip": `${out(s)} of 6 ${SUITS[s].status} cards are in play for them. ${STATUS_TIP(s)}` }, `${SUITS[s].status} ×${out(s)}`) : null),
-        c.items.map((id) => h("span", { class: "pill", "data-tip": itemTip(id) }, ITEM_NAMES[id] || id)),
-        h("span", { class: "pill tinted tone-B", "data-tip": cardText({ blessed: true }) }, `Blessed ${c.reserveBlessed} in reserve`)),
+      inPlayPills(c, (k) => (k === "B" ? cardText({ blessed: true }) : STATUS_TIP(k))),
+      c.items.length ? h("div", { class: "facts" }, c.items.map((id) => h("span", { class: "pill", "data-tip": itemTip(id) }, ITEM_NAMES[id] || id))) : null,
       openEditors.has(c.id) ? cardEditor(c, view) : null);
   }))];
 }

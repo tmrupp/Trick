@@ -9,6 +9,8 @@ export { charsOf };
 const MAX_SEATS = 10;
 
 // What a player seat may do: act for its own character only. The GM may do anything.
+// Every action carries the time it happened, for the campaign history. The rules never read it.
+const stamp = (a) => ({ ...a, at: Date.now() });
 const PLAYER_ACTIONS = new Set(["createCharacter", "declareApproach", "lockCard", "unlockCard", "recalculate", "peek", "giveBlessed", "evolve", "evolvePick", "useItem"]);
 
 export function authorize(seat, action) {
@@ -71,7 +73,7 @@ export class Room {
     const action = nextBotAction(this.state);
     if (!action) return;
     try {
-      const { state, events } = apply(this.state, action);
+      const { state, events } = apply(this.state, stamp(action));
       this.state = state;
       this.save.actions = state.actions;
       this.persist();
@@ -155,7 +157,7 @@ export class Room {
       for (let n = 2; this.state.characters[id]; n++) id = `${base}-${n}`;
       a = { type: "createCharacter", id, name: String(a.name || seat.name).slice(0, 24), primary: a.primary, secondary: a.secondary, others: a.others, race: a.race || null, controller: seat.role };
     }
-    const { state, events } = apply(this.state, a);
+    const { state, events } = apply(this.state, stamp(a));
     this.state = state;
     this.save.actions = state.actions;
     if (a.type === "createCharacter") playCharacter(seat, a.id);
@@ -228,7 +230,7 @@ export class Room {
       const rest = SUIT_ORDER.filter((s) => s !== primary);
       const id = nextSeatId(this.save, "bot");
       const name = String(op.name || `${BOT_KINDS[kind]} ${id.slice(1)}`).trim().slice(0, 24);
-      const { state, events } = apply(this.state, { type: "createCharacter", id, name, primary, secondary: rest[0], others: [rest[1], rest[2]], controller: "bot", bot: kind });
+      const { state, events } = apply(this.state, stamp({ type: "createCharacter", id, name, primary, secondary: rest[0], others: [rest[1], rest[2]], controller: "bot", bot: kind }));
       this.state = state;
       this.save.actions = state.actions;
       const botSeat = { id, token: newSecret(), name, role: "bot", charId: null };
@@ -272,7 +274,7 @@ export class Room {
   who(seat) {
     if (!seat) return { role: "table" };
     if (seat.role === "gm") return { role: "gm" };
-    if (seat.charId) return { role: "player", charId: seat.charId };
+    if (seat.charId) return { role: "player", charId: seat.charId, charIds: charsOf(seat) };
     return { role: "table" };
   }
 
@@ -280,7 +282,7 @@ export class Room {
     const connected = new Set([...this.clients].filter((c) => c.seat).map((c) => c.seat.id));
     return {
       code: this.code, name: this.save.name, joinUrl: `${this.linkBase()}/j/${this.code}`,
-      seats: this.save.seats.filter((s) => !s.removed).map((s) => ({ id: s.id, name: s.name, role: s.role, charId: s.charId, connected: connected.has(s.id) })),
+      seats: this.save.seats.filter((s) => !s.removed).map((s) => ({ id: s.id, name: s.name, role: s.role, charId: s.charId, chars: charsOf(s), connected: connected.has(s.id) })),
       you: seat ? { seatId: seat.id, role: seat.role, charId: seat.charId, chars: charsOf(seat), name: seat.name } : { role: "table" },
     };
   }

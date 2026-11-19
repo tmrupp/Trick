@@ -30,6 +30,7 @@ export function createGame({ seed = Date.now(), gmSeat = 0, rules = {} } = {}) {
     checkCount: 0,
     lastCheckTricks: null,
     history: [],
+    journal: [], // the campaign's story so far: see JOURNAL below
     actions: [], // every applied action, for replay
   };
 }
@@ -88,12 +89,32 @@ Object.assign(HANDLERS, LEGACY_HANDLERS);
 
 export const ACTION_TYPES = Object.keys(HANDLERS);
 
+// The events worth keeping as the campaign's history, beyond each check's own record in state.history.
+// Each is kept with the time on its action (the server stamps action.at) and the number of checks begun so far.
+export const JOURNAL = new Set([
+  "characterCreated", "renamed", "retired", "unretired", "died", "resurrected",
+  "checkBegun", "checkCancelled", "checkClosed", "survivalRequired",
+  "statusGained", "statusUnavailable", "curseViolated", "rested", "evolved", "evolveKept",
+  "blessedGranted", "blessedGiven", "itemGiven", "itemLost", "itemUsed",
+  "tallyAdjusted", "targetAdjusted", // the GM's hand on a check's outcome, with the reason given
+  "gmCardAdded", "gmCardMoved", // the GM adding, moving or removing a character's cards: private, see PRIVATE_JOURNAL in views.mjs
+]);
+
+function keepInJournal(st, action, events) {
+  const kept = events.filter((e) => JOURNAL.has(e.type));
+  if (!kept.length) return;
+  // A game saved before the journal existed starts one now, marked so the history can say it begins here.
+  if (!st.journal) st.journal = [{ type: "journalStarted", at: action.at ?? null, check: st.checkCount || 0 }];
+  for (const e of kept) st.journal.push({ ...e, at: action.at ?? null, check: st.checkCount || 0 });
+}
+
 export function apply(state, action, { inPlace = false } = {}) {
   const handler = HANDLERS[action && action.type];
   if (!handler) throw new campaign.RuleError(`Unknown action "${action && action.type}".`);
   const st = inPlace ? state : structuredClone(state);
   const ctx = { state: st, events: [], rng: rngFor(st) };
   handler(ctx, action);
+  keepInJournal(st, action, ctx.events);
   st.actions.push(action);
   return { state: st, events: ctx.events };
 }

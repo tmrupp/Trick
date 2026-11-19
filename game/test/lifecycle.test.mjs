@@ -217,3 +217,35 @@ test("the GM can set a check's exact number of tricks; the kind still sets the t
   ({ state: s } = run(s, { type: "beginCheck", participants: ["ana", "ben"] }));
   assert.equal(s.check.tricks, 7, "without a number, the preset: 3 per player, +1");
 });
+
+test("the campaign journal keeps the story: who joined, checks, statuses, deaths, with each action's time", () => {
+  let s = createGame({ seed: "journal" });
+  s = apply(s, { type: "createCharacter", id: "ana", name: "Ana", primary: "S", secondary: "D", others: ["I", "W"], at: 1000 }).state;
+  s = apply(s, { type: "gainStatus", charId: "ana", suit: "I", at: 2000 }).state;
+  ({ state: s } = playCheck(s, { goals: { ana: { approach: "S", target: 10 } }, consequences: [{ charId: "ana", suit: "S" }] }));
+  const types = s.journal.map((e) => e.type);
+  assert.deepEqual(types.slice(0, 3), ["characterCreated", "statusGained", "checkBegun"]);
+  assert.ok(types.includes("checkClosed"));
+  assert.equal(s.journal[0].at, 1000);
+  assert.equal(s.journal[1].check, 0, "between checks, before the first");
+  assert.equal(s.journal.find((e) => e.type === "checkClosed").check, 1);
+  // The check's own record says what each participant set out to do and what the GM gave them.
+  const h = s.history[0];
+  assert.deepEqual([h.players.ana.approach, h.players.ana.target], ["S", 10]);
+  assert.deepEqual(h.consequences.map((c) => c.suit), ["S"]);
+  // Every screen sees the journal and the full check record. The GM's card edits name cards, so only the GM and
+  // that character's player (in any of their characters) see them; an evolution is public, as it is live.
+  s = apply(s, { type: "gmAddCard", charId: "ana", suit: "S", v: 3, to: "discard" }).state;
+  s.journal.push({ type: "evolveKept", id: "ana", card: "7♥", check: 1, at: null });
+  const seen = (who) => viewFor(s, who).journal.map((e) => e.type);
+  assert.ok(seen({ role: "gm" }).includes("gmCardAdded"));
+  assert.ok(seen({ role: "player", charId: "ana-2", charIds: ["ana", "ana-2"] }).includes("gmCardAdded"));
+  assert.ok(!seen({ role: "table" }).includes("gmCardAdded"));
+  assert.ok(!seen({ role: "player", charId: "ben" }).includes("gmCardAdded"));
+  assert.equal(viewFor(s, { role: "table" }).journal.at(-1).card, "7♥");
+  assert.equal(viewFor(s, { role: "table" }).history[0].log.length, s.history[0].log.length);
+  // A game saved before the journal existed starts one, marked, at its next notable event.
+  delete s.journal;
+  s = apply(s, { type: "renameCharacter", charId: "ana", name: "Anna" }).state;
+  assert.deepEqual(s.journal.map((e) => e.type), ["journalStarted", "renamed"]);
+});

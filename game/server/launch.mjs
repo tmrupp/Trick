@@ -5,13 +5,14 @@ import { join } from "node:path";
 
 const run = (cmd, args) => { try { return execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); } catch { return ""; } };
 
-// Stop the Node process listening on this port, with its tunnel. Anything that isn't Node is left alone.
+// Stop the host listening on this port (Node, or the packaged TRICK.exe), with its tunnel. Anything else is left alone.
+const HOSTS = /^(node|TRICK)$/i;
 export function stopOldHost(port) {
   if (process.platform === "win32") {
     const ps = `$c = Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; if ($p) { "$($p.Id) $($p.ProcessName)" } }`;
     const [pid, name] = run("powershell.exe", ["-NoProfile", "-Command", ps]).trim().split(/\s+/);
     if (!pid) return null;
-    if (name !== "node") return { pid, name, skipped: true };
+    if (!HOSTS.test(name)) return { pid, name, skipped: true };
     run("taskkill", ["/PID", pid, "/T", "/F"]); // /T takes the cloudflared child with it
     return { pid, name };
   }

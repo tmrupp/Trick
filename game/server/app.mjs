@@ -9,9 +9,9 @@ import { RuleError } from "../engine/index.mjs";
 import { Store, newSecret } from "./store.mjs";
 import { Room } from "./room.mjs";
 
-const HERE = fileURLToPath(new URL(".", import.meta.url));
-const PUBLIC = resolve(HERE, "../public");
-const REPO = resolve(HERE, "../..");
+// The repository's files the host serves. The packaged TRICK.exe unpacks them somewhere else and says where in TRICK_ROOT.
+const REPO = process.env.TRICK_ROOT ? resolve(process.env.TRICK_ROOT) : resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
+const PUBLIC = resolve(REPO, "game", "public");
 const SHARED_FROM_REPO = new Map([ // repo files the pages may load
   ["/suit_icons.js", "suit_icons.js"], ["/card_rules.js", "card_rules.js"],
   ["/items/item_catalog.js", "items/item_catalog.js"], ["/races/race_catalog.js", "races/race_catalog.js"],
@@ -21,7 +21,7 @@ const SHARED_FROM_REPO = new Map([ // repo files the pages may load
 const TYPES = { ".png": "image/png", ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".json": "application/json" };
 const PAGES = { "/host": "host.html", "/table": "table.html", "/watch": "table.html", "/play": "play.html", "/gm": "gm.html", "/print": "print.html" };
 
-export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves"), adminToken = newSecret(), publicUrl = null, log = console.log, botDelay = 650 } = {}) {
+export function createServer({ port = 8787, savesDir = resolve(REPO, "game", "saves"), adminToken = newSecret(), publicUrl = null, log = console.log, botDelay = 650 } = {}) {
   let base = publicUrl;
   const linkBase = () => base || `http://localhost:${port}`;
   const store = new Store(savesDir);

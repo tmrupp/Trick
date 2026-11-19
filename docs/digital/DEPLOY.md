@@ -2,7 +2,25 @@
 
 Two ways to put a game online. Both run the same server, and saves move between them with Download and Import on the host page.
 
-## From your computer (the default)
+## As a Windows program (the easiest)
+
+`TRICK.exe` hosts a game with a double-click: no terminal, no Node, no cloudflared to install.
+
+1. Build it once (and again after changing the game):
+   ```bash
+   npm run build:exe
+   ```
+   This writes `dist/TRICK.exe` (about 150 MB: it carries Node, the pages, the card art and cloudflared). Copy it anywhere, such as the desktop.
+2. Double-click it. A window opens with the links, and your browser opens the host page, the table screen and the GM page for your most recent campaign. Players join with the public link or QR code on the host page.
+3. Keep the window open while you play. Close it to stop the game.
+
+- Campaigns are saved in a `TRICK Campaigns` folder in your Documents (wherever Windows keeps them, OneDrive included). To bring campaigns from `npm start`, copy their `.json` files from `game/saves` into that folder, or use Download and Import on the host page.
+- Starting it again stops the copy already running, like `npm run restart`.
+- The first start of each new build unpacks its files into `%LOCALAPPDATA%\TRICK\app`, which takes a few seconds.
+- It isn't code-signed, so on another computer Windows may warn about it the first time ("More info", then "Run anyway").
+- How it's made: `scripts/build_exe.mjs` bundles `game/launcher/trick.mjs` with the server into one script and packs it, with the served files and cloudflared, into a copy of `node.exe` (Node's single executable application). The icon is `game/launcher/trick.ico`, drawn by `scripts/make_icon.mjs`.
+
+## From your computer (with Node)
 
 1. Install cloudflared once. On Windows:
    ```bash

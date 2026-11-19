@@ -3,6 +3,7 @@
 The rules of [RULES.md](../RULES.md) as code, and a host server for playing them with phones, as planned in [docs/digital/PLAN.md](../docs/digital/PLAN.md). Every phase of the plan is built. The one thing left is a real table playing through it.
 
 ```bash
+npm run build:exe    # build dist/TRICK.exe: double-click it to host, no terminal needed (docs/digital/DEPLOY.md)
 npm start            # host with a public link through a Cloudflare quick tunnel
 npm run start:local  # host on this computer only
 npm run restart      # stop any running host, start again with the tunnel, and open the host, table and GM windows

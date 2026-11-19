@@ -64,3 +64,4 @@ The three screens (phone `play.html`, GM `gm.html`, table `table.html`) share `g
 - If RULES.md changed: `npm run build:guides && npm run check:assets`, then the exports that show rules text (`export:reference-cards`, `export:tts-reference-deck`, `export:print`; `export:cards`, `export:cards:dark`, `export:tts-deck` and `export:web-cards` when card faces change).
 - If a rule's numbers changed: `npm run sim:targets`, then RULES.md and `rules.mjs` together.
 - Restart a running host (`npm run restart`) so it loads the new engine.
+- `TRICK.exe` carries its own copy of the game: rebuild it (`npm run build:exe`) when you want it to have your changes. How the host starts lives in `game/server/start.mjs`, shared by `npm start` and the exe's launcher (`game/launcher/trick.mjs`).

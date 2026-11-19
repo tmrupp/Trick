@@ -1,6 +1,7 @@
 {
   "name": "trick-card-export",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "build:guides": "node scripts/build_guides.mjs",
@@ -20,11 +21,17 @@
     "restart": "node game/server/main.mjs --tunnel --restart --open",
     "restart:local": "node game/server/main.mjs --restart --open",
     "export:cards:dark": "node export_cards.mjs --dark",
-    "export:web-cards": "node export_web_cards.mjs"
+    "export:web-cards": "node export_web_cards.mjs",
+    "build:exe": "node scripts/build_exe.mjs"
   },
   "dependencies": {
     "playwright": "^1.54.1",
     "qrcode": "1.5.4",
     "ws": "8.22.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.10",
+    "postject": "^1.0.0-alpha.6",
+    "rcedit": "^4.0.1"
   }
 }

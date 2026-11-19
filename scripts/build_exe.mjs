@@ -6,7 +6,7 @@
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import rcedit from "rcedit";
@@ -58,7 +58,10 @@ writeFileSync(join(WORK, "sea-config.json"), JSON.stringify({ main: join(WORK, "
 console.log("Packing", files.length + 1, "files…");
 execFileSync(process.execPath, ["--experimental-sea-config", join(WORK, "sea-config.json")], { stdio: "inherit" });
 const exe = join(OUT, "TRICK.exe");
-rmSync(exe, { force: true });
+// A running TRICK.exe can't be deleted, but Windows lets it be renamed: it keeps running, and the next start of the
+// new build stops it. Copies set aside by earlier builds go once nothing is running them.
+for (const f of readdirSync(OUT)) if (/^TRICK\.old-\d+\.exe$/.test(f)) try { rmSync(join(OUT, f)); } catch {}
+try { rmSync(exe, { force: true }); } catch { renameSync(exe, join(OUT, `TRICK.old-${Date.now()}.exe`)); console.log("TRICK.exe is running: set it aside; the next start replaces it."); }
 copyFileSync(process.execPath, exe);
 await rcedit(exe, {
   icon: join(REPO, "game/launcher/trick.ico"),

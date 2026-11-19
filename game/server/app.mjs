@@ -27,19 +27,26 @@ export function createServer({ port = 8787, savesDir = resolve(REPO, "game", "sa
   const store = new Store(savesDir);
   const rooms = new Map(); // code -> Room
   const joinsByIp = new Map(); // ip -> [timestamps]
+  // Campaigns the host closed: screens that reconnect (a table tab, a phone waking up) are turned away instead of
+  // reopening them. Opening one again from the host page clears it; a restarted host starts with none closed.
+  const closed = new Set(); // campaign ids
+  const CLOSED = "The host closed this campaign. It opens again from the host page.";
 
   const openRoom = (id) => {
     const save = store.read(id);
+    closed.delete(save.id);
     if (!rooms.has(save.code)) rooms.set(save.code, new Room(save, store, linkBase, { botDelay }));
     return rooms.get(save.code);
   };
 
-  // A room by code, opening its saved campaign if the host hasn't yet (e.g. just after a restart).
+  // A room by code, opening its saved campaign if the host hasn't yet (e.g. just after a restart), unless the host closed it.
+  const savedByCode = (code) => store.list().find((c) => c.code === String(code || "").toUpperCase());
+  const isClosed = (code) => { const saved = savedByCode(code); return !!saved && closed.has(saved.id); };
   const roomByCode = (code) => {
     code = String(code || "").toUpperCase();
     if (rooms.has(code)) return rooms.get(code);
-    const saved = store.list().find((c) => c.code === code);
-    return saved ? openRoom(saved.id) : null;
+    const saved = savedByCode(code);
+    return saved && !closed.has(saved.id) ? openRoom(saved.id) : null;
   };
 
   const info = () => ({
@@ -95,6 +102,7 @@ export function createServer({ port = 8787, savesDir = resolve(REPO, "game", "sa
       const back = path.match(/^\/api\/rooms\/([A-Za-z]{1,8})\/returning$/);
       if (back && req.method === "GET") {
         const room = roomByCode(back[1]);
+        if (!room && isClosed(back[1])) return send(res, 404, { error: CLOSED });
         return room ? send(res, 200, { code: room.code, returning: room.returning() }) : send(res, 404, { error: "No room with that code." });
       }
       if (path.startsWith("/api/")) {
@@ -131,9 +139,9 @@ export function createServer({ port = 8787, savesDir = resolve(REPO, "game", "sa
         if (path === "/api/close" && req.method === "POST") {
           const body = await readJson(req);
           const id = String(body.id);
-          let closed = false;
-          for (const [code, r] of rooms) if (r.save.id === id) { for (const c of r.clients) { c.send({ type: "error", reason: "The host closed this campaign." }); c.close(); } r.stop(); rooms.delete(code); closed = true; }
-          if (!closed) return send(res, 400, { error: "That campaign isn't open." });
+          let wasOpen = false;
+          for (const [code, r] of rooms) if (r.save.id === id) { closed.add(id); for (const c of r.clients) { c.send({ type: "closed", reason: CLOSED }); c.close(); } r.stop(); rooms.delete(code); wasOpen = true; }
+          if (!wasOpen) return send(res, 400, { error: "That campaign isn't open." });
           return send(res, 200, info());
         }
         if (path === "/api/archive" && req.method === "POST") {
@@ -189,6 +197,7 @@ export function createServer({ port = 8787, savesDir = resolve(REPO, "game", "sa
           if (client) return reply({ type: "error", reason: "Already joined." });
           if (!allowJoin(ip)) return reply({ type: "error", reason: "Too many joins from here; wait a minute." });
           room = roomByCode(msg.room);
+          if (!room && isClosed(msg.room)) return reply({ type: "closed", reason: CLOSED });
           if (!room) return reply({ type: "error", reason: "No room with that code." });
           const as = ["table", "gm", "player"].includes(msg.as) ? msg.as : "player";
           const seat = room.join({ as, token: msg.token, name: msg.name, gmKey: msg.gmKey, reclaim: msg.reclaim, claimIfFree: !!msg.claimIfFree });

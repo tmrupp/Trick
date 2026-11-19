@@ -18,7 +18,7 @@
 </header>
 <main id="main" aria-live="polite"></main>
 <script type="module">
-import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, racesById, stripTags, difficultyHint, draft, menu, zoomCard, cardFromLabel, markSuits, mountHeader, setRedraw, announce, trickLog, handDock, consolationText, choosingList, layoutSwitch, notesPanel, suitChoice, picked, setPicked, tone, resultPill, historyPanel, inPlayPills, segmented } from "/shared/client.js";
+import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, racesById, stripTags, difficultyHint, draft, menu, zoomCard, cardFromLabel, markSuits, mountHeader, setRedraw, announce, trickLog, handDock, consolationText, choosingList, layoutSwitch, notesPanel, suitChoice, picked, setPicked, tone, resultPill, historyPanel, inPlayPills, segmented, closedNotice } from "/shared/client.js";
 
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -128,6 +128,7 @@ function go(name, reclaim) {
     onView: (msg) => { last = msg; react(msg); draw(); },
     onNotes: (n) => notes.receive(n),
     onRejected: (reason) => { toast(reason); buzz(120); },
+    onClosed: (reason) => { last = null; closedNotice(main, reason); },
     onError: (reason) => {
       // A saved seat this room doesn't know (or one someone else took back): start over at the join screen.
       // Your seat is open in another tab: join here as someone else, or take back a character nobody is playing.

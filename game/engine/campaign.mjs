@@ -110,6 +110,20 @@ export function rest(ctx, { charId, cardIds }) {
   ctx.events.push({ type: "rested", id: ch.id, removed: (cardIds || []).length });
 }
 
+// The GM rewrites a character's Curse compulsion: fix its wording, add a term or drop one. It needs a Curse out
+// (the last Curse leaving ends the compulsion), and a Curse out keeps at least one term.
+export function setCompulsion(ctx, { charId, terms }) {
+  const ch = character(ctx.state, charId);
+  if (!cursesOut(ch)) throw rule(`${ch.name} has no Curse, so no compulsion.`);
+  const clean = (Array.isArray(terms) ? terms : []).map((t) => String(t ?? "").trim().slice(0, 200)).filter(Boolean);
+  if (!clean.length) throw rule("A Curse keeps its compulsion: give it at least one term.");
+  if (clean.length > 12) throw rule("That's too many terms for one compulsion.");
+  const from = ch.compulsion.slice();
+  if (from.length === clean.length && from.every((t, i) => t === clean[i])) return;
+  ch.compulsion = clean;
+  ctx.events.push({ type: "compulsionEdited", id: ch.id, from, to: clean.slice() });
+}
+
 // The GM renames a character.
 export function renameCharacter(ctx, { charId, name }) {
   const ch = character(ctx.state, charId);

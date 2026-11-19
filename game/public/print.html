@@ -15,11 +15,12 @@
 <div class="noprint spread"><h1>My cards</h1><button class="primary" onclick="window.print()">Print</button></div>
 <main id="main"><p class="muted">Loading…</p></main>
 <script type="module">
-import { connect, params, h, render, cardFace, cardText } from "/shared/client.js";
+import { connect, params, h, render, cardFace, cardText, closedNotice } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 connect({
   room, as: "player",
+  onClosed: (r) => closedNotice(main, r),
   onError: (e) => render(main, h("p", {}, e, " Open this from your phone's ", h("a", { href: `/play?room=${room}` }, "game page"), " first.")),
   onView: ({ room: info, view }) => {
     const me = info.you.charId;

@@ -114,6 +114,25 @@ test("Curses: a first Curse needs a compulsion; violations gain Stress per Curse
   assert.ok(!s.characters.cara.discard.some((c) => c.id === stress.id));
 });
 
+test("the GM edits a compulsion: rewords, adds and drops terms while a Curse is out, and the journal keeps it", () => {
+  let s = game();
+  assert.throws(() => run(s, { type: "setCompulsion", charId: "cara", terms: ["Speak only in rhyme"] }), /no Curse/);
+  ({ state: s } = run(s, { type: "gainStatus", charId: "cara", suit: "W", compulsion: "Never refuse a dare" }));
+  let events;
+  ({ state: s, events } = run(s, { type: "setCompulsion", charId: "cara", terms: [" Never refuse a dare from a stranger ", "", "Speak only in rhyme"] }));
+  assert.deepEqual(s.characters.cara.compulsion, ["Never refuse a dare from a stranger", "Speak only in rhyme"]);
+  assert.deepEqual(events.find((e) => e.type === "compulsionEdited"), { type: "compulsionEdited", id: "cara", from: ["Never refuse a dare"], to: ["Never refuse a dare from a stranger", "Speak only in rhyme"] });
+  assert.ok(s.journal.some((e) => e.type === "compulsionEdited" && e.id === "cara"));
+  assert.throws(() => run(s, { type: "setCompulsion", charId: "cara", terms: ["  "] }), /at least one term/);
+  ({ state: s } = run(s, { type: "setCompulsion", charId: "cara", terms: ["Speak only in rhyme"] }));
+  assert.deepEqual(s.characters.cara.compulsion, ["Speak only in rhyme"]);
+  // A Curse the GM added straight to their cards has no compulsion yet: this is how it gets one.
+  ({ state: s } = run(s, { type: "gmAddCard", charId: "ana", kind: "status", suit: "W", to: "discard" }));
+  assert.deepEqual(s.characters.ana.compulsion, []);
+  ({ state: s } = run(s, { type: "setCompulsion", charId: "ana", terms: ["Keep every promise"] }));
+  assert.deepEqual(s.characters.ana.compulsion, ["Keep every promise"]);
+});
+
 test("drawing Stress gains another Stress into discard", () => {
   let s = game();
   s.characters.ana.deck.push(card("Ix", "ana"));

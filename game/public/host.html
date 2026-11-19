@@ -58,7 +58,7 @@ function renderInfo(info) {
     else fetch(`/qr.svg?text=${encodeURIComponent(join)}`).then((x) => x.text()).then((svg) => { qrCache.set(join, svg); qr.innerHTML = svg; });
     return h("div", { class: "panel stack" },
       h("div", { class: "headrow" }, h("h2", {}, r.name),
-        confirmButton(`close-${r.id}`, "Close campaign", `Yes, close ${r.name}`, () => closeCampaign(r.id), "Disconnects its screens and unloads the room. The save stays; open it again any time.")),
+        confirmButton(`close-${r.id}`, "Close campaign", `Yes, close ${r.name}`, () => closeCampaign(r.id), "Disconnects its screens, which stay out until you open it again. The save stays.")),
       h("div", { class: "row align-start-wide" }, qr,
         h("div", { class: "stack" },
           h("div", {}, h("div", { class: "muted small" }, "Room code"), h("div", { class: "code" }, r.code)),
@@ -73,7 +73,7 @@ function renderInfo(info) {
     h("tr", {}, h("td", {}, h("strong", {}, c.name), h("div", { class: "muted small" }, c.characters.join(", ") || "No characters yet")),
       h("td", { class: "muted small" }, new Date(c.updatedAt).toLocaleString()),
       h("td", {}, h("div", { class: "row" },
-        openIds.has(c.id) ? [h("span", { class: "pill good" }, "Open"), h("button", { class: "small ghost", "data-tip": "Disconnects its screens and unloads the room. The save stays.", onclick: () => closeCampaign(c.id) }, "Close")]
+        openIds.has(c.id) ? [h("span", { class: "pill good" }, "Open"), h("button", { class: "small ghost", "data-tip": "Disconnects its screens, which stay out until you open it again. The save stays.", onclick: () => closeCampaign(c.id) }, "Close")]
           : h("button", { class: "small primary", onclick: () => api("/api/open", { id: c.id }).then(renderInfo).catch(show) }, "Open"),
         h("button", { class: "small", onclick: () => download(c.id, c.name).catch(show) }, "Download"),
         confirmButton(`archive-${c.id}`, "Archive", `Yes, archive ${c.name}`, () => api("/api/archive", { id: c.id }).then(renderInfo).catch(show), "Closes the room and moves the save to saves/archive.")))))))) : h("p", { class: "muted" }, "No saved campaigns yet."));

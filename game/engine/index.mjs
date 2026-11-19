@@ -50,6 +50,7 @@ const HANDLERS = {
   },
   gainStatus: campaign.gainStatusBetweenChecks,
   curseViolation: campaign.curseViolation,
+  setCompulsion: campaign.setCompulsion,
   rest: campaign.rest,
   giveItem: campaign.giveItem,
   loseItem: campaign.loseItem,
@@ -94,7 +95,7 @@ export const ACTION_TYPES = Object.keys(HANDLERS);
 export const JOURNAL = new Set([
   "characterCreated", "renamed", "retired", "unretired", "died", "resurrected",
   "checkBegun", "checkCancelled", "checkClosed", "survivalRequired",
-  "statusGained", "statusUnavailable", "curseViolated", "rested", "evolved", "evolveKept",
+  "statusGained", "statusUnavailable", "curseViolated", "compulsionEdited", "rested", "evolved", "evolveKept",
   "blessedGranted", "blessedGiven", "itemGiven", "itemLost", "itemUsed",
   "tallyAdjusted", "targetAdjusted", // the GM's hand on a check's outcome, with the reason given
   "gmCardAdded", "gmCardMoved", // the GM adding, moving or removing a character's cards: private, see PRIVATE_JOURNAL in views.mjs

@@ -20,7 +20,8 @@ const browserStore = { get: (k) => { try { return localStorage.getItem(k); } cat
 
 // Connect to a room and stay connected: rejoins with this tab's seat token after any drop.
 // fresh: join as someone new (or reclaim), ignoring the seat this browser last used.
-export function connect({ room, as, gmKey, getName, reclaim, fresh = false, onView, onWelcome, onRejected, onStatus, onError, onNotes }) {
+// onClosed: the host closed the campaign; the connection stops trying (see closedNotice).
+export function connect({ room, as, gmKey, getName, reclaim, fresh = false, onView, onWelcome, onRejected, onStatus, onError, onNotes, onClosed }) {
   const key = `trick:${room}:${as}`;
   let ws = null;
   let seq = 0;
@@ -48,10 +49,11 @@ export function connect({ room, as, gmKey, getName, reclaim, fresh = false, onVi
       else if (msg.type === "notes") onNotes && onNotes(msg.notes, !!msg.all);
       else if (msg.type === "rejected") onRejected && onRejected(msg.reason, msg.seq);
       else if (msg.type === "removed") { stopped = true; forget(); onError && onError("The GM removed your seat."); }
+      else if (msg.type === "closed") { stopped = true; (onClosed || onError || (() => {}))(msg.reason); }
       else if (msg.type === "error") onError && onError(msg.reason);
     };
     ws.onclose = () => {
-      onStatus && onStatus("offline");
+      onStatus && onStatus(stopped ? "stopped" : "offline");
       if (!stopped) setTimeout(open, (wait = Math.min(wait * 2, 8000)));
     };
   };
@@ -69,6 +71,13 @@ export function connect({ room, as, gmKey, getName, reclaim, fresh = false, onVi
     forget,
     stop() { stopped = true; try { ws.close(); } catch {} },
   };
+}
+
+// What a screen shows once the host has closed its campaign: it stops, says so, and can try again once it's open.
+export function closedNotice(main, reason) {
+  main.replaceChildren(h("div", { class: "panel banner bad" },
+    h("h2", {}, "Campaign closed"), h("p", {}, reason),
+    h("button", { class: "mt", onclick: () => location.reload() }, "Try again")));
 }
 
 export const hasToken = (room, as) => !!(tabStore.get(`trick:${room}:${as}`) || browserStore.get(`trick:${room}:${as}`));
@@ -465,6 +474,7 @@ export const tallyClass = (total, target) => (target == null ? "" : total > targ
 // Difficulty and check sizes come from the engine's rules.mjs (one home for RULES.md's numbers).
 export const difficultyBands = (kind) => DIFFICULTY[kind] || DIFFICULTY.standard;
 export { difficulty, difficultyHint, presetTricks, CHECK_KINDS } from "/engine/rules.mjs";
+export { STATUSES_PER_SUIT };
 
 // A sentence for a resolved trick, from the engine's log entry.
 export function trickSentence(e, names) {
@@ -513,6 +523,7 @@ export function eventText(e, names, items = {}) {
     case "peekKept": return `Peek: the ${e.world} stays.`;
     case "itemUsed": return `${n(e.id)} uses ${items[e.itemId] || e.itemId}${e.note ? `: ${e.note}` : ""}.`;
     case "itemGiven": return `${n(e.id)} gains ${items[e.itemId] || e.itemId}.`;
+    case "compulsionEdited": return `The GM changes ${n(e.id)}'s compulsion to: ${e.to.join("; ")}.`;
     case "curseViolated": return `${n(e.id)} breaks the compulsion and gains ${e.stress} Stress.`;
     case "rested": return `${n(e.id)} rests.`;
     case "evolved": {
@@ -670,11 +681,12 @@ export function announce(events, names, items, ms) {
 }
 
 // The header every screen shares: the title, a connection dot, and one menu (Rules and Sound, plus the page's own items).
+const STATUS_WORDS = { connecting: "Connecting…", connected: "Connected", offline: "Reconnecting…", stopped: "Not connected" };
 export function mountHeader({ items = () => [], tip = "Rules, sound and more." } = {}) {
   const status = document.getElementById("status");
   let state = "connecting";
   document.getElementById("tools").replaceChildren(menu("Menu", () => [
-    { heading: state === "connected" ? "Connected" : state === "offline" ? "Reconnecting…" : "Connecting…" },
+    { heading: STATUS_WORDS[state] },
     ...items(),
     { label: "Rules", hint: "new tab", onclick: () => window.open("/rules", "_blank") },
     { label: isSoundOn() ? "Turn sound off" : "Turn sound on", onclick: () => setSoundOn(!isSoundOn()) },
@@ -684,7 +696,7 @@ export function mountHeader({ items = () => [], tip = "Rules, sound and more." }
     setStatus: (s) => {
       state = s;
       status.className = `dot${s === "connected" ? " on" : ""}`;
-      status.setAttribute("data-tip", s === "connected" ? "Connected" : s === "offline" ? "Reconnecting…" : "Connecting…");
+      status.setAttribute("data-tip", STATUS_WORDS[s]);
     },
   };
 }

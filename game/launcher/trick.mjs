@@ -2,7 +2,7 @@
 // server, the pages, the card art and cloudflared. On start it unpacks the files it serves (once per version), keeps
 // campaigns in Documents\TRICK Campaigns, stops any older host, opens the public tunnel and the host, table and GM windows.
 // The console window is the app: it shows the links, and closing it stops the game.
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -27,9 +27,17 @@ function unpack() {
     }
     writeFileSync(join(dir, ".complete"), manifest.build);
   }
-  // Older versions' files are no longer needed.
-  for (const old of readdirSync(base)) if (old !== manifest.build) rmSync(join(base, old), { recursive: true, force: true });
-  return { dir, manifest };
+  return { dir, base, manifest };
+}
+
+// Older versions' files, once nothing runs from them. A running copy (on another port, say) holds its cloudflared
+// open, and Windows won't rename a folder with a running program in it, so a folder in use is left whole.
+function removeOldBuilds(base, keep) {
+  for (const old of readdirSync(base)) {
+    if (old === keep || old.endsWith(".removing")) continue;
+    try { renameSync(join(base, old), join(base, `${old}.removing`)); } catch {} // in use: keep it
+  }
+  for (const old of readdirSync(base)) if (old.endsWith(".removing")) try { rmSync(join(base, old), { recursive: true, force: true }); } catch {}
 }
 
 // The Documents folder Windows shows, which may have moved (to OneDrive, say) away from %USERPROFILE%\Documents.
@@ -52,7 +60,7 @@ function savesFolder() {
 }
 
 async function main() {
-  const { dir, manifest } = unpack();
+  const { dir, base, manifest } = unpack();
   process.env.TRICK_ROOT = dir; // where the server finds its pages (read when it loads, below)
   process.env.CLOUDFLARED = join(dir, "cloudflared.exe");
   const savesDir = savesFolder();
@@ -60,6 +68,7 @@ async function main() {
   say(`Campaigns are saved in ${savesDir}`);
   const { startHost } = await import("../server/start.mjs");
   await startHost({ port: Number(process.env.TRICK_PORT) || 8787, restart: true, tunnel: true, open: true, savesDir });
+  removeOldBuilds(base, manifest.build);
   say("\nKeep this window open while you play. Close it to stop the game.");
 }
 

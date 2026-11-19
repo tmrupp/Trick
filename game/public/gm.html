@@ -13,7 +13,7 @@
 <header class="phone-head"><h1 id="title">GM</h1><span id="status" class="dot" data-tip="Connecting…"></span><span id="tools"></span></header>
 <main id="main"></main>
 <script type="module">
-import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, eventText, toast, chime, itemsById, racesById, stripTags, menu, openMenuAt, presetTricks, CHECK_KINDS, num, segmented, picked, confirmButton, mountHeader, setRedraw, trickLog, consolationText, choosingChip, layoutSwitch, notesPanel, suitChoice, tone, difficultyPill, resultPill, tallyClass, historyPanel, inPlayPills } from "/shared/client.js";
+import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, eventText, toast, chime, itemsById, racesById, stripTags, menu, openMenuAt, presetTricks, CHECK_KINDS, num, segmented, picked, confirmButton, mountHeader, setRedraw, trickLog, consolationText, choosingChip, layoutSwitch, notesPanel, suitChoice, tone, difficultyPill, resultPill, tallyClass, historyPanel, inPlayPills, closedNotice, STATUSES_PER_SUIT } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -45,6 +45,7 @@ const conn = connect({
   },
   onRejected: (r) => toast(r),
   onError: (r) => toast(r),
+  onClosed: (r) => { last = null; closedNotice(main, r); },
 });
 const act = (a) => conn.act(a);
 // Shortcut: D deals while a check is being set up (not while typing).
@@ -322,15 +323,32 @@ function cardEditor(c, view) {
       pile("reserve", "", c.reserveCards, "")));
 }
 
+// A character's Curse compulsion, term by term: edit one in place (empty it to drop it), drop one, or add one.
+function compulsionItems(c) {
+  const terms = c.compulsion;
+  const set = (next) => act({ type: "setCompulsion", charId: c.id, terms: next });
+  const short = (t) => (t.length > 28 ? `${t.slice(0, 27)}…` : t);
+  return [
+    ...terms.map((t, i) => ({ label: terms.length > 1 ? `Term ${i + 1}` : "The compulsion", fields: [{ type: "text", value: t, maxlength: 200 }], submit: "Save",
+      tip: terms.length > 1 ? "Empty it to drop this term." : undefined, onsubmit: ([v]) => set(terms.map((x, j) => (j === i ? v : x))) })),
+    ...(terms.length > 1 ? ["-", ...terms.map((t, i) => ({ label: `Drop “${short(t)}”`, danger: true, confirm: "Yes, drop it", onclick: () => set(terms.filter((_, j) => j !== i)) }))] : []),
+    terms.length ? "-" : null,
+    { label: terms.length ? "Add a term" : "Name the compulsion", fields: [{ type: "text", placeholder: "e.g. never refuse a dare", maxlength: 200 }], submit: "Add",
+      onsubmit: ([v]) => { if (v) set([...terms, v]); } },
+  ].filter(Boolean);
+}
+
 // Everything the GM can do to a character, between checks or during one.
 function characterItems(c, inCheck) {
   const restable = (c.discard || []).filter((x) => x.status && x.suit !== "W");
+  const cursesOut = STATUSES_PER_SUIT - ((c.reserveStatuses || {}).W || 0);
   const between = inCheck ? "Between checks only: during a check, statuses wait for cleanup." : undefined;
   return [
     { label: "Give a status", disabled: inCheck, tip: between || "Into their discard now.", items: statusItems((s, comp) => act({ type: "gainStatus", charId: c.id, suit: s, compulsion: comp }), "Into their discard now. ") },
     { label: "Rest", disabled: inCheck || !restable.length, tip: between || (restable.length ? "Return statuses from their discard to reserve. Curses need a ritual." : "No Injury, Stumble or Stress in their discard."),
       items: [...restable.map((x) => ({ label: `Remove a ${x.label}`, tip: STATUS_TIP(x.suit), onclick: () => act({ type: "rest", charId: c.id, cardIds: [x.id] }) })), "-",
         { label: `Remove all ${restable.length}`, onclick: () => act({ type: "rest", charId: c.id, cardIds: restable.map((x) => x.id) }) }] },
+    { label: "Edit compulsion", disabled: !cursesOut, tip: cursesOut ? "Reword it, add a term or drop one." : "They have no Curse, so no compulsion.", items: compulsionItems(c) },
     { label: "Compulsion broken", disabled: !c.compulsion.length, tip: c.compulsion.length ? "They broke their Curse's compulsion: they gain Stress." : "They have no compulsion.", onclick: () => act({ type: "curseViolation", charId: c.id }) },
     { label: "Grant a Blessed", hint: `${c.reserveBlessed} left`, disabled: !c.reserveBlessed, tip: cardText({ blessed: true }) + " It goes on top of their deck.", onclick: () => act({ type: "grantBlessed", charId: c.id }) },
     "-",

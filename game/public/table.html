@@ -58,7 +58,7 @@
 <main id="main"></main>
 <div id="reveal"></div>
 <script type="module">
-import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, itemsById, reducedMotion, markSuits, difficulty, cardFromLabel, mountHeader, setRedraw, announce, trickLog, resultsList, choosingChip, layoutSwitch, notesPanel, presence, tone, difficultyPill, resultPill, tallyClass, historyPanel } from "/shared/client.js";
+import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, itemsById, reducedMotion, markSuits, difficulty, cardFromLabel, mountHeader, setRedraw, announce, trickLog, resultsList, choosingChip, layoutSwitch, notesPanel, presence, tone, difficultyPill, resultPill, tallyClass, historyPanel, closedNotice } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEM_NAMES = Object.fromEntries(Object.entries(itemsById()).map(([k, v]) => [k, v.label]));
@@ -94,6 +94,7 @@ function showReveal(e, view, names) {
 
 connect({
   room, as: "table", onStatus: (st) => header.setStatus(st), onNotes: (n) => notes.receive(n),
+  onClosed: (r) => { lastView = null; closedNotice(main, r); },
   onError: (e) => render(main, h("div", { class: "panel banner bad" }, h("h2", {}, "Can't show this room"), h("p", {}, e))),
   onView: ({ room: info, view, events }) => {
     header.setTitle(info.name);

@@ -24,7 +24,7 @@ function client(port, hello) {
   });
   c.ready = new Promise((ok) => ws.on("open", ok)).then(() => {
     ws.send(JSON.stringify({ type: "hello", ...hello }));
-    return c.waitFor((m) => m.type === "welcome" || m.type === "error");
+    return c.waitFor((m) => m.type === "welcome" || m.type === "error" || m.type === "closed");
   });
   // Send an action and wait for the host's answer.
   c.act = async (action) => {
@@ -357,22 +357,29 @@ test("the GM adds bots; they declare, answer and play on their own; a left-to-ri
   }
 });
 
-test("the host closes a campaign: screens disconnect, the save stays, and it opens again", async () => {
+test("the host closes a campaign: screens disconnect and stay out, the save stays, and it opens again", async () => {
   const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
   const { host, port, api } = await startHost(dir);
   try {
     const { id, code } = (await api("/api/campaigns", { name: "Closing", seed: "close" })).body.rooms[0];
     const table = client(port, { room: code, as: "table" });
     await table.ready;
-    const told = table.waitFor((m) => m.type === "error" && /closed this campaign/.test(m.reason));
+    const told = table.waitFor((m) => m.type === "closed" && /closed this campaign/.test(m.reason));
     const closed = await api("/api/close", { id });
     assert.equal(closed.status, 200);
     assert.ok(!closed.body.rooms.some((r) => r.id === id), "the room is no longer open");
     assert.ok(closed.body.campaigns.some((c) => c.id === id), "the save stays");
     await told;
     assert.equal((await api("/api/close", { id })).status, 400);
+    // A screen that reconnects (a table tab, a phone waking up) is turned away; it doesn't reopen the campaign.
+    const back = client(port, { room: code, as: "table" });
+    assert.equal((await back.ready).type, "closed");
+    assert.ok(!(await api("/api/info")).body.rooms.some((r) => r.id === id), "still closed");
+    assert.equal((await fetch(`http://localhost:${port}/api/rooms/${code}/returning`)).status, 404);
     assert.ok((await api("/api/open", { id })).body.rooms.some((r) => r.id === id), "it opens again");
-    await table.close();
+    const again = client(port, { room: code, as: "table" });
+    assert.equal((await again.ready).type, "welcome", "screens join once it's open");
+    for (const c of [table, back, again]) await c.close();
   } finally {
     await host.close();
     rmSync(dir, { recursive: true, force: true });

@@ -53,6 +53,9 @@ const HANDLERS = {
   useItem: campaign.useItem,
   grantBlessed: campaign.grantBlessed,
   resurrect: campaign.resurrect,
+  retireCharacter: campaign.retireCharacter,
+  renameCharacter: campaign.renameCharacter,
+  cancelCheck: check.cancelCheck,
   evolve: (ctx, a) => { campaign.evolve(ctx, a); check.settle(ctx); },
   evolvePick: (ctx, a) => { campaign.evolvePick(ctx, a); check.settle(ctx); },
   // a check

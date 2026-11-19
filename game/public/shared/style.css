@@ -35,6 +35,7 @@ body {
     repeating-linear-gradient(45deg, var(--hatch) 0 1px, transparent 1px 14px),
     repeating-linear-gradient(-45deg, var(--hatch) 0 1px, transparent 1px 14px);
   padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left));
+  overflow-x: clip; /* nothing should ever scroll the page sideways */
 }
 h1, h2 { font-family: var(--display); font-weight: 700; font-variant: small-caps; letter-spacing: .02em; margin: 0; text-wrap: balance; }
 h1 { font-size: 34px; line-height: 1.05; margin: 6px 0 10px; }
@@ -57,7 +58,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 button.primary { background: var(--ink); color: var(--card); border-color: var(--ink); }
 button.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 85%, var(--card)); }
 button.big { width: 100%; padding: 14px 20px; font-size: 19px; }
-button.ghost { background: transparent; } button.small { min-height: 32px; padding: 4px 10px; font-size: 14px; }
+button.ghost { background: transparent; } button.small { min-height: 36px; padding: 4px 12px; font-size: 14px; }
 button:disabled { opacity: .4; cursor: default; }
 input[type=number] { width: 5.5em; font-family: var(--num); }
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border: 1.5px solid var(--rule-soft); border-radius: 3px; font: 700 14px/1.6 var(--label); letter-spacing: .04em; background: var(--card); }
@@ -76,12 +77,12 @@ button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: poin
 .cf.sm { --cw: 46px; } .cf.md { --cw: 72px; } .cf.lg { --cw: 104px; } .cf.xl { --cw: 150px; }
 .cf.empty { border: 1.5px dashed var(--rule-soft); }
 .cf .beat { position: absolute; top: -10px; right: -8px; line-height: 1; background: var(--ink); color: var(--card); font: 700 12px var(--label); padding: 4px 6px; border-radius: 3px; }
-.cf.current { outline: 3px solid var(--ink); outline-offset: 3px; }
-.cf.past { opacity: .3; }
-.cf.chosen { transform: translateY(-10px); outline: 3px solid var(--i); outline-offset: 3px; }
-.cf.forced { outline: 3px dashed var(--warn); outline-offset: 3px; }
-.cf.price { outline: 3px solid var(--bad); outline-offset: 3px; }
-.cf[disabled] { opacity: .35; }
+.cf.current { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--ink), 0 8px 20px rgba(0, 0, 0, .18); }
+.cf.past { opacity: .5; filter: saturate(.5); }
+.cf.chosen { transform: translateY(-10px); box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--i), 0 10px 20px rgba(0, 0, 0, .25); }
+.cf.forced { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--warn); }
+.cf.price { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--bad); }
+.cf[disabled], .cf[aria-disabled=true] { opacity: .45; }
 .hand { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 12px; }
 .hand .cf { --cw: clamp(62px, 18vw, 92px); }
 
@@ -99,7 +100,7 @@ button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: poin
 .reveal .inner { background: var(--card); border: 6px double var(--ink); border-radius: 6px; padding: 24px; max-width: 920px; width: 100%; text-align: center; }
 .reveal .plays { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 18px 0; }
 .reveal .play { display: grid; justify-items: center; gap: 6px; font: 700 18px var(--label); }
-.reveal .play.won .cf { outline: 4px solid var(--good); outline-offset: 4px; }
+.reveal .play.won .cf { box-shadow: 0 0 0 4px var(--card), 0 0 0 8px var(--good); }
 .reveal .line { font: 700 26px/1.25 var(--display); }
 @media (prefers-reduced-motion: no-preference) {
   .reveal .play .cf { animation: flip .45s ease both; } .reveal .play:nth-child(2) .cf { animation-delay: .08s; } .reveal .play:nth-child(3) .cf { animation-delay: .16s; } .reveal .play:nth-child(4) .cf { animation-delay: .24s; } .reveal .play:nth-child(5) .cf { animation-delay: .32s; }
@@ -108,7 +109,8 @@ button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: poin
 @keyframes flip { from { transform: rotateY(90deg); } to { transform: rotateY(0); } }
 @keyframes flash { 0% { box-shadow: 0 0 0 0 var(--good); } 30% { box-shadow: 0 0 0 6px var(--good); } 100% { box-shadow: 0 0 0 0 transparent; } }
 
-.toasts { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: grid; gap: 6px; z-index: 30; width: min(92vw, 540px); }
+.toasts { position: fixed; left: 50%; top: max(10px, env(safe-area-inset-top)); transform: translateX(-50%); display: grid; gap: 6px; z-index: 30; width: min(92vw, 540px); pointer-events: none; }
+.toast { pointer-events: auto; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .22); }
 .toast { background: var(--ink); color: var(--card); padding: 10px 16px; border-radius: 4px; text-align: center; font-family: var(--text); }
 .qr svg { width: 150px; height: 150px; background: #fff; padding: 6px; border-radius: 4px; display: block; border: 2px solid var(--rule); }
 .code { font: 700 34px/1 var(--num); letter-spacing: 6px; }
@@ -126,7 +128,7 @@ label.pill { display: inline-flex; }
   box-shadow: 0 4px 14px rgba(0, 0, 0, .25); pointer-events: none; }
 .tip::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; background: inherit; transform: translateX(-50%) rotate(45deg); }
 .tip.below::after { bottom: auto; top: -6px; }
-[data-tip]:not(button):not(.cf):not(input) { text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 3px; cursor: help; }
+[data-tip]:not(button):not(.cf):not(input):not(.face) { text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 3px; cursor: help; }
 .pill[data-tip] { text-decoration: none; }
 
 /* Menus */
@@ -141,10 +143,141 @@ label.pill { display: inline-flex; }
 .menu-label { flex: 1; } .menu-hint { color: var(--muted); font-size: 13px; } .menu-arrow { color: var(--muted); font-size: 18px; line-height: 1; }
 .menu-head { font: 700 12px/1.2 var(--label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px 4px; }
 .menu-sep { height: 1px; background: var(--rule-soft); margin: 6px 4px; }
-.menu-form { padding: 4px 6px 8px; } .menu-form .menu-head { padding-left: 4px; } .menu-form input { min-height: 36px; padding: 6px 8px; font-size: 15px; } .menu-form input[type=text] { flex: 1; min-width: 9em; }
+.menu-form { padding: 4px 6px 8px; } .menu-form .menu-head { padding-left: 4px; } .menu-form input { min-height: 36px; padding: 6px 8px; font-size: 15px; } .menu-form input[type=text] { flex: 1; min-width: 9em; } .menu-form select { min-height: 36px; padding: 4px 8px; font-size: 15px; }
 .menu-inline { margin: 2px 0 6px 12px; padding-left: 8px; border-left: 2px solid var(--rule-soft); }
 .menu .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 4px; }
 .menu .grid .menu-item { justify-content: center; font: 700 16px var(--num); }
 /* Quiet header rows with a title and its menus */
-.headrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .headrow > h2 { margin: 0; flex: 1; min-width: 8em; }
+/* Buttons sit right beside what they act on: a header's title doesn't push them to the far edge. */
+.headrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .headrow > h2 { margin: 0; }
+.headrow > .push, .row > .push { margin-left: auto; }
 .facts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+/* Card zoom: the card full size with its rule in large type */
+.cf img { -webkit-touch-callout: none; user-select: none; }
+.cf .beat.badge { background: var(--good); top: 56%; right: auto; bottom: auto; left: 50%; transform: translate(-50%, -50%); min-width: 24px; text-align: center; font: 700 14px var(--num); padding: 4px 5px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
+.zoom { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(2px); }
+.zoom-inner { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; justify-content: center; max-width: 760px; }
+.cf.zoomed { --cw: min(76vw, 330px); }
+.zoom-text { max-width: 360px; } .zoom-text p { font-size: 20px; line-height: 1.4; }
+@media (prefers-reduced-motion: no-preference) { .zoom-inner { animation: rise .18s ease both; } }
+@keyframes rise { from { transform: translateY(12px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Waiting faces */
+.faces { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.face { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; min-width: 44px; }
+.face-dot { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 700 14px var(--label); letter-spacing: .04em;
+  border: 2px dashed var(--rule); background: var(--card); color: var(--muted); }
+.face.done .face-dot { border-style: solid; border-color: var(--ink); background: var(--ink); color: var(--card); }
+.face.me .face-dot { outline: 2px solid var(--i); outline-offset: 2px; }
+.face-name { font: 13px/1 var(--text); color: var(--muted); max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) { .face:not(.done) .face-dot { animation: pulse 1.6s ease-in-out infinite; } }
+@keyframes pulse { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--ink) 12%, transparent); } }
+
+/* The phone during a check: a slim top bar, the world on stage, the hand docked at the bottom */
+.phone-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.phone-head h1 { flex: 1; font-size: 24px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phone-head .dot { flex: none; }
+.hud { position: sticky; top: 0; z-index: 5; margin: 0 -16px 10px; padding: 8px 16px 10px; background: var(--card); border-bottom: 2px solid var(--rule);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .08); }
+.hud-top { display: flex; align-items: baseline; gap: 10px; }
+.hud-goal { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-score { font: 700 26px/1 var(--num); white-space: nowrap; } .hud-score small { font: 15px var(--text); color: var(--muted); }
+.hud .bar { margin-top: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .chips .pill { font-size: 13px; }
+.stage { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 6px 0 4px; }
+.stage > * { min-width: 0; }
+.stage-card { display: grid; justify-items: center; gap: 4px; }
+.stage-label { font: 700 13px var(--label); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+.cf.stage { --cw: clamp(116px, 34vw, 170px); }
+.strip { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 2px; }
+.strip .cf { --cw: 40px; }
+.dock { position: sticky; bottom: 0; z-index: 6; margin: 12px -16px 0; padding: 10px 16px max(12px, env(safe-area-inset-bottom)); background: var(--card);
+  border-top: 2px solid var(--rule); box-shadow: 0 -6px 16px rgba(0, 0, 0, .1); }
+.dock .hint { font-size: 14px; color: var(--muted); margin: 0 0 6px; }
+/* The hand wraps into rows, so every card shows in full. */
+.fan { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 8px; padding: 14px 0 8px; }
+.fan .cf { --cw: clamp(50px, calc((100vw - 32px - 40px) / 6), 84px); transition: transform .15s ease, box-shadow .15s ease; }
+.fan .cf.chosen { transform: translateY(-8px); z-index: 1; }
+.fan .cf.can-beat::after { content: ""; position: absolute; left: 20%; right: 20%; bottom: -8px; height: 4px; border-radius: 2px; background: var(--good); }
+.dock button.big { margin-top: 8px; }
+.locked-row { display: flex; gap: 14px; align-items: center; }
+
+/* The phone's own reveal after each trick */
+.phone-reveal { position: fixed; left: 0; right: 0; top: 22%; margin: 0 auto; z-index: 40; width: min(92vw, 420px); padding: 16px 18px; text-align: center;
+  background: var(--card); border: 5px double var(--ink); border-radius: 8px; box-shadow: 0 16px 40px rgba(0, 0, 0, .3); }
+.phone-reveal .cards { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin: 8px 0; }
+.phone-reveal .cards .cf { --cw: 82px; }
+.phone-reveal .vs { font: 700 14px var(--label); color: var(--muted); }
+.phone-reveal .headline { font: 700 24px/1.2 var(--display); font-variant: small-caps; }
+.phone-reveal.won { border-color: var(--good); } .phone-reveal.won .headline { color: var(--good); }
+@media (prefers-reduced-motion: no-preference) { .phone-reveal { animation: pop .25s ease both; } }
+@keyframes pop { from { transform: translateY(10px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* First-time guide */
+.guide { position: fixed; inset: 0; z-index: 65; display: grid; place-items: end center; padding: 20px; background: color-mix(in srgb, var(--paper) 70%, transparent); }
+.guide-card { width: min(94vw, 460px); background: var(--card); border: 5px double var(--ink); border-radius: 8px; padding: 18px; box-shadow: 0 16px 40px rgba(0, 0, 0, .3); }
+.guide-card h2 { font-size: 24px; } .guide-card p { font-size: 18px; }
+.guide-steps { display: flex; gap: 6px; margin-bottom: 8px; } .guide-steps span { width: 28px; height: 4px; border-radius: 2px; background: var(--rule-soft); } .guide-steps span.on { background: var(--ink); }
+
+/* The GM's next step stays in reach */
+.next-step { position: sticky; top: 0; z-index: 7; }
+.next-step .row { justify-content: space-between; }
+.face[data-tip] { text-decoration: none; cursor: default; }
+
+/* Simple card faces: a big value, the suit mark, and the consolation's name. The printed card is a hold away. */
+.cf.simple { --sc: var(--ink); background: color-mix(in srgb, var(--sc) 8%, var(--card)); color: var(--sc); border: max(1.5px, calc(var(--cw) * .028)) solid var(--sc);
+  border-radius: calc(var(--cw) * .09); box-shadow: 0 1px 3px rgba(0, 0, 0, .18); overflow: hidden; line-height: 1; }
+.cf.k-strength { --sc: var(--s); } .cf.k-dexterity { --sc: var(--d); } .cf.k-intelligence { --sc: var(--i); } .cf.k-weird { --sc: var(--w); } .cf.k-blessed { --sc: var(--b); }
+.cf.simple .sv { position: absolute; top: 7%; left: 10%; font: 700 calc(var(--cw) * .44) / 1 var(--num); letter-spacing: -.02em; }
+.cf.simple .si { position: absolute; top: 9%; right: 9%; width: calc(var(--cw) * .3); height: calc(var(--cw) * .3); }
+.cf.simple .si svg { width: 100%; height: 100%; display: block; }
+.cf.simple .sn { position: absolute; left: 4%; right: 4%; bottom: 8%; text-align: center; font: 700 max(9px, calc(var(--cw) * .135)) / 1.1 var(--label); letter-spacing: .02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* a faint large mark in the middle, so the suit reads at a glance */
+.cf.simple .sbig { position: absolute; left: 50%; top: 56%; width: calc(var(--cw) * .5); height: calc(var(--cw) * .5); transform: translate(-50%, -50%); opacity: .13; }
+.cf.simple .sbig svg { width: 100%; height: 100%; display: block; }
+.cf.simple.is-blessed .sbig, .cf.simple.sm .sbig, .strip .cf.simple .sbig { display: none; }
+.cf.simple.is-status { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--sc) 6%, var(--card)) 0 6px, color-mix(in srgb, var(--sc) 15%, var(--card)) 6px 12px); border-style: dashed; }
+.cf.simple.is-blessed { background: color-mix(in srgb, var(--b) 16%, var(--card)); }
+.cf.simple.is-blessed .si { top: 18%; left: 50%; right: auto; width: calc(var(--cw) * .5); height: calc(var(--cw) * .5); transform: translateX(-50%); }
+/* very small cards keep just the value and mark */
+.cf.simple.sm .sn, .strip .cf.simple .sn { display: none; }
+.cf.simple.sm .sv, .strip .cf.simple .sv { font-size: calc(var(--cw) * .52); }
+.cf.simple.sm .si, .strip .cf.simple .si { top: auto; bottom: 8%; right: 8%; width: calc(var(--cw) * .36); height: calc(var(--cw) * .36); }
+.cf.back { background: repeating-linear-gradient(45deg, var(--ink) 0 2px, color-mix(in srgb, var(--ink) 80%, var(--card)) 2px 7px); border: max(2px, calc(var(--cw) * .04)) solid var(--card);
+  border-radius: calc(var(--cw) * .09); box-shadow: 0 0 0 1.5px var(--ink), 0 1px 3px rgba(0, 0, 0, .25); }
+.cf.simple.k-intelligence:not(.is-status) .sn { letter-spacing: -.03em; font-size: max(8px, calc(var(--cw) * .118)); }
+
+/* Suit marks inside text */
+.mark { display: inline-block; width: 1em; height: 1em; vertical-align: -.15em; margin: 0 .04em; }
+.mark svg { width: 100%; height: 100%; display: block; }
+.mark.k-strength { color: var(--s); } .mark.k-dexterity { color: var(--d); } .mark.k-intelligence { color: var(--i); } .mark.k-weird { color: var(--w); }
+.toast .mark, .tip .mark, button.primary .mark, .tabs [aria-pressed=true] .mark { color: inherit; }
+
+/* A left-to-right bot's open hand: the leftmost card plays next. */
+.open-hand { margin-top: 12px; } .open-hand .row { margin-top: 6px; }
+.cf.next-up { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--warn); }
+
+/* A small choice as a row of buttons */
+.seg { display: inline-flex; flex-wrap: wrap; border: 1.5px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; border-right: 1px solid var(--rule-soft); min-height: 34px; padding: 4px 12px; background: var(--card); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed=true] { background: var(--ink); color: var(--card); }
+button.danger-armed { background: var(--bad); color: var(--card); border-color: var(--bad); }
+table.seats td { padding: 6px 8px; } table.seats td:first-child { width: 1%; white-space: nowrap; }
+.add-bot { padding-top: 10px; border-top: 1px dashed var(--rule-soft); }
+
+/* Computer screens: tighter spacing so more fits at once. */
+@media (min-width: 900px) and (pointer: fine), (min-width: 1200px) {
+  body { font-size: 16px; padding-bottom: 28px; }
+  h1 { font-size: 30px; margin: 4px 0 8px; } h2 { font-size: 21px; } h3 { margin: 8px 0 4px; }
+  .panel { padding: 10px 14px; margin: 8px 0; }
+  .stack > * + * { margin-top: 7px; }
+  button, select, input, textarea { min-height: 36px; padding: 6px 11px; font-size: 15px; }
+  button.big { padding: 10px 16px; font-size: 17px; }
+  button.small, .seg button { min-height: 30px; padding: 3px 10px; font-size: 13px; }
+  .pill { font-size: 13px; padding: 1px 8px; }
+  .row { gap: 6px; }
+  .panel .panel { margin: 6px 0; }
+}

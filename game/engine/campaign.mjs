@@ -15,7 +15,9 @@ export function character(state, id) {
 
 const take = (pile, pred) => { const i = pile.findIndex(pred); return i < 0 ? null : pile.splice(i, 1)[0]; };
 
-export function createCharacter(ctx, { id, name, primary, secondary, others, controller = "player", race = null }) {
+// bot: null for a person; "greedy" (goes for any world card it can take without busting) or "ltr" (left to right:
+// plays its leftmost card each trick, with its hand face up for everyone, like the Wake Lantern's dead hand).
+export function createCharacter(ctx, { id, name, primary, secondary, others, controller = "player", race = null, bot = null }) {
   const st = ctx.state;
   if (!id || !/^[A-Za-z0-9_-]{1,32}$/.test(id)) throw rule("A character needs an id of letters, digits, - or _.");
   if (st.characters[id]) throw rule(`A character "${id}" already exists.`);
@@ -24,6 +26,7 @@ export function createCharacter(ctx, { id, name, primary, secondary, others, con
     throw rule("Choose a primary suit, a different secondary suit, and which other suit takes 2, 3, 6, 9.");
   }
   if (race != null && !/^[a-z0-9-]{1,40}$/.test(race)) throw rule("Unknown people.");
+  if (bot != null && !["greedy", "ltr"].includes(bot)) throw rule("A bot is greedy or ltr (left to right).");
   const { deck, reserve } = buildStarter(id, primary, secondary, others);
   ctx.rng.shuffle(deck);
   st.characters[id] = {
@@ -33,6 +36,7 @@ export function createCharacter(ctx, { id, name, primary, secondary, others, con
     survival: null, // a recorded survival requirement: { M, N }
     race: race || null,
     items: [], // item ids from items/item_catalog.js
+    bot: bot || null,
   };
   if (!st.seats.includes(id)) st.seats.push(id);
   ctx.events.push({ type: "characterCreated", id, name: name || id });
@@ -104,6 +108,25 @@ export function rest(ctx, { charId, cardIds }) {
     returnToReserve(ch, card);
   }
   ctx.events.push({ type: "rested", id: ch.id, removed: (cardIds || []).length });
+}
+
+// The GM renames a character.
+export function renameCharacter(ctx, { charId, name }) {
+  const ch = character(ctx.state, charId);
+  const clean = String(name || "").trim().slice(0, 24);
+  if (!clean) throw rule("Give them a name.");
+  const old = ch.name;
+  ch.name = clean;
+  ctx.events.push({ type: "renamed", id: ch.id, from: old, to: clean });
+}
+
+// The GM retires a character: they stay in the campaign's history but take no part in checks until brought back.
+export function retireCharacter(ctx, { charId, retired = true }) {
+  const st = ctx.state;
+  const ch = character(st, charId);
+  if (st.check && st.check.phase !== "closed" && st.check.players[charId]) throw rule(`${ch.name} is in this check; cancel or finish it first.`);
+  ch.retired = !!retired;
+  ctx.events.push({ type: retired ? "retired" : "unretired", id: ch.id });
 }
 
 // The GM brings a dead character back. Their cards stay as they were, so a survival scan may come up again.

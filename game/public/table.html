@@ -8,11 +8,45 @@
 <script src="/card_rules.js"></script>
 <script src="/items/item_catalog.js"></script>
 <style>
-  body { font-size: 18px; }
-  .top { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; }
-  .join { display: flex; gap: 14px; align-items: center; } .join .qr svg { width: 120px; height: 120px; }
+  /* The table screen is read from across a room: readable, but compact enough to fit a check on one screen. */
+  body { font-size: clamp(17px, 1.25vw, 24px); padding-top: 8px; }
+  h1 { font-size: clamp(30px, 2.6vw, 48px); margin: 0 0 4px; }
+  .panel { padding: 10px 16px; margin: 8px 0; }
+  .table-stage { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(16px, 2vw, 32px); align-items: center; }
+  .table-stage .cf.current { --cw: clamp(140px, 12vw, 220px); }
+  .table-stage .strip { gap: 8px; } .table-stage .strip .cf { --cw: clamp(56px, 4.6vw, 86px); }
+  .table-stage .strip .cf.simple .sn { display: block; }
+  .table-stage .strip .cf.simple .sv { font-size: calc(var(--cw) * .44); }
+  .table-stage .strip .cf.simple .si { top: 9%; bottom: auto; right: 9%; width: calc(var(--cw) * .3); height: calc(var(--cw) * .3); }
+  .table-stage .label { font: 700 clamp(13px, 1vw, 18px) var(--label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .lanes { gap: 6px; }
+  .lane { padding: 8px 14px; gap: 14px; grid-template-columns: minmax(170px, 260px) 1fr auto; }
+  .lane .who { font-size: clamp(22px, 1.8vw, 34px); }
+  .lane .small, .lanes .small { font-size: clamp(15px, 1.1vw, 20px); }
+  .lane .big { font-size: clamp(24px, 2vw, 38px); }
+  .lane .tally .cf { --cw: clamp(38px, 3vw, 54px); }
+  .lane .bar { height: 10px; }
+  .lane .cf.back, .lane .cf.chosen { --cw: clamp(48px, 3.6vw, 68px); }
+  .lane .open-hand .cf { --cw: clamp(44px, 3.4vw, 62px); }
+  .pill { font-size: clamp(13px, 1vw, 18px); padding: 2px 10px; }
+  .faces { gap: 14px; } .faces .face-dot { width: clamp(40px, 3vw, 58px); height: clamp(40px, 3vw, 58px); font-size: clamp(15px, 1.1vw, 21px); }
+  .faces .face-name { font-size: clamp(14px, 1vw, 19px); max-width: 160px; }
+  .top { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+  .join { display: flex; gap: 14px; align-items: center; } .join .qr svg { width: clamp(96px, 8vw, 150px); height: clamp(96px, 8vw, 150px); }
+  .code { font-size: clamp(28px, 2.4vw, 46px); } #joinlink { font-size: clamp(13px, 1vw, 18px); }
+  .log { font-size: clamp(15px, 1.1vw, 20px); max-height: 32vh; }
+  .reveal .plays .cf { --cw: clamp(96px, 8vw, 150px); } .reveal .inner > .row .cf { --cw: clamp(130px, 11vw, 200px); }
+  .reveal .play { font-size: clamp(17px, 1.3vw, 25px); } .reveal .line { font-size: clamp(24px, 2vw, 38px); }
+  .reveal .inner { max-width: min(96vw, 1300px); }
+  .toast { font-size: clamp(16px, 1.2vw, 22px); }
+  .setup-lane { grid-template-columns: minmax(200px, 300px) 1fr auto; }
+  .setup-lane.ready { border-color: var(--good); }
+  .setup-lane .label { font: 700 clamp(14px, 1.1vw, 20px) var(--label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .goal-text { font: 700 clamp(20px, 1.7vw, 32px)/1.2 var(--display); }
+  .setup-facts { display: flex; gap: clamp(20px, 3vw, 56px); text-align: center; }
+  .setup-facts .fact { font: 700 clamp(24px, 2.1vw, 40px)/1.1 var(--num); }
   .world { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-  .reason { font: 600 24px/1.3 Georgia, serif; }
+  .reason { font: 700 clamp(22px, 1.8vw, 34px)/1.3 var(--display); }
   @media (max-width: 700px) { .top { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -24,7 +58,7 @@
 <main id="main"></main>
 <div id="reveal"></div>
 <script type="module">
-import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, soundToggle, itemsById, reducedMotion } from "/shared/client.js";
+import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, soundToggle, itemsById, reducedMotion, waitingFaces, markSuits, difficulty } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEM_NAMES = Object.fromEntries(Object.entries(itemsById()).map(([k, v]) => [k, v.label]));
@@ -47,6 +81,7 @@ function showReveal(e, view, names) {
         return h("div", { class: `play${p.id === winner ? " won" : ""}` }, cardFace(card, "lg"), h("div", {}, names[p.id]), p.bv != null && (p.brace || p.boost) ? h("div", { class: "small muted" }, `counts ${p.bv}`) : null);
       })),
       h("div", { class: "line" }, trickSentence(e, names)))));
+  markSuits(box);
   chime(winner ? "win" : "reveal");
   clearTimeout(revealTimer);
   revealTimer = setTimeout(() => box.replaceChildren(), reducedMotion() ? 2500 : 3800);
@@ -72,7 +107,8 @@ connect({
     document.getElementById("joinlink").textContent = join.replace(/^https?:\/\//, "");
     if (qrFor !== join) { qrFor = join; fetch(`/qr.svg?text=${encodeURIComponent(join)}`).then((r) => r.text()).then((svg) => { document.getElementById("qr").innerHTML = svg; }); }
     const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
-    for (const e of events || []) { const t = eventText(e, names, ITEM_NAMES); if (t && e.type !== "reshuffled") toast(t, 5000); }
+    const quiet = new Set(["reshuffled", "trickResolved", "trickReady", "locked", "unlocked", "peekAnswered", "approachDeclared", "goalSet"]);
+    toast((events || []).filter((e) => !quiet.has(e.type)).map((e) => eventText(e, names, ITEM_NAMES)), 5000);
     const ck = view.check;
     if (ck && ck.phase !== "closed") {
       if (seenTricks !== null && ck.log.length > seenTricks) showReveal(ck.log[ck.log.length - 1], view, names);
@@ -101,27 +137,54 @@ function draw(info, view, names) {
   }
   sub.textContent = `${ck.kind[0].toUpperCase()}${ck.kind.slice(1)} check · ${ck.phase === "setup" ? "setting goals" : ck.phase === "resolve" ? "resolved" : `trick ${ck.trick + 1} of ${ck.tricks}`}`;
   if (ck.phase !== "setup") {
-    parts.push(h("div", { class: "panel" }, h("div", { class: "world" }, ck.worldRow.map((c, i) => {
-      const cur = i === ck.trick && ck.phase !== "resolve";
-      return cardFace(c, cur ? "xl" : "md", { class: cur ? "current" : i < ck.trick ? "past" : "" });
-    }))));
+    const live = ck.phase !== "resolve";
+    parts.push(h("div", { class: "panel table-stage" },
+      live ? h("div", { style: "display:grid;justify-items:center;gap:6px" }, h("span", { class: "label" }, `Trick ${ck.trick + 1} of ${ck.tricks}`), cardFace(ck.worldRow[ck.trick], "xl", { class: "current" }),
+        ck.worldRow[ck.trick].beat != null ? h("span", { class: "label" }, `counts ${ck.worldRow[ck.trick].beat} to beat`) : null) : h("span", { class: "label" }, "All tricks played"),
+      h("div", {}, h("div", { class: "label" }, live ? "Still to come" : "The world row"),
+        h("div", { class: "strip" }, ck.worldRow.map((c, i) => (live && i === ck.trick ? null : cardFace(c, "md", { class: i < ck.trick ? "past" : "" })))))));
   }
   const waiting = ck.waitingOn.length ? ck.waitingOn.map((w) => `${names[w.charId]} (${w.type === "peek" ? "Peek" : w.type === "recalculate" ? "Recalculate" : w.type === "evolve" ? "evolving" : "choosing"})`)
     : ck.phase === "play" ? ck.participants.filter((id) => !ck.players[id].locked && ck.players[id].handCount).map((id) => names[id]) : [];
-  if (waiting.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel banner" }, h("span", { class: "reason" }, `Waiting for ${waiting.join(", ")}`)));
+  if (ck.phase === "play") parts.push(h("div", { class: "panel" }, waitingFaces(ck.participants.filter((id) => ck.players[id].handCount || ck.players[id].locked).map((id) => ({ name: names[id], done: !!ck.players[id].locked })))));
+  else if (waiting.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel banner" }, h("span", { class: "reason" }, `Waiting for ${waiting.join(", ")}`)));
   if (ck.log.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel" }, h("div", { class: "reason" }, trickSentence(ck.log[ck.log.length - 1], names))));
 
+  // Setting up: everyone can see each goal, trump and target here, without the GM's screen.
+  if (ck.phase === "setup") {
+    const ready = ck.participants.filter((id) => ck.players[id].approved).length;
+    parts.push(h("div", { class: "panel" }, h("div", { class: "headrow" }, h("h2", {}, "Setting up the check"),
+      h("span", { class: "pill" }, `${ck.kind} · ${ck.tricks} tricks`), h("span", { class: `pill${ready === ck.participants.length ? " good" : ""}` }, `${ready} of ${ck.participants.length} ready`)),
+      h("p", { class: "muted", style: "margin:8px 0 0" }, "Each goal's trump and target, as the GM sets them. Talk them through now: once the cards are dealt, they're fixed.")));
+    parts.push(h("div", { class: "lanes" }, ck.participants.map((id) => {
+      const p = ck.players[id];
+      const ch = view.characters[id];
+      return h("div", { class: `lane setup-lane${p.approved ? " ready" : ""}` },
+        h("div", {}, h("div", { class: "who" }, names[id]),
+          ch && ch.bot ? h("span", { class: "pill" }, ch.bot === "ltr" ? "bot · left to right" : "bot · greedy") : null,
+          p.survival ? h("span", { class: "pill bad" }, "Survival") : null),
+        h("div", { class: "setup-goal" }, h("div", { class: "label" }, "Goal"),
+          h("div", { class: "goal-text" }, p.survival ? "Survive" : p.goal ? `“${p.goal}”` : h("span", { class: "muted" }, "Spoken at the table"))),
+        h("div", { class: "setup-facts" },
+          h("div", {}, h("div", { class: "label" }, "Trump"), h("div", { class: "fact" }, p.approach ? `${SUITS[p.approach].sym} ${SUITS[p.approach].name}` : h("span", { class: "muted" }, "—"))),
+          h("div", {}, h("div", { class: "label" }, "Target"), h("div", { class: "fact" }, p.target != null ? `${p.target}` : h("span", { class: "muted" }, "—")),
+            p.target != null ? h("div", { class: "small muted" }, difficulty(ck.kind, p.target)) : p.suggested != null ? h("div", { class: "small muted" }, `suggests ${p.suggested}`) : null)));
+    })));
+    return render(main, parts);
+  }
   parts.push(h("div", { class: "lanes" }, ck.participants.map((id) => {
     const p = ck.players[id];
     const r = ck.results && ck.results[id];
     const over = p.target != null && p.total > p.target;
     return h("div", { class: `lane${ck.log.length && ck.log[ck.log.length - 1].winner === id ? " flash" : ""}` },
       h("div", {}, h("div", { class: "who" }, names[id]),
+        view.characters[id] && view.characters[id].bot ? h("span", { class: "pill" }, view.characters[id].bot === "ltr" ? "bot · left to right" : "bot · greedy") : null,
         p.goal ? h("div", { class: "small", style: "font-style:italic" }, p.goal) : null,
         h("div", { class: "small" }, p.approach ? `${SUITS[p.approach].sym} ${SUITS[p.approach].name} trump${p.approved ? "" : " · waiting for a target"}` : "deciding on a goal"),
         p.survival ? h("span", { class: "pill bad" }, "Survival") : null),
       h("div", {}, h("div", { class: "tally" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm")), h("strong", { class: "big" }, ` ${p.total}`), h("span", { class: "muted" }, ` / ${p.target ?? "?"}`)),
         p.target ? h("div", { class: `bar${over ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / p.target)}%` })) : null,
+        p.openHand && p.openHand.length && ck.phase !== "resolve" ? h("div", { class: "row open-hand", style: "margin-top:8px" }, h("span", { class: "small muted" }, "Open hand:"), p.openHand.map((c, i) => cardFace(c, "md", { class: i === 0 ? "next-up" : "" }))) : null,
         h("div", { class: "row small", style: "margin-top:6px" }, p.brace ? h("span", { class: "pill good" }, `Brace +${p.brace}`) : null, p.mirror ? h("span", { class: "pill good" }, "Mirror") : null, p.boost ? h("span", { class: "pill good" }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null)),
       h("div", { class: "row" }, r ? h("div", { style: "text-align:right" }, h("div", { class: "reason" }, RESULT[r.result]), r.dies ? h("div", { class: "pill bad" }, "does not survive") : null)
         : ck.phase === "play" ? (p.locked ? cardBack("md", { class: "chosen" }) : h("span", { class: "muted small" }, `${p.handCount} in hand`)) : null));

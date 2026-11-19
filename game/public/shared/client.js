@@ -103,13 +103,14 @@ if (typeof document !== "undefined") {
     const el = e.target.closest && e.target.closest("[data-tip]");
     if (el && el !== tipFor) showTip(el); else if (!el && tipFor) hideTip();
   });
-  document.addEventListener("focusin", (e) => { const el = e.target.closest && e.target.closest("[data-tip]"); if (el) showTip(el); });
+  // Keyboard focus shows a tip; a tap that focuses a button doesn't.
+  document.addEventListener("focusin", (e) => { const el = e.target.closest && e.target.closest("[data-tip]"); if (el && e.target.matches(":focus-visible")) showTip(el); });
   document.addEventListener("focusout", hideTip);
   document.addEventListener("pointerdown", (e) => {
     hideTip();
     if (e.pointerType !== "touch") return;
     const el = e.target.closest && e.target.closest("[data-tip]");
-    if (el) holdTimer = setTimeout(() => showTip(el), 450);
+    if (el && !el.closest(".cf")) holdTimer = setTimeout(() => showTip(el), 450);
   });
   document.addEventListener("pointerup", (e) => { if (e.pointerType === "touch" && tipFor) setTimeout(hideTip, 2200); clearTimeout(holdTimer); });
   addEventListener("scroll", hideTip, true);
@@ -146,7 +147,9 @@ function menuItem(it, level) {
   if (it.heading) return h("div", { class: "menu-head" }, it.heading);
   if (it.grid) return h("div", { class: "grid" }, it.grid.map((x) => menuItem(x, level)));
   if (it.fields) {
-    const inputs = it.fields.map((f) => h("input", { type: f.type || "text", value: f.value ?? "", min: f.min, max: f.max, placeholder: f.placeholder || "", "aria-label": f.placeholder || f.name || it.label, maxlength: f.type === "number" ? undefined : 80 }));
+    const inputs = it.fields.map((f) => f.type === "select"
+      ? h("select", { "aria-label": f.name || it.label }, f.options.map(([v, t]) => h("option", { value: v, selected: v === f.value }, t)))
+      : h("input", { type: f.type || "text", value: f.value ?? "", min: f.min, max: f.max, placeholder: f.placeholder || "", "aria-label": f.placeholder || f.name || it.label, maxlength: f.type === "number" ? undefined : (f.maxlength || 80) }));
     const go = () => { const values = inputs.map((i) => (i.type === "number" ? Number(i.value) : i.value.trim())); closeMenus(); it.onsubmit(values); };
     for (const i of inputs) i.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go(); } e.stopPropagation(); });
     return h("div", { class: "menu-form", "data-tip": it.tip }, it.label ? h("div", { class: "menu-head" }, it.label) : null, h("div", { class: "row" }, inputs, h("button", { class: "small primary", onclick: go }, it.submit || "OK")));
@@ -181,6 +184,7 @@ function openPanel(anchor, items, level, side) {
     else if (e.key === "ArrowLeft" && level > 0) { e.preventDefault(); closeMenus(level); anchor.focus(); }
     else if (e.key === "Escape") { e.preventDefault(); closeMenus(); openPanels.length || (menuRoot && menuRoot.focus()); }
   });
+  markSuits(panel);
   anchor.setAttribute("aria-expanded", "true");
   openPanels[level] = { panel, anchor };
   placePanel(panel, anchor, side);
@@ -214,6 +218,36 @@ if (typeof document !== "undefined") {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && openPanels.length) closeMenus(); });
 }
 
+// ---- Suit marks in text ----
+// Trick logs and labels carry ♥♠♦♣; on screen they become the cards' own marks (flag, boot, book, moon) in suit ink.
+const SUIT_OF = { "♥": "strength", "♠": "dexterity", "♦": "intelligence", "♣": "weird" };
+const SUIT_NAME = { strength: "Strength", dexterity: "Dexterity", intelligence: "Intelligence", weird: "Weird" };
+export function markSuits(root) {
+  const icons = globalThis.TrickSuitIcons;
+  if (!root || !icons || typeof document === "undefined") return root;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (/[♥♠♦♣]/.test(n.data) && n.parentElement && !n.parentElement.closest("select, option, textarea, input, .mark, svg") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
+  });
+  const found = [];
+  while (walker.nextNode()) found.push(walker.currentNode);
+  for (const n of found) {
+    const frag = document.createDocumentFragment();
+    for (const part of n.data.split(/([♥♠♦♣])/)) {
+      if (!part) continue;
+      const k = SUIT_OF[part];
+      if (!k) { frag.append(part); continue; }
+      const sp = document.createElement("span");
+      sp.className = `mark k-${k}`;
+      sp.setAttribute("role", "img");
+      sp.setAttribute("aria-label", SUIT_NAME[k]);
+      sp.innerHTML = icons.svg(k);
+      frag.append(sp);
+    }
+    n.replaceWith(frag);
+  }
+  return root;
+}
+
 // Redraw a region without losing what someone is typing: inputs with data-key keep their draft value
 // and focus across redraws. Call forget(key) after sending a form.
 const drafts = new Map();
@@ -234,6 +268,7 @@ export function render(root, nodes) {
     if (el) { el.focus({ preventScroll: true }); try { if (sel) el.setSelectionRange(...sel); } catch {} }
   }
   if (tipFor && !tipFor.isConnected) hideTip();
+  markSuits(root);
 }
 // The current value of a keyed field: what's on screen now, else the last draft.
 export const draft = (key) => {
@@ -243,11 +278,17 @@ export const draft = (key) => {
 };
 export const forget = (...keys) => keys.forEach((k) => drafts.delete(k));
 
+// Toasts sit at the top, two at most; decisions never go in a toast. Several lines can be merged into one.
 export function toast(text, ms = 4000) {
+  if (Array.isArray(text)) text = text.filter(Boolean).join(" · ");
+  if (!text) return;
   let box = document.querySelector(".toasts");
   if (!box) { box = h("div", { class: "toasts", "aria-live": "polite" }); document.body.append(box); }
-  const t = h("div", { class: "toast" }, text);
+  for (const old of box.children) if (old.textContent === text) old.remove();
+  const t = h("div", { class: "toast", onclick: () => t.remove() }, text);
+  markSuits(t);
   box.append(t);
+  while (box.children.length > 2) box.firstChild.remove();
   setTimeout(() => t.remove(), ms);
 }
 
@@ -282,21 +323,76 @@ export function cardLabel(c) {
   return `${valueLabel(c.v)} of ${SUITS[c.suit].name}`;
 }
 
-// A card, drawn with its printed art. size: "sm" | "md" | "lg" | "xl". extra: { class, onclick, title, disabled }
+// A simple face, easy to read at any size: the value, the suit mark, and what the card does when it loses.
+function simpleFace(c) {
+  const key = c.blessed ? "blessed" : SUITS[c.suit].key;
+  const icons = globalThis.TrickSuitIcons;
+  return [
+    h("span", { class: "sv" }, c.blessed ? "" : c.status ? "0" : valueLabel(c.v)),
+    h("span", { class: "si", html: icons ? icons.svg(key) : "" }),
+    h("span", { class: "sbig", html: icons ? icons.svg(key) : "" }),
+    h("span", { class: "sn" }, c.blessed ? "Blessed" : c.status ? SUITS[c.suit].status : SUITS[c.suit].consolation),
+  ];
+}
+
+// A card. size: "sm" | "md" | "lg" | "xl" | "stage". The screens draw simple faces; extra.art draws the printed card.
+// extra: { class, onclick, title, disabled, badge, art }. Press and hold any card to see the printed card full size.
 export function cardFace(c, size = "md", extra = {}) {
   if (!c) return h("div", { class: `cf ${size} empty`, "aria-label": "no card" });
   const label = cardLabel(c);
-  return h(extra.onclick ? "button" : "div", {
-    class: `cf ${size} ${extra.class || ""}`,
+  const kind = c.blessed ? "blessed" : SUITS[c.suit].key;
+  const el = h(extra.onclick ? "button" : "div", {
+    class: `cf ${size} ${extra.art ? "" : `simple k-${kind}${c.status ? " is-status" : ""}${c.blessed ? " is-blessed" : ""}`} ${extra.class || ""}`,
     "data-tip": extra.title || `${label}. ${cardText(c)}`,
-    onclick: extra.onclick, disabled: extra.disabled, type: extra.onclick ? "button" : undefined,
+    onclick: extra.onclick, "aria-disabled": extra.disabled ? "true" : undefined, type: extra.onclick ? "button" : undefined,
     "aria-label": extra.onclick ? label : undefined,
   },
-  art(artName(c), label),
-  c.beat != null ? h("span", { class: "beat" }, `counts ${c.beat}`) : null);
+  extra.art ? art(artName(c), label) : simpleFace(c),
+  c.beat != null ? h("span", { class: "beat" }, `counts ${c.beat}`) : extra.badge ? h("span", { class: "beat badge" }, extra.badge) : null);
+  if (!extra.onclick) el.setAttribute("aria-label", label), el.setAttribute("role", "img");
+  el._card = c;
+  if (extra.disabled && extra.onclick) el.addEventListener("click", (e) => e.stopImmediatePropagation(), { capture: true });
+  return el;
 }
 
-export const cardBack = (size = "md", extra = {}) => h("div", { class: `cf ${size} ${extra.class || ""}` }, art("back", "a face-down card"));
+// The card, full size, with its rule in large type. Tap anywhere to close.
+export function zoomCard(c) {
+  if (!c) return;
+  hideTip();
+  const close = () => box.remove();
+  const box = h("div", { class: "zoom", role: "dialog", "aria-label": cardLabel(c), onclick: close },
+    h("div", { class: "zoom-inner" }, h("div", { class: "cf zoomed" }, art(artName(c), cardLabel(c))),
+      h("div", { class: "zoom-text" }, h("h2", {}, cardLabel(c)), h("p", {}, cardText(c)), c.beat != null ? h("p", { class: "pill" }, `Counts ${c.beat} for beating`) : null,
+        h("p", { class: "small muted" }, "Tap anywhere to close."))));
+  document.querySelectorAll(".zoom").forEach((z) => z.remove());
+  document.body.append(box);
+  const onKey = (e) => { if (e.key === "Escape") { close(); removeEventListener("keydown", onKey); } };
+  addEventListener("keydown", onKey);
+}
+if (typeof document !== "undefined") {
+  // Press and hold a card (touch) or double-click it (mouse) to zoom.
+  let hold = null, held = false;
+  document.addEventListener("pointerdown", (e) => {
+    const el = e.target.closest && e.target.closest(".cf");
+    if (!el || !el._card) return;
+    held = false;
+    hold = setTimeout(() => { held = true; zoomCard(el._card); }, 480);
+  }, true);
+  for (const t of ["pointerup", "pointercancel", "pointerleave"]) document.addEventListener(t, () => clearTimeout(hold), true);
+  document.addEventListener("click", (e) => { if (held) { held = false; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  document.addEventListener("dblclick", (e) => { const el = e.target.closest && e.target.closest(".cf"); if (el && el._card) zoomCard(el._card); });
+  document.addEventListener("contextmenu", (e) => { if (e.target.closest && e.target.closest(".cf")) e.preventDefault(); });
+}
+
+// Who we're waiting on: initials that pulse while someone is choosing and settle once they've locked.
+export function waitingFaces(people) {
+  return h("div", { class: "faces", role: "list" }, people.map(({ name, done, me }) =>
+    h("span", { class: `face${done ? " done" : ""}${me ? " me" : ""}`, role: "listitem", "data-tip": `${name}: ${done ? "locked in" : "choosing"}` },
+      h("span", { class: "face-dot", "aria-hidden": "true" }, (name || "?").trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()),
+      h("span", { class: "face-name" }, me ? "You" : name))));
+}
+
+export const cardBack = (size = "md", extra = {}) => h("div", { class: `cf ${size} back ${extra.class || ""}`, role: "img", "aria-label": "a face-down card" });
 
 // The cards' typefaces, from Google Fonts, with serif fallbacks if they can't load.
 if (!document.querySelector("link[data-fonts]")) {
@@ -369,6 +465,10 @@ export function eventText(e, names, items = {}) {
     case "survivalRequired": return `${n(e.id)} must survive: target ${e.target}.`;
     case "died": return `${n(e.id)} does not survive.`;
     case "resurrected": return `${n(e.id)} is back.`;
+    case "retired": return `${n(e.id)} retires.`;
+    case "renamed": return `${e.from} is now ${e.to}.`;
+    case "unretired": return `${n(e.id)} comes out of retirement.`;
+    case "checkCancelled": return "The GM cancels the check. Everyone is back where they were.";
     case "gmCardMoved": return `GM: ${n(e.id)}'s ${e.card} moves from ${e.from} to ${PLACE_NAMES[e.to] || e.to}.`;
     case "gmCardAdded": return `GM: ${n(e.id)} gains ${/^[AEIOU]/.test(e.card) ? "an" : "a"} ${e.card} (${PLACE_NAMES[e.to] || e.to})${e.extra ? ", an extra card" : ""}.`;
     case "gmDeckShuffled": return `GM: ${n(e.id)}'s deck is shuffled.`;
@@ -421,6 +521,23 @@ export function soundToggle() {
     if (soundOn) chime("ready");
   } }, soundOn ? "Sound on" : "Sound off");
   return b;
+}
+export const isSoundOn = () => soundOn;
+export function setSoundOn(on) {
+  soundOn = !!on;
+  try { localStorage.setItem("trick:sound", soundOn ? "on" : "off"); } catch {}
+  if (soundOn) chime("ready");
+}
+// Played cards arrive in trick logs as labels ("7♥", "A♣", "Injury", "Blessed"); rebuild enough to draw the card.
+export function cardFromLabel(label) {
+  if (!label) return null;
+  if (label === "Blessed") return { blessed: true, v: 0, label };
+  const st = Object.entries(SUITS).find(([, x]) => x.status === label);
+  if (st) return { suit: st[0], status: true, v: 0, label };
+  const suit = Object.entries(SUITS).find(([, x]) => x.sym === label.slice(-1));
+  if (!suit) return null;
+  const v = label.slice(0, -1) === "A" ? 1 : Number(label.slice(0, -1));
+  return { suit: suit[0], v, label };
 }
 export function chime(kind) {
   if (!soundOn) return;

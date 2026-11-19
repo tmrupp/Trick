@@ -21,7 +21,7 @@ const SHARED_FROM_REPO = new Map([ // repo files the pages may load
 const TYPES = { ".png": "image/png", ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".json": "application/json" };
 const PAGES = { "/host": "host.html", "/table": "table.html", "/watch": "table.html", "/play": "play.html", "/gm": "gm.html", "/print": "print.html" };
 
-export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves"), adminToken = newSecret(), publicUrl = null, log = console.log } = {}) {
+export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves"), adminToken = newSecret(), publicUrl = null, log = console.log, botDelay = 650 } = {}) {
   let base = publicUrl;
   const linkBase = () => base || `http://localhost:${port}`;
   const store = new Store(savesDir);
@@ -30,7 +30,7 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
 
   const openRoom = (id) => {
     const save = store.read(id);
-    if (!rooms.has(save.code)) rooms.set(save.code, new Room(save, store, linkBase));
+    if (!rooms.has(save.code)) rooms.set(save.code, new Room(save, store, linkBase, { botDelay }));
     return rooms.get(save.code);
   };
 
@@ -128,7 +128,7 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
         if (path === "/api/archive" && req.method === "POST") {
           const body = await readJson(req);
           const id = String(body.id);
-          for (const [code, r] of rooms) if (r.save.id === id) { for (const c of r.clients) c.close(); rooms.delete(code); }
+          for (const [code, r] of rooms) if (r.save.id === id) { for (const c of r.clients) c.close(); r.stop(); rooms.delete(code); }
           store.archive(id);
           return send(res, 200, info());
         }
@@ -229,6 +229,6 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
     setPublicUrl(u) { base = u; },
     openRoom,
     listen: () => new Promise((ok) => server.listen(port, () => { port = server.address().port; ok(port); })),
-    close: () => new Promise((ok) => { clearInterval(pinger); for (const ws of wss.clients) ws.terminate(); wss.close(); server.close(() => ok()); }),
+    close: () => new Promise((ok) => { clearInterval(pinger); for (const r of rooms.values()) r.stop(); for (const ws of wss.clients) ws.terminate(); wss.close(); server.close(() => ok()); }),
   };
 }

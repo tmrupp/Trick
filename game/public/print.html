@@ -28,7 +28,7 @@ connect({
     const all = [...(ch.deckCards || []), ...(ch.discard || []), ...(view.hand || [])].sort((a, b) => (a.blessed - b.blessed) || (a.status - b.status) || String(a.suit).localeCompare(String(b.suit)) || a.v - b.v);
     render(main, [
       h("p", {}, h("strong", {}, ch.name), ` · ${all.length} cards: deck, discard${view.hand ? " and hand" : ""}.`),
-      h("div", { class: "grid" }, all.map((c) => cardFace(c, "lg", { title: cardText(c) }))),
+      h("div", { class: "grid" }, all.map((c) => cardFace(c, "lg", { title: cardText(c), art: true }))),
     ]);
   },
 });

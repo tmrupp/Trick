@@ -9,7 +9,7 @@ const pub = (c) => (c ? { id: c.id, label: label(c), suit: c.suit || null, v: c.
 
 function characterPublic(ch) {
   return {
-    id: ch.id, name: ch.name, alive: ch.alive, controller: ch.controller, race: ch.race || null, items: (ch.items || []).slice(),
+    id: ch.id, name: ch.name, alive: ch.alive, retired: !!ch.retired, controller: ch.controller, bot: ch.bot || null, race: ch.race || null, items: (ch.items || []).slice(),
     primary: ch.primary, secondary: ch.secondary,
     deckCount: ch.deck.length, discardCount: ch.discard.length,
     discardTop: pub(ch.discard[ch.discard.length - 1]),
@@ -33,7 +33,7 @@ function characterPrivate(ch) {
   };
 }
 
-function checkPublic(ck) {
+function checkPublic(ck, state) {
   if (!ck) return null;
   const players = {};
   for (const id of ck.participants) {
@@ -47,6 +47,8 @@ function checkPublic(ck) {
       total: p.tally.reduce((a, t) => a + t.score, 0),
       brace: p.brace, mirror: p.mirror,
       locked: !!ck.locks[id],
+      // A left-to-right bot plays with its hand face up, in order: the leftmost card plays next.
+      openHand: state.characters[id] && state.characters[id].bot === "ltr" ? p.hand.map(pub) : null,
     };
   }
   return {
@@ -67,7 +69,7 @@ export function viewFor(state, who) {
   const view = {
     seats: state.seats.slice(), gmSeat: state.gmSeat,
     characters: {},
-    check: checkPublic(state.check),
+    check: checkPublic(state.check, state),
     history: state.history.map((h) => ({ id: h.id, kind: h.kind, results: h.results })),
   };
   for (const ch of Object.values(state.characters)) {

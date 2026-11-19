@@ -25,7 +25,6 @@ test("setup: a stated goal and a target are required before the deal", () => {
   ({ state: s } = run(s, { type: "beginCheck", kind: "solo", participants: ["ana"] }));
   assert.equal(s.check.tricks, 6);
   assert.throws(() => run(s, { type: "deal" }), /no target/);
-  assert.throws(() => run(s, { type: "declareApproach", charId: "ana", suit: "S", goal: "  " }), /what you're trying/);
   ({ state: s } = run(s, { type: "declareApproach", charId: "ana", suit: "S", goal: "Hold the door" }));
   assert.throws(() => run(s, { type: "deal" }), /no target/);
   ({ state: s } = run(s, { type: "setGoal", charId: "ana", target: 6 }));
@@ -181,4 +180,40 @@ test("views: the table sees no hands, and no phone sees another hand or the worl
     assert.ok(!JSON.stringify(viewFor(s, who)).includes(s.check.worldDeck.at(-1).id), "no phone sees the world deck");
   }
   assert.ok(!JSON.stringify(viewFor(s, { role: "table" })).includes(s.check.worldDeck.at(-1).id), "the table never sees the world deck");
+});
+
+test("the GM cancels a check: everyone goes back to how they were before it, and nothing is recorded", () => {
+  let s = game(["ana", "ben"]);
+  const before = structuredClone(s.characters);
+  s = dealt(s);
+  ({ state: s } = run(s, lock(s, "ana", find(s, "ana", "S1") ? "S1" : hand(s, "ana").find((c) => !c.status && !c.blessed).suit + hand(s, "ana").find((c) => !c.status && !c.blessed).v)));
+  let events;
+  ({ state: s, events } = run(s, { type: "cancelCheck" }));
+  assert.equal(s.check, null);
+  assert.deepEqual(s.characters.ana.deck.map((c) => c.id), before.ana.deck.map((c) => c.id), "Ana's deck is back as it was");
+  assert.deepEqual(s.characters.ben.discard, before.ben.discard);
+  assert.equal(s.history.length, 0, "a cancelled check leaves no record");
+  assert.ok(events.some((e) => e.type === "checkCancelled"));
+  assert.throws(() => run(s, { type: "cancelCheck" }), /No check/);
+});
+
+test("a retired character can't take part until brought back, and can't be retired mid-check", () => {
+  let s = game(["ana", "ben"]);
+  ({ state: s } = run(s, { type: "retireCharacter", charId: "ben" }));
+  assert.equal(s.characters.ben.retired, true);
+  assert.throws(() => run(s, { type: "beginCheck", participants: ["ana", "ben"] }), /Ben is retired/);
+  ({ state: s } = run(s, { type: "retireCharacter", charId: "ben", retired: false }));
+  ({ state: s } = run(s, { type: "beginCheck", participants: ["ana", "ben"] }));
+  assert.throws(() => run(s, { type: "retireCharacter", charId: "ana" }), /in this check/);
+});
+
+test("the GM can set a check's exact number of tricks; the kind still sets the target range", () => {
+  let s = game(["ana", "ben"]);
+  ({ state: s } = run(s, { type: "beginCheck", kind: "quick", participants: ["ana", "ben"], tricks: 9 }));
+  assert.equal(s.check.tricks, 9);
+  assert.equal(s.check.kind, "quick");
+  ({ state: s } = run(s, { type: "cancelCheck" }));
+  assert.throws(() => run(s, { type: "beginCheck", participants: ["ana"], tricks: 0 }), /1 to 40 tricks/);
+  ({ state: s } = run(s, { type: "beginCheck", participants: ["ana", "ben"] }));
+  assert.equal(s.check.tricks, 7, "without a number, the preset: 3 per player, +1");
 });

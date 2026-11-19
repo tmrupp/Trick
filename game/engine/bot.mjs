@@ -75,6 +75,48 @@ export function answerPrompt(state, prompt) {
   throw new Error(`No bot answer for ${prompt.type}`);
 }
 
+// ---- Bots at the table ----
+
+// Left to right: the leftmost card it may legally play; for Stumble's Price, its leftmost ordinary card.
+export function chooseLockLeftToRight(state, charId) {
+  const p = state.check.players[charId];
+  const legal = new Set(legalCards(state, charId));
+  const card = p.hand.find((c) => legal.has(c.id));
+  let priceCardId;
+  if (card && isStatus(card) && card.suit === "D") priceCardId = p.hand.find((c) => c !== card && isOrdinary(c))?.id;
+  return { type: "lockCard", charId, cardId: card.id, priceCardId };
+}
+
+// Left to right answers are fixed too: never Peek, Recalculate its leftmost card, never evolve.
+function answerLeftToRight(state, prompt) {
+  const p = state.check.players[prompt.charId];
+  if (prompt.type === "peek") return { type: "peek", charId: prompt.charId, replace: false };
+  if (prompt.type === "recalculate") return { type: "recalculate", charId: prompt.charId, cardId: p.hand[0].id };
+  if (prompt.type === "evolve") return { type: "evolve", charId: prompt.charId, skip: true };
+  if (prompt.type === "evolvePick") return { type: "evolvePick", charId: prompt.charId, cardId: prompt.options[0] };
+  throw new Error(`No left-to-right answer for ${prompt.type}`);
+}
+
+// The next thing a bot character should do in the running check, or null. The host applies it like a player's action.
+export function nextBotAction(state) {
+  const ck = state.check;
+  if (!ck || ck.phase === "closed") return null;
+  const bots = ck.participants.filter((id) => state.characters[id] && state.characters[id].bot);
+  if (!bots.length) return null;
+  if (ck.phase === "setup") {
+    const id = bots.find((x) => !ck.players[x].approach);
+    // A bot leans on its primary suit and leaves the goal to the table; the GM sets its target.
+    return id ? { type: "declareApproach", charId: id, suit: state.characters[id].primary } : null;
+  }
+  const prompt = ck.pending.find((x) => bots.includes(x.charId));
+  if (prompt) return state.characters[prompt.charId].bot === "ltr" ? answerLeftToRight(state, prompt) : answerPrompt(state, prompt);
+  if (ck.phase === "play") {
+    const id = bots.find((x) => !ck.locks[x] && ck.players[x].hand.length);
+    if (id) return state.characters[id].bot === "ltr" ? chooseLockLeftToRight(state, id) : chooseLock(state, id);
+  }
+  return null;
+}
+
 function nextPrompt(ck) {
   return ck.pending[0] || null;
 }

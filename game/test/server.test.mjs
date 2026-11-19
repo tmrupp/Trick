@@ -284,6 +284,8 @@ test("a player makes another character after a death, switches between them, and
     assert.equal((await ana.act({ type: "resurrect", charId: "p1" })).reason, "Only the GM can do that.");
     assert.equal((await gm.act({ type: "resurrect", charId: "p1" })).type, "ok");
     assert.equal((await gm.act({ type: "resurrect", charId: "p1" })).type, "rejected", "only the dead come back");
+    // Ana is alive again but Tess plays Bea now: Ana can't be put in a check.
+    assert.equal((await gm.act({ type: "beginCheck", participants: ["p1"] })).reason, "Ana isn't being played by anyone right now.");
     assert.equal((await ana.manage({ op: "switch", charId: "p1" })).type, "ok");
     await settle();
     you = ana.latest().room.you;
@@ -301,6 +303,54 @@ test("a player makes another character after a death, switches between them, and
     assert.ok(heard(gm) && heard(ana), "the GM and Ana's player see it");
     assert.ok(!heard(ben) && !heard(table), "other phones and the table don't");
     for (const c of [gm, ana, ben, table]) await c.close();
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the GM adds bots; they declare, answer and play on their own; a left-to-right bot's hand is open to all", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  const host = createServer({ port: 0, savesDir: dir, log: () => {}, botDelay: 5 });
+  const port = await host.listen();
+  try {
+    const r = await fetch(`http://localhost:${port}/api/campaigns`, { method: "POST", headers: { "x-admin": host.adminToken, "content-type": "application/json" }, body: JSON.stringify({ name: "Bots", seed: "bots" }) });
+    const { code, gmKey } = (await r.json()).rooms[0];
+    const gm = client(port, { room: code, as: "gm", gmKey });
+    const table = client(port, { room: code, as: "table" });
+    await gm.ready; await table.ready;
+    assert.equal((await gm.manage({ op: "addBot", kind: "greedy", primary: "S" })).type, "ok");
+    assert.equal((await gm.manage({ op: "addBot", kind: "ltr", primary: "W", name: "The Spirit" })).type, "ok");
+    await settle();
+    let seats = gm.latest().room.seats.filter((s) => s.role === "bot");
+    assert.deepEqual(seats.map((s) => [s.id, s.name, s.charId]), [["b1", "Greedy 1", "b1"], ["b2", "The Spirit", "b2"]]);
+    assert.equal((await gm.act({ type: "renameCharacter", charId: "b1", name: "Sergeant Vell" })).type, "ok");
+    await settle();
+    seats = gm.latest().room.seats.filter((s) => s.role === "bot");
+    assert.equal(seats[0].name, "Sergeant Vell", "the bot's seat takes the new name");
+    assert.equal(gm.latest().view.characters.b1.name, "Sergeant Vell");
+    assert.equal((await gm.act({ type: "renameCharacter", charId: "b1", name: "  " })).type, "rejected");
+    assert.equal(gm.latest().view.characters.b2.bot, "ltr");
+    assert.equal((await gm.act({ type: "beginCheck", participants: ["b1", "b2"] })).type, "ok");
+    const wait = (pred) => new Promise((ok, fail) => { const t0 = Date.now(); const tick = () => { const v = gm.latest(); if (pred(v)) return ok(v); if (Date.now() - t0 > 4000) return fail(new Error("timed out")); setTimeout(tick, 20); }; tick(); });
+    await wait((v) => v.view.check.players.b1.approach && v.view.check.players.b2.approach);
+    for (const id of ["b1", "b2"]) assert.equal((await gm.act({ type: "setGoal", charId: id, target: 8 })).type, "ok");
+    assert.equal((await gm.act({ type: "deal" })).type, "ok");
+    await settle();
+    // Everyone, the table included, sees the left-to-right bot's hand in order; the greedy bot's stays hidden.
+    const firstView = table.views.find((v) => v.view.check && v.view.check.phase === "play" && v.view.check.trick === 0);
+    const open = firstView.view.check.players.b2.openHand;
+    assert.ok(open && open.length > 0);
+    assert.equal(firstView.view.check.players.b1.openHand, null);
+    // The bots play the whole check by themselves.
+    const done = await wait((v) => v.view.check && v.view.check.phase === "resolve");
+    assert.ok(done.view.check.results.b1 && done.view.check.results.b2);
+    // The left-to-right bot played its leftmost legal card: its first play was the first legal card shown.
+    const first = done.view.check.log[0].plays.find((p) => p.id === "b2");
+    const w = firstView.view.check.worldRow[0];
+    const forced = open.find((c) => c.status && c.suit === w.suit);
+    assert.equal(first.card, (forced || open[0]).id);
+    for (const c of [gm, table]) await c.close();
   } finally {
     await host.close();
     rmSync(dir, { recursive: true, force: true });

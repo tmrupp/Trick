@@ -1,5 +1,6 @@
 // A room: one loaded campaign, its seats, and the sockets watching it.
 import { apply, replay, viewFor, RuleError } from "../engine/index.mjs";
+import { nextBotAction } from "../engine/bot.mjs";
 import { newSecret } from "./store.mjs";
 
 const MAX_SEATS = 10;
@@ -18,12 +19,19 @@ export function authorize(seat, action) {
 // A seat's characters: the one it plays now (charId) and any others it has made or played.
 export const charsOf = (seat) => [...new Set([...(seat.chars || []), ...(seat.charId ? [seat.charId] : [])])];
 
+const SUIT_ORDER = ["S", "D", "I", "W"];
+const BOT_KINDS = { greedy: "Greedy", ltr: "Lantern" };
+
 export class Room {
-  constructor(save, store, linkBase = () => "") {
+  constructor(save, store, linkBase = () => "", { botDelay = 650 } = {}) {
+    this.botDelay = botDelay;
+    this.botTimer = null;
     this.save = save;
     this.store = store;
     this.linkBase = linkBase;
-    try {
+    // A save keeps the game's state, so later rule changes never rewrite past checks. Older saves without it replay.
+    if (save.state && save.state.actions && save.state.actions.length === save.actions.length) this.state = save.state;
+    else try {
       this.state = replay({ seed: save.seed, gmSeat: save.gmSeat, rules: save.rules }, save.actions);
     } catch (e) {
       // Saves from while Peek happened automatically won't replay with the Peek choice: keep them on that rule.
@@ -32,7 +40,33 @@ export class Room {
       save.rules = { peek: "auto" };
     }
     this.clients = new Set(); // { ws, seat | null, as }
+    this.scheduleBots();
   }
+
+  // Bots act one step at a time, a moment after each change, so the table sees them think and lock in.
+  scheduleBots() {
+    clearTimeout(this.botTimer);
+    this.botTimer = setTimeout(() => this.runBot(), this.botDelay);
+    if (this.botTimer.unref) this.botTimer.unref();
+  }
+
+  runBot() {
+    const action = nextBotAction(this.state);
+    if (!action) return;
+    try {
+      const { state, events } = apply(this.state, action);
+      this.state = state;
+      this.save.actions = state.actions;
+      this.persist();
+      this.broadcast(events);
+    } catch (e) {
+      console.error("bot action failed:", action.type, e.message);
+      return;
+    }
+    this.scheduleBots();
+  }
+
+  stop() { clearTimeout(this.botTimer); }
 
   get code() { return this.save.code; }
 
@@ -89,6 +123,14 @@ export class Room {
     if (!seat) throw new RuleError("A table screen can't act.");
     authorize(seat, action);
     let a = { ...action };
+    if (a.type === "beginCheck") {
+      // Only characters someone is playing right now can take part.
+      const played = new Set(this.save.seats.filter((s) => !s.removed && s.charId).map((s) => s.charId));
+      for (const id of a.participants || []) {
+        const c = this.state.characters[id];
+        if (c && !played.has(id)) throw new RuleError(`${c.name} isn't being played by anyone right now.`);
+      }
+    }
     if (a.type === "createCharacter") {
       if (seat.charId && this.inCheck(seat.charId)) throw new RuleError("Finish this check before making a new character.");
       // The server names the character after its seat (p1, then p1-2, p1-3…), so ids never collide.
@@ -101,9 +143,11 @@ export class Room {
     this.state = state;
     this.save.actions = state.actions;
     if (a.type === "createCharacter") { seat.chars = [...charsOf(seat), a.id]; seat.charId = a.id; }
+    if (a.type === "renameCharacter") for (const s of this.save.seats) if (s.role === "bot" && s.charId === a.charId) s.name = state.characters[a.charId].name;
     this.save.characterNames = Object.values(state.characters).map((c) => c.name);
     this.persist();
     this.broadcast(events);
+    this.scheduleBots();
     return events;
   }
 
@@ -124,6 +168,23 @@ export class Room {
       return;
     }
     if (!seat || seat.role !== "gm") throw new RuleError("Only the GM can manage seats.");
+    if (op.op === "addBot") {
+      const kind = op.kind === "ltr" ? "ltr" : "greedy";
+      const primary = SUIT_ORDER.includes(op.primary) ? op.primary : "S";
+      const rest = SUIT_ORDER.filter((s) => s !== primary);
+      const n = this.save.seats.filter((s) => s.role === "bot").length + 1;
+      const id = `b${n}`;
+      const name = String(op.name || `${BOT_KINDS[kind]} ${n}`).trim().slice(0, 24);
+      const { state, events } = apply(this.state, { type: "createCharacter", id, name, primary, secondary: rest[0], others: [rest[1], rest[2]], controller: "bot", bot: kind });
+      this.state = state;
+      this.save.actions = state.actions;
+      this.save.seats.push({ id, token: newSecret(), name, role: "bot", charId: id, chars: [id] });
+      this.save.characterNames = Object.values(state.characters).map((c) => c.name);
+      this.persist();
+      this.broadcast(events);
+      this.scheduleBots();
+      return;
+    }
     if (op.op === "remove") {
       const target = this.seatById(op.seatId);
       if (!target || target.role === "gm") throw new RuleError("No such player seat.");
@@ -157,6 +218,7 @@ export class Room {
   }
 
   persist() {
+    this.save.state = this.state;
     this.store.write(this.save);
   }
 

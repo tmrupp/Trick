@@ -83,9 +83,12 @@ test("players state their own goal and its suit; the GM sets the target", () => 
   ({ state: s } = run(s, { type: "beginCheck", participants: ["ana", "ben"] },
     { type: "declareApproach", charId: "ana", suit: "S", goal: "Hold the gate until the bell" },
     { type: "setGoal", charId: "ana", target: 8, goal: "GM's words" }));
-  assert.equal(s.check.players.ana.goal, "Hold the gate until the bell", "the GM doesn't overwrite a stated goal");
+  assert.equal(s.check.players.ana.goal, "GM's words", "the GM has the final say on the goal too");
   assert.equal(s.check.players.ana.target, 8);
-  assert.throws(() => run(s, { type: "declareApproach", charId: "ben", suit: "D", goal: "   " }), /what you're trying/);
+  // A goal needn't be written: it can be spoken at the table or implied by the situation.
+  ({ state: s } = run(s, { type: "declareApproach", charId: "ben", suit: "D", goal: "   " }));
+  assert.equal(s.check.players.ben.goal, null);
+  assert.equal(s.check.players.ben.approach, "D");
   // A player may suggest a difficulty; the GM's target still decides.
   ({ state: s } = run(s, { type: "declareApproach", charId: "ben", suit: "D", goal: "Pick the lock", suggested: 13 }));
   assert.equal(viewFor(s, { role: "gm" }).check.players.ben.suggested, 13);
@@ -141,4 +144,19 @@ test("GM card editing: move between deck, discard, hand and reserve; add from re
   const locked = s.check.locks.ana.cardId;
   assert.throws(() => run(s, { type: "gmMoveCard", charId: "ana", cardId: locked, to: "discard" }), /locked in/);
   ({ state: s } = run(s, { type: "gmShuffleDeck", charId: "ana" }));
+});
+
+test("the GM can set a participant up with no input from them: trump, goal and target", () => {
+  let s = game(["ana", "ben"]);
+  ({ state: s } = run(s, { type: "beginCheck", participants: ["ana", "ben"] }));
+  // Ana says nothing; the GM sets her trump and target. Ben's player declares; the GM changes his trump anyway.
+  ({ state: s } = run(s, { type: "setGoal", charId: "ana", suit: "W", target: 9 }));
+  assert.deepEqual([s.check.players.ana.approach, s.check.players.ana.target, s.check.players.ana.approved, s.check.players.ana.goal], ["W", 9, true, null]);
+  ({ state: s } = run(s, { type: "declareApproach", charId: "ben", suit: "D", goal: "Pick the lock", suggested: 11 }, { type: "setGoal", charId: "ben", target: 11 }));
+  ({ state: s } = run(s, { type: "setGoal", charId: "ben", suit: "I", goal: "Talk the guard round" }));
+  assert.deepEqual([s.check.players.ben.approach, s.check.players.ben.goal, s.check.players.ben.approved], ["I", "Talk the guard round", true], "changing the trump keeps the target accepted");
+  assert.throws(() => run(s, { type: "setGoal", charId: "ben" }), /Set a trump, a goal or a target/);
+  assert.throws(() => run(s, { type: "setGoal", charId: "ben", suit: "X" }), /trump/);
+  ({ state: s } = run(s, { type: "deal" }));
+  assert.equal(s.check.phase, "play");
 });

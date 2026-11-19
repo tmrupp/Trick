@@ -11,13 +11,14 @@
 <script src="/races/race_catalog.js"></script>
 </head>
 <body>
-<header class="spread">
+<header class="phone-head">
   <h1 id="title">TRICK</h1>
-  <div class="row"><span id="status" class="pill"><span class="dot"></span><span>…</span></span><span id="tools" class="row"></span></div>
+  <span id="status" class="dot" data-tip="Connecting…"></span>
+  <span id="tools"></span>
 </header>
 <main id="main" aria-live="polite"></main>
 <script type="module">
-import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, soundToggle, hasToken, itemsById, racesById, stripTags, difficultyHint, draft } from "/shared/client.js";
+import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, racesById, stripTags, difficultyHint, draft, menu, zoomCard, waitingFaces, isSoundOn, setSoundOn, cardFromLabel, markSuits } from "/shared/client.js";
 
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -28,18 +29,79 @@ let conn = null;
 let last = null;
 let tab = "play"; // play | cards
 let ui = { chosen: null, price: null, info: false, creating: false };
-let lastTrickSeen = -1;
+let lastTrickSeen = null; // the newest trick this phone has shown; null until the first view
 let lastPromptKey = "";
+let status = "connecting";
+const GUIDE_KEY = "trick:guide-seen";
 
-document.getElementById("tools").append(
-  h("a", { href: "/rules", target: "_blank", class: "small" }, "Rules"),
-  soundToggle(),
-);
+// Everything that isn't the game lives in one menu: connection, cards, the guide, rules and sound.
+document.getElementById("tools").append(menu("Menu", () => [
+  { heading: status === "connected" ? `Connected to room ${room}` : status === "offline" ? "Reconnecting…" : "Connecting…" },
+  { label: tab === "cards" ? "Back to the check" : "My cards and characters", onclick: () => { tab = tab === "cards" ? "play" : "cards"; draw(); } },
+  { label: "How to play a trick", tip: "A three-step reminder of how a trick works.", onclick: () => showGuide(0) },
+  { label: "Rules", hint: "new tab", onclick: () => window.open("/rules", "_blank") },
+  { label: isSoundOn() ? "Turn sound off" : "Turn sound on", onclick: () => setSoundOn(!isSoundOn()) },
+], { class: "small ghost", tip: "Your cards, the guide, rules and sound." }));
 
 const setStatus = (s) => {
+  status = s;
   const el = document.getElementById("status");
-  el.replaceChildren(h("span", { class: `dot${s === "connected" ? " on" : ""}` }), h("span", {}, s === "connected" ? "connected" : s === "offline" ? "reconnecting…" : "connecting…"));
+  el.className = `dot${s === "connected" ? " on" : ""}`;
+  el.setAttribute("data-tip", s === "connected" ? "Connected" : s === "offline" ? "Reconnecting…" : "Connecting…");
 };
+
+// ---- First-time guide: three steps, shown once, and again from the menu ----
+function showGuide(step = 0) {
+  document.querySelectorAll(".guide").forEach((g) => g.remove());
+  const me = last && last.room.you.charId;
+  const p = last && last.view.check && last.view.check.players && last.view.check.players[me];
+  const trump = p && p.approach ? `${SUITS[p.approach].sym} ${SUITS[p.approach].name}` : "your goal's suit";
+  const steps = [
+    ["The world card", "Each trick, the world leads one card, shown big at the top. Everyone picks a card from their hand at the same time, face down."],
+    ["Beat it to win it", `Your card wins if it's the single highest card and it's in the world card's suit or your trump (${trump}). Losing isn't wasted: your losing card's suit gives you a consolation for the next trick.`],
+    ["Hit your target exactly", "A world card you win scores its value. Land on your target exactly for a critical; a little short is still a success. Going over is a bust."],
+  ];
+  const [title, text] = steps[step];
+  const close = () => { box.remove(); try { localStorage.setItem(GUIDE_KEY, "1"); } catch {} };
+  const box = h("div", { class: "guide", role: "dialog", "aria-label": "How to play a trick" },
+    h("div", { class: "guide-card stack" },
+      h("div", { class: "guide-steps", "aria-hidden": "true" }, steps.map((_, i) => h("span", { class: i <= step ? "on" : "" }))),
+      h("h2", {}, title), h("p", {}, text),
+      h("div", { class: "row" },
+        step < steps.length - 1 ? h("button", { class: "primary", onclick: () => showGuide(step + 1) }, "Next") : h("button", { class: "primary", onclick: close }, "Got it"),
+        h("button", { class: "ghost", onclick: close }, step < steps.length - 1 ? "Skip" : "Close"),
+        h("span", { class: "small muted" }, "Hold any card to see it full size."))));
+  document.body.append(box);
+}
+const guideSeen = () => { try { return localStorage.getItem(GUIDE_KEY) === "1"; } catch { return true; } };
+
+// ---- The phone's own reveal: what just happened to you, for a moment ----
+let revealTimer = null;
+function showReveal(e, view, me, names) {
+  document.querySelectorAll(".phone-reveal").forEach((x) => x.remove());
+  const mine = e.plays.find((x) => x.id === me);
+  const world = view.check.worldRow[e.trick];
+  const p = view.check.players[me];
+  const last = e.trick === view.check.tricks - 1;
+  const won = e.winner === me;
+  const headline = won ? `You take the ${e.worldLabel}` : e.winner ? `${names[e.winner]} takes the ${e.worldLabel}` : `The world keeps the ${e.worldLabel}`;
+  const card = mine && cardFromLabel(mine.label);
+  let after = "";
+  if (won) after = `+${e.score}: you're on ${p.total} of ${p.target}.`;
+  else if (mine && !last && card && !card.blessed) {
+    after = { S: `Brace +${card.v} on your next card.`, D: "Peek: choose below whether to replace the next world card.", I: "Recalculate: choose a card to swap below.", W: "Mirror: your next card counts 11 minus its value." }[card.suit] || "";
+  }
+  const box = h("div", { class: `phone-reveal${won ? " won" : ""}`, role: "status", onclick: () => box.remove() },
+    h("div", { class: "small muted" }, `Trick ${e.trick + 1}`),
+    h("div", { class: "cards" }, world ? cardFace(world, "md") : null, h("span", { class: "vs" }, mine ? "vs" : ""), card ? cardFace(card, "md", { class: won ? "chosen" : "" }) : null),
+    h("div", { class: "headline" }, headline),
+    after ? h("p", { style: "margin:6px 0 0" }, after) : null,
+    h("p", { class: "small muted", style: "margin:6px 0 0" }, trickSentence(e, names)));
+  document.body.append(markSuits(box));
+  if (won) buzz([60, 40, 90]); else buzz(30);
+  clearTimeout(revealTimer);
+  revealTimer = setTimeout(() => box.remove(), 3200);
+}
 
 function askRoom() {
   const input = h("input", { placeholder: "Room code", maxlength: 8, autocapitalize: "characters", autocomplete: "off", "aria-label": "Room code" });
@@ -86,15 +148,14 @@ const act = (a) => conn.act(a);
 function react(msg) {
   const view = msg.view;
   const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
-  for (const e of msg.events || []) {
-    const t = eventText(e, names, ITEM_NAMES);
-    if (t && e.type !== "reshuffled") toast(t);
-  }
+  const quiet = new Set(["reshuffled", "trickResolved", "trickReady", "locked", "unlocked", "peekAnswered", "approachDeclared", "goalSet"]);
+  toast((msg.events || []).filter((e) => !quiet.has(e.type)).map((e) => eventText(e, names, ITEM_NAMES)), 4500);
   const ck = view.check;
-  if (ck && ck.log.length - 1 > lastTrickSeen) {
-    if (lastTrickSeen >= -1 && ck.log.length) { chime("reveal"); toast(trickSentence(ck.log[ck.log.length - 1], names), 5000); }
-    lastTrickSeen = ck.log.length - 1;
-  }
+  const me = msg.room.you.charId;
+  const newest = ck && ck.phase !== "closed" ? ck.log.length - 1 : -1;
+  if (lastTrickSeen !== null && newest > lastTrickSeen && ck.players[me]) { chime("reveal"); showReveal(ck.log[newest], view, me, names); }
+  lastTrickSeen = newest;
+  if (ck && ck.phase === "play" && ck.players[me] && !guideSeen() && !document.querySelector(".guide")) showGuide(0);
   const promptKey = (view.prompts || []).map((p) => p.type).join(",");
   if (promptKey && promptKey !== lastPromptKey) { chime("turn"); buzz(); }
   lastPromptKey = promptKey;
@@ -146,7 +207,7 @@ function charactersPanel(info, view, me, busy) {
   return h("div", { class: "panel stack" }, h("h2", {}, mine.length > 1 ? "Your characters" : "Your character"),
     mine.map((id) => {
       const c = view.characters[id];
-      return h("div", { class: "spread" }, h("span", {}, h("strong", {}, c.name), c.alive ? "" : h("span", { class: "pill bad", style: "margin-left:8px" }, "dead")),
+      return h("div", { class: "spread" }, h("span", {}, h("strong", {}, c.name), c.alive ? "" : h("span", { class: "pill bad", style: "margin-left:8px" }, "dead"), c.retired ? h("span", { class: "pill warn", style: "margin-left:8px" }, "retired") : ""),
         id === me ? h("span", { class: "pill good" }, "playing") : h("button", { class: "small", disabled: busy, onclick: () => conn.manage({ op: "switch", charId: id }) }, "Play as"));
     }),
     busy ? h("p", { class: "small muted" }, "You can switch or start a new character once this check ends.")
@@ -213,33 +274,59 @@ function promptPanel(pr, view, me) {
 
 // ---- The check ----
 
+// What a card counts for beating right now, with Brace, Mirror and the GM's adjustment.
+function counts(c, p) {
+  if (c.blessed) return null;
+  return (p.mirror && !c.status ? 11 - c.v : c.v) + (p.brace || 0) + (p.boost || 0);
+}
+
+// The slim bar that stays at the top: goal, score, and the effects waiting on your next card.
+function hud(p, ck) {
+  const need = p.target != null ? p.target - p.total : null;
+  return h("div", { class: "hud" },
+    h("div", { class: "hud-top" }, h("span", { class: "hud-goal", "data-tip": p.goal || undefined }, p.survival ? "Survive" : p.goal || (p.approach ? "Goal spoken at the table" : "Your goal")),
+      h("span", { class: "hud-score" }, p.total, h("small", {}, ` / ${p.target ?? "?"}`))),
+    need != null ? h("div", { class: `bar${need < 0 ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / Math.max(1, p.target))}%` })) : null,
+    h("div", { class: "chips" },
+      need != null ? h("span", { class: `pill ${need < 0 ? "bad" : need === 0 ? "good" : ""}`, "data-tip": need < 0 ? "Over your target: a bust, unless an adjustment brings you back." : need === 0 ? "Exactly on target: a critical. Winning more would bust you." : "Points still needed. Exactly is a critical; 1–3 short a success; 4–6 a partial." }, need < 0 ? `Over by ${-need}` : need === 0 ? "On target" : `Need ${need}`) : null,
+      p.approach ? h("span", { class: "pill", "data-tip": "Your goal's suit. Cards in it can win any trick, not only ones in the world card's suit." }, `Trump ${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
+      p.brace ? h("span", { class: "pill good", "data-tip": "Brace: your next card counts this much higher for beating. It never changes what you score." }, `Brace +${p.brace}`) : null,
+      p.mirror ? h("span", { class: "pill good", "data-tip": "Mirror: your next card counts 11 minus its value for beating (a 2 counts 9, a 9 counts 2). Statuses stay at 0." }, "Mirror") : null,
+      p.boost ? h("span", { class: "pill good", "data-tip": "The GM's adjustment to your next card, for beating." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null,
+      ck.phase === "setup" ? h("span", { class: "pill" }, `${ck.kind} check · ${ck.tricks} tricks`) : null));
+}
+
+// Left-to-right bots play with their hands face up: everyone can plan around them.
+function openHands(ck, names) {
+  const open = ck.participants.filter((id) => ck.players[id].openHand && ck.players[id].openHand.length);
+  if (!open.length) return null;
+  return open.map((id) => h("div", { class: "open-hand" }, h("div", { class: "small", "data-tip": "A left-to-right bot: it plays its leftmost legal card each trick, so you can see what's coming." }, h("strong", {}, names[id]), " plays left to right"),
+    h("div", { class: "row" }, ck.players[id].openHand.map((c, i) => cardFace(c, "sm", { class: i === 0 ? "next-up" : "" })))));
+}
+
+// The world: the card in play on stage, the rest of the row beside it.
+function stage(ck) {
+  const live = ck.phase !== "resolve";
+  const cur = live ? ck.worldRow[ck.trick] : null;
+  return h("div", { class: "stage" },
+    cur ? h("div", { class: "stage-card" }, h("span", { class: "stage-label" }, `Trick ${ck.trick + 1} of ${ck.tricks}`), cardFace(cur, "stage", { class: "current" }),
+      cur.beat != null ? h("span", { class: "small", "data-tip": "The GM changed what it takes to beat this card. It still scores its printed value." }, `counts ${cur.beat} to beat`) : null)
+      : h("div", { class: "stage-card" }, h("span", { class: "stage-label" }, "All tricks played")),
+    h("div", {}, h("div", { class: "stage-label" }, live ? "Still to come" : "The world row"),
+      h("div", { class: "strip" }, ck.worldRow.map((c, i) => (live && i === ck.trick ? null : cardFace(c, "sm", { class: i < ck.trick ? "past" : "" }))))));
+}
+
 function checkView(view, info, me) {
   const ck = view.check;
   const p = ck.players[me];
   const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
   const w = ck.worldRow[ck.trick];
-  const out = [];
-  const need = p.target != null ? p.target - p.total : null;
+  const out = [hud(p, ck)];
 
-  out.push(h("div", { class: "panel stack" },
-    h("div", { class: "spread" }, h("div", {}, h("div", { class: "small muted" }, p.survival ? "Forced goal" : "Goal"), h("strong", {}, p.goal || "—")),
-      h("div", {}, h("span", { class: "big" }, h("strong", {}, p.total)), h("span", { class: "muted" }, ` of ${p.target ?? "?"}`))),
-    need != null ? h("div", { class: `bar${need < 0 ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / Math.max(1, p.target))}%` })) : null,
-    h("div", { class: "row small" },
-      need != null ? h("span", { class: `pill ${need < 0 ? "bad" : need === 0 ? "good" : ""}`, "data-tip": need < 0 ? "Over your target: a bust, unless an adjustment brings you back." : need === 0 ? "Exactly on target: a critical." : "Points still needed. 1–3 short is a success; 4–6 a partial." }, need < 0 ? `Over by ${-need}` : need === 0 ? "Exactly on target" : `Need ${need}`) : null,
-      p.approach ? h("span", { class: "pill", "data-tip": "Your goal's suit. Cards in it can win any trick, not only ones in the world card's suit." }, `Trump ${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
-      p.brace ? h("span", { class: "pill good", "data-tip": "Brace: your next card counts this much higher for beating. It never changes what you score." }, `Brace +${p.brace}`) : null,
-      p.mirror ? h("span", { class: "pill good", "data-tip": "Mirror: your next card counts 11 minus its value for beating (a 2 counts 9, a 9 counts 2). Statuses stay at 0." }, "Mirror ready") : null,
-      p.boost ? h("span", { class: "pill good", "data-tip": "The GM's adjustment to your next card, for beating." }, `Next card ${p.boost > 0 ? "+" : ""}${p.boost}`) : null),
-    p.tally.length ? h("div", { class: "row" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm", { title: t.mirrored ? `Mirrored: scores ${t.score}` : undefined }))) : null));
-
-  if (ck.phase !== "setup") {
-    out.push(h("div", { class: "panel" }, h("div", { class: "small muted" }, `The world · trick ${Math.min(ck.trick + 1, ck.tricks)} of ${ck.tricks}`),
-      h("div", { class: "row", style: "margin-top:8px" }, ck.worldRow.map((c, i) => cardFace(c, i === ck.trick && ck.phase !== "resolve" ? "md" : "sm", { class: i === ck.trick && ck.phase !== "resolve" ? "current" : i < ck.trick ? "past" : "" })))));
-  }
+  if (ck.phase !== "setup") out.push(stage(ck));
 
   if (ck.phase === "setup") {
-    const goal = p.survival ? null : h("textarea", { "data-key": "goal-text", rows: 3, placeholder: "e.g. Shoulder the gate shut before the bell", maxlength: 100, "aria-label": "What you're doing, and how", style: "width:100%; resize:vertical; line-height:1.35" }, p.goal || "");
+    const goal = p.survival ? null : h("textarea", { "data-key": "goal-text", rows: 3, placeholder: "Optional, e.g. Shoulder the gate shut before the bell", maxlength: 100, "aria-label": "What you're doing, and how", style: "width:100%; resize:vertical; line-height:1.35" }, p.goal || "");
     const suit = h("select", { "data-key": "appr-suit", "aria-label": "Suit" }, Object.entries(SUITS).map(([k, s]) => h("option", { value: k, selected: k === (p.approach || view.characters[me].primary) }, `${s.sym} ${s.name}`)));
     const start = p.suggested ?? (ck.kind === "standard" ? 10 : 6);
     const hint = h("div", { class: "small", "aria-live": "polite" }, difficultyHint(ck.kind, Number(draft("suggest") ?? start)));
@@ -247,12 +334,11 @@ function checkView(view, info, me) {
       oninput: (e) => { hint.textContent = difficultyHint(ck.kind, Number(e.target.value)); } });
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Your goal"),
       p.survival ? h("p", { class: "pill bad" }, `Your goal is forced: survive. Target ${p.target}.`)
-        : h("label", {}, h("h3", {}, "What are you doing, and how?"), h("div", { class: "small muted" }, "The GM sets the difficulty from this."), goal),
+        : h("label", {}, h("h3", {}, "What are you doing, and how?"), h("div", { class: "small muted" }, "Optional: leave it blank if you've said it at the table or it's obvious. The GM sets the difficulty from it."), goal),
       h("label", {}, h("h3", {}, "Which suit does it use?"), h("div", { class: "small muted" }, "Whichever the goal leans on. It's your trump for this check."), suit),
       hard ? h("label", {}, h("h3", {}, "What target do you suggest?"), h("div", { class: "small muted" }, `The total you'll aim to hit. ${ck.kind === "standard" ? "Standard checks run 6–20." : "This check runs 6–12."} The GM has the final say.`), h("div", { class: "row" }, hard), hint) : null,
       h("button", { class: "primary big", onclick: () => {
         const g = goal ? goal.value.trim() : undefined;
-        if (goal && !g) return toast("Say what you're trying to do.");
         const n = hard ? Number(hard.value) : undefined;
         if (hard && (!Number.isInteger(n) || n < 1 || n > 40)) return toast("Suggest a target from 1 to 40.");
         act({ type: "declareApproach", charId: me, suit: suit.value, goal: g, suggested: n });
@@ -262,42 +348,16 @@ function checkView(view, info, me) {
 
   for (const pr of view.prompts || []) out.push(promptPanel(pr, view, me));
 
-  if (ck.phase === "play" && w) {
-    const waiting = ck.participants.filter((id) => !ck.players[id].locked && id !== me).map((id) => names[id]);
-    if (view.myLock) {
-      const c = view.hand.find((x) => x.id === view.myLock.cardId);
-      out.push(h("div", { class: "panel stack" }, h("h2", {}, "Locked in"), h("div", { class: "row" }, cardFace(c, "lg"), h("div", {},
-        h("p", {}, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
-        h("button", { onclick: () => act({ type: "unlockCard", charId: me }) }, "Change my card")))));
-    } else {
-      const chosen = view.hand.find((c) => c.id === ui.chosen);
-      const needsPrice = chosen && chosen.status && chosen.suit === "D" && view.hand.some((c) => c.id !== chosen.id && !c.status && !c.blessed);
-      const forced = view.legal.length < view.hand.length;
-      out.push(h("div", { class: "panel stack" },
-        h("div", { class: "spread" }, h("h2", {}, "Your move"), h("span", { class: "small muted" }, `World card: ${w.label}${w.beat != null ? ` (counts ${w.beat})` : ""}`)),
-        forced ? h("p", { class: "pill warn" }, `The situation finds your weakness: you must play your ${SUITS[w.suit].status}.`) : null,
-        needsPrice ? h("p", { class: "pill warn" }, ui.price ? "Price chosen." : "Stumble's Price: tap an ordinary card to discard.") : h("p", { class: "small muted" }, "Tap a card, then lock it in. Nobody sees it until everyone has locked."),
-        h("div", { class: "hand" }, view.hand.map((c) => {
-          const legal = view.legal.includes(c.id);
-          const pickPrice = needsPrice && c.id !== chosen.id && !c.status && !c.blessed;
-          return cardFace(c, "md", {
-            class: [ui.chosen === c.id ? "chosen" : "", ui.price === c.id ? "price" : "", forced && legal ? "forced" : ""].join(" "),
-            disabled: !(legal || pickPrice),
-            onclick: () => { if (pickPrice) ui.price = c.id; else { ui.chosen = ui.chosen === c.id ? null : c.id; ui.price = null; } draw(); },
-          });
-        })),
-        chosen ? h("p", { class: "small" }, h("strong", {}, `${chosen.label}: `), cardText(chosen)) : null,
-        h("button", { class: "primary big", disabled: !chosen || (needsPrice && !ui.price), onclick: () => { act({ type: "lockCard", charId: me, cardId: chosen.id, priceCardId: ui.price || undefined }); ui = { chosen: null, price: null }; } }, chosen ? `Lock in ${chosen.label}` : "Choose a card")));
-    }
-  } else if (ck.phase !== "setup" && view.hand && ck.phase !== "resolve" && !(view.prompts || []).some((x) => x.type === "recalculate")) {
-    out.push(h("div", { class: "panel" }, h("div", { class: "small muted" }, "Your hand"), h("div", { class: "hand" }, view.hand.map((c) => cardFace(c, "md")))));
-  }
+  // Who's still choosing.
+  if (ck.phase === "play" && w) out.push(h("div", { class: "panel" }, h("div", { class: "stage-label", style: "margin-bottom:8px" }, "This trick"),
+    waitingFaces(ck.participants.filter((id) => ck.players[id].handCount || ck.players[id].locked).map((id) => ({ name: names[id], done: !!ck.players[id].locked, me: id === me }))),
+    openHands(ck, names)));
 
   const blessed = (view.hand || []).find((c) => c.blessed);
   const nobodyLocked = ck.participants.every((id) => !ck.players[id].locked);
   if (blessed && ck.participants.length > 1 && (ck.phase === "consolation" || (ck.phase === "play" && nobodyLocked))) {
     const to = h("select", { "data-key": "bless-to", "aria-label": "Give to" }, ck.participants.filter((id) => id !== me).map((id) => h("option", { value: id }, names[id])));
-    out.push(h("div", { class: "panel row" }, "Give your Blessed to ", to, h("button", { onclick: () => act({ type: "giveBlessed", charId: me, to: to.value, cardId: blessed.id }) }, "Give"), h("span", { class: "small muted" }, "You draw a card.")));
+    out.push(h("div", { class: "panel row" }, h("span", { "data-tip": cardText(blessed) }, "Give your Blessed to"), to, h("button", { onclick: () => act({ type: "giveBlessed", charId: me, to: to.value, cardId: blessed.id }) }, "Give"), h("span", { class: "small muted" }, "You draw a card.")));
   }
 
   if (ck.results) {
@@ -305,7 +365,53 @@ function checkView(view, info, me) {
     out.push(h("div", { class: `panel banner ${r.result === "bust" || r.result === "failure" ? "bad" : ""} stack` }, h("h2", {}, RESULT[r.result]), h("p", { class: "big" }, `${r.tally} of ${r.target}`), h("p", {}, RESULT_NOTE[r.result]),
       r.dies ? h("p", {}, h("strong", {}, "You do not survive.")) : null, h("p", { class: "small muted" }, "The GM narrates what happens and any consequences.")));
   }
-  if (ck.log.length) out.push(h("div", { class: "panel log" }, [...ck.log].reverse().map((e) => h("div", {}, `${e.trick + 1}. ${trickSentence(e, names)}`))));
+  if (p.tally.length) out.push(h("div", { class: "panel" }, h("div", { class: "stage-label" }, "Won so far"), h("div", { class: "row", style: "margin-top:6px" },
+    p.tally.map((t) => t.adjustment ? h("span", { class: "pill", "data-tip": t.reason || "A GM adjustment." }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm")))));
+  if (ck.log.length) out.push(h("details", { class: "panel" }, h("summary", {}, "Every trick so far"), h("div", { class: "log" }, [...ck.log].reverse().map((e) => h("div", {}, `${e.trick + 1}. ${trickSentence(e, names)}`)))));
+
+  // The hand, docked at the bottom where your thumb is.
+  if (ck.phase === "play" && w) {
+    const waiting = ck.participants.filter((id) => !ck.players[id].locked && id !== me && ck.players[id].handCount).map((id) => names[id]);
+    if (view.myLock) {
+      const c = view.hand.find((x) => x.id === view.myLock.cardId);
+      out.push(h("div", { class: "dock" }, h("div", { class: "locked-row" }, cardFace(c, "lg", { class: "chosen" }), h("div", { class: "stack" },
+        h("strong", {}, `Locked in: ${c ? c.label : ""}`), h("div", { class: "small muted" }, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
+        h("button", { class: "small", onclick: () => act({ type: "unlockCard", charId: me }) }, "Change my card")))));
+    } else {
+      const chosen = view.hand.find((c) => c.id === ui.chosen);
+      const needsPrice = chosen && chosen.status && chosen.suit === "D" && view.hand.some((c) => c.id !== chosen.id && !c.status && !c.blessed);
+      const forced = view.legal.length < view.hand.length;
+      const toBeat = w.beat ?? w.v;
+      const hint = forced ? `The situation finds your weakness: you must play your ${SUITS[w.suit].status}.`
+        : needsPrice ? (ui.price ? "Price chosen. Lock in when ready." : "Stumble's Price: tap an ordinary card to discard.")
+        : chosen ? `${chosen.label}: ${cardText(chosen)}`
+        : `Pick a card. A green mark means it can beat the ${w.label}${w.beat != null ? ` (counts ${w.beat})` : ""}. Hold a card to see it full size.`;
+      out.push(h("div", { class: "dock" },
+        h("p", { class: `hint${forced || needsPrice ? " pill warn" : ""}` }, hint),
+        h("div", { class: "fan" }, view.hand.map((c) => {
+          const legal = view.legal.includes(c.id);
+          const pickPrice = needsPrice && c.id !== chosen.id && !c.status && !c.blessed;
+          const n = counts(c, p);
+          const on = c.blessed || c.suit === w.suit || c.suit === p.approach;
+          const canBeat = legal && on && (c.blessed || n > toBeat);
+          return cardFace(c, "md", {
+            class: [ui.chosen === c.id ? "chosen" : "", ui.price === c.id ? "price" : "", forced && legal ? "forced" : "", canBeat && !needsPrice ? "can-beat" : ""].join(" "),
+            disabled: !(legal || pickPrice),
+            badge: n != null && n !== c.v ? String(n) : null,
+            title: `${c.label}${n != null && n !== c.v ? ` (counts ${n} now)` : ""}. ${cardText(c)}`,
+            onclick: () => {
+              if (pickPrice) ui.price = c.id;
+              else if (ui.chosen === c.id) return zoomCard(c);
+              else { ui.chosen = c.id; ui.price = null; }
+              draw();
+            },
+          });
+        })),
+        h("button", { class: "primary big", disabled: !chosen || (needsPrice && !ui.price), onclick: () => { act({ type: "lockCard", charId: me, cardId: chosen.id, priceCardId: ui.price || undefined }); ui = { chosen: null, price: null }; } }, chosen ? `Lock in ${chosen.label}` : "Choose a card")));
+    }
+  } else if (ck.phase !== "setup" && view.hand && view.hand.length && ck.phase !== "resolve" && !(view.prompts || []).some((x) => x.type === "recalculate")) {
+    out.push(h("div", { class: "dock" }, h("p", { class: "hint" }, "Your hand. The next trick starts when everyone's ready."), h("div", { class: "fan" }, view.hand.map((c) => cardFace(c, "md")))));
+  }
   return out;
 }
 
@@ -323,10 +429,12 @@ function draw() {
   const ch = view.characters[me];
   const ck = view.check;
   const inCheck = ck && ck.phase !== "closed" && ck.players[me];
-  const tabs = h("div", { class: "tabs" },
-    h("button", { "aria-pressed": String(tab === "play"), onclick: () => { tab = "play"; draw(); } }, inCheck ? "The check" : "Table"),
-    h("button", { "aria-pressed": String(tab === "cards"), onclick: () => { tab = "cards"; draw(); } }, "My cards"));
+  const tabs = h("div", { class: "tabs small-tabs" },
+    h("button", { class: "small", "aria-pressed": String(tab === "play"), onclick: () => { tab = "play"; draw(); } }, inCheck ? "The check" : "Table"),
+    h("button", { class: "small", "aria-pressed": String(tab === "cards"), onclick: () => { tab = "cards"; draw(); } }, "My cards"));
   const parts = [tabs];
+  if (ch.alive && ch.retired) parts.push(h("div", { class: "panel banner warn stack" }, h("h2", {}, `${ch.name} is retired`), h("p", {}, "The GM has retired this character. Make a new one, switch to another in My cards, or ask the GM to bring them back."),
+    h("button", { class: "primary", onclick: () => { ui.creating = true; draw(); } }, "Make a new character")));
   if (!ch.alive) parts.push(h("div", { class: "panel banner bad stack" }, h("h2", {}, `${ch.name} is dead`), h("p", {}, "Make a new character, or ask the GM to bring them back."),
     h("button", { class: "primary", onclick: () => { ui.creating = true; draw(); } }, "Make a new character")));
   if (tab === "cards") parts.push(charactersPanel(info, view, me, !!inCheck), sheet(view, me));
@@ -338,7 +446,12 @@ function draw() {
       const h0 = view.history[view.history.length - 1];
       if (h0.results[me]) parts.push(h("div", { class: "panel small" }, `Last check: ${RESULT[h0.results[me].result]} (${h0.results[me].tally} of ${h0.results[me].target}).`));
     }
-  } else parts.push(...checkView(view, info, me));
+  } else {
+    // In a check the score bar goes first, above the tabs, so it can stay pinned at the top.
+    const [bar, ...rest] = checkView(view, info, me);
+    parts.unshift(bar);
+    parts.push(...rest);
+  }
   render(main, parts);
 }
 

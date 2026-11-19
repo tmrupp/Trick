@@ -45,16 +45,21 @@ function seatOrder(st, ids) {
 
 // ---- Setup ----
 
-export function beginCheck(ctx, { kind = "standard", participants }) {
+// kind sets the target range and the default size; tricks, if given, is the GM's exact number of tricks.
+export function beginCheck(ctx, { kind = "standard", participants, tricks: wanted }) {
   const st = ctx.state;
   if (st.check && st.check.phase !== "closed") throw rule("A check is already running.");
   const spec = CHECK_KINDS[kind];
   if (!spec) throw rule("A check is standard, quick or solo.");
   const ids = [...new Set(participants || [])];
   if (!ids.length) throw rule("Choose who takes part.");
-  for (const id of ids) if (!character(st, id).alive) throw rule(`${character(st, id).name} is dead.`);
+  for (const id of ids) {
+    if (!character(st, id).alive) throw rule(`${character(st, id).name} is dead.`);
+    if (character(st, id).retired) throw rule(`${character(st, id).name} is retired.`);
+  }
   if (kind === "solo" && ids.length !== 1) throw rule("A solo check has one player.");
-  const tricks = spec.tricks(ids.length);
+  if (wanted !== undefined && (!Number.isInteger(wanted) || wanted < 1 || wanted > 40)) throw rule("A check has 1 to 40 tricks.");
+  const tricks = wanted ?? spec.tricks(ids.length);
   const players = {};
   for (const id of ids) {
     const ch = st.characters[id];
@@ -80,23 +85,31 @@ export function beginCheck(ctx, { kind = "standard", participants }) {
     id: (st.checkCount = (st.checkCount || 0) + 1),
     kind, tricks, participants: seatOrder(st, ids), players,
     phase: "setup", worldRow: [], worldDeck: [], worldTaken: [], trick: 0,
+    // Each participant as they were before the check, so the GM can cancel it as if it never began.
+    before: Object.fromEntries(ids.map((id) => [id, structuredClone(st.characters[id])])),
     locks: {}, pending: [], log: [], consequences: [], results: null,
   };
   ctx.events.push({ type: "checkBegun", kind, tricks, participants: st.check.participants });
 }
 
-// The GM sets the target (the difficulty) from the player's goal. Setting it accepts the goal and its suit.
-// A goal given here only fills in when the player hasn't stated one (older saves).
-export function setGoal(ctx, { charId, goal, target }) {
+// The GM sets up a participant directly: any of their trump (suit), goal and target. The GM has the final say;
+// a player's own declaration (declareApproach) is a convenience that fills these in. Once a participant has
+// both a trump and a target, the GM's word accepts them.
+export function setGoal(ctx, { charId, goal, target, suit }) {
   const ck = activeCheck(ctx.state, ["setup"]);
   const p = participant(ck, charId);
-  if (!Number.isInteger(target) || target < 1) throw rule("A target is a whole number of at least 1.");
-  if (p.survival && target !== 3 * p.survival.M) throw rule(`Survival is a forced goal at target ${3 * p.survival.M}.`);
-  if (!p.goal && goal) p.goal = String(goal).slice(0, 100);
-  p.target = target;
-  if (p.approach) p.approved = true;
+  if (target !== undefined) {
+    if (!Number.isInteger(target) || target < 1) throw rule("A target is a whole number of at least 1.");
+    if (p.survival && target !== 3 * p.survival.M) throw rule(`Survival is a forced goal at target ${3 * p.survival.M}.`);
+  }
+  if (suit !== undefined && !SUITS.includes(suit)) throw rule("A trump is S, D, I or W.");
+  if (target === undefined && suit === undefined && goal === undefined) throw rule("Set a trump, a goal or a target.");
+  if (suit !== undefined) p.approach = suit;
+  if (goal !== undefined && !p.survival) p.goal = String(goal ?? "").trim().slice(0, 100) || null;
+  if (target !== undefined) p.target = target;
+  p.approved = !!(p.approach && p.target != null);
   const [lo, hi] = CHECK_KINDS[ck.kind].targets;
-  ctx.events.push({ type: "goalSet", id: charId, target, outsideRange: target < lo || target > hi });
+  ctx.events.push({ type: "goalSet", id: charId, target: p.target, suit: p.approach, outsideRange: p.target != null && (p.target < lo || p.target > hi) });
 }
 
 // The player states their goal and the suit it uses, which is their trump. The goal is the approach: there's
@@ -108,11 +121,8 @@ export function declareApproach(ctx, { charId, suit, approach, goal, suggested }
   const p = participant(ck, charId);
   if (!SUITS.includes(suit)) throw rule("A goal's suit is S, D, I or W.");
   if (suggested != null && (!Number.isInteger(suggested) || suggested < 1 || suggested > 40)) throw rule("A suggested target is a whole number from 1 to 40.");
-  if (goal != null && !p.survival) {
-    const g = String(goal).trim().slice(0, 100);
-    if (!g) throw rule("Say what you're trying to do.");
-    p.goal = g;
-  }
+  // The goal's words are optional: it may be spoken at the table or obvious from the situation.
+  if (goal !== undefined && !p.survival) p.goal = String(goal ?? "").trim().slice(0, 100) || null;
   p.approach = suit;
   p.suggested = p.survival ? null : suggested ?? null;
   p.approachText = (approach && String(approach).slice(0, 60)) || null; // older saves only
@@ -572,4 +582,15 @@ export function gmShuffleDeck(ctx, { charId }) {
   const ch = character(ctx.state, charId);
   ctx.rng.shuffle(ch.deck);
   ctx.events.push({ type: "gmDeckShuffled", id: charId });
+}
+
+// The GM cancels the running check: every participant goes back to how they were before it began, and
+// nothing is recorded. The world deck and row are simply put away.
+export function cancelCheck(ctx) {
+  const st = ctx.state;
+  const ck = st.check;
+  if (!ck || ck.phase === "closed") throw rule("No check is running.");
+  for (const [id, ch] of Object.entries(ck.before || {})) st.characters[id] = ch;
+  st.check = null;
+  ctx.events.push({ type: "checkCancelled", id: ck.id });
 }

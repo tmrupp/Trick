@@ -1,43 +1,53 @@
 // Shared browser code: the room connection, rendering that keeps what people are typing, card faces,
 // readable event text, sounds and small helpers. Load /suit_icons.js and /card_rules.js before this module.
 
-export const SUITS = {
-  S: { key: "strength", name: "Strength", sym: "♥", status: "Injury", statusKey: "injury", consolation: "Brace", cls: "s" },
-  D: { key: "dexterity", name: "Dexterity", sym: "♠", status: "Stumble", statusKey: "dazed", consolation: "Peek", cls: "d" },
-  I: { key: "intelligence", name: "Intelligence", sym: "♦", status: "Stress", statusKey: "stress", consolation: "Recalculate", cls: "i" },
-  W: { key: "weird", name: "Weird", sym: "♣", status: "Curse", statusKey: "curse", consolation: "Mirror", cls: "w" },
-};
+import { SUIT_INFO, countsAs } from "/engine/cards.mjs";
+import { DIFFICULTY, difficulty as difficultyWord } from "/engine/rules.mjs";
+
+// The suits come from the engine; the pages add only what they need to draw them (art and rule-text keys).
+const SUIT_UI = { S: { key: "strength", statusKey: "injury" }, D: { key: "dexterity", statusKey: "dazed" }, I: { key: "intelligence", statusKey: "stress" }, W: { key: "weird", statusKey: "curse" } };
+export const SUITS = Object.fromEntries(Object.entries(SUIT_INFO).map(([k, x]) => [k, { ...SUIT_UI[k], name: x.name, sym: x.symbol, status: x.status, consolation: x.consolation, cls: k.toLowerCase() }]));
 
 export const params = new URLSearchParams(location.search);
 
 // ---- Connection ----
 
-// Connect to a room and stay connected: rejoins with the saved token after any drop.
-export function connect({ room, as, gmKey, getName, reclaim, onView, onWelcome, onRejected, onStatus, onError }) {
+// Seat tokens: each browser tab keeps its own (sessionStorage), so two tabs can play two characters. The newest
+// token is also remembered for the browser (localStorage), so a tab opened later finds its seat again, unless
+// that seat is already open in another tab, when the host says so and the tab joins as someone else.
+const tabStore = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch {} }, del: (k) => { try { sessionStorage.removeItem(k); } catch {} } };
+const browserStore = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: (k) => { try { localStorage.removeItem(k); } catch {} } };
+
+// Connect to a room and stay connected: rejoins with this tab's seat token after any drop.
+// fresh: join as someone new (or reclaim), ignoring the seat this browser last used.
+export function connect({ room, as, gmKey, getName, reclaim, fresh = false, onView, onWelcome, onRejected, onStatus, onError, onNotes }) {
   const key = `trick:${room}:${as}`;
   let ws = null;
   let seq = 0;
   let wait = 500;
   let stopped = false;
+  let mine = null; // the token this tab holds
   const open = () => {
     const proto = location.protocol === "https:" ? "wss" : "ws";
     ws = new WebSocket(`${proto}://${location.host}/ws`);
     onStatus && onStatus("connecting");
     ws.onopen = () => {
       wait = 500;
-      let token = null;
-      try { token = localStorage.getItem(key); } catch {}
-      ws.send(JSON.stringify({ type: "hello", room, as, token, gmKey, name: token ? undefined : getName && getName(), reclaim: token ? undefined : reclaim }));
+      const tab = mine || tabStore.get(key);
+      const shared = !tab && !fresh ? browserStore.get(key) : null;
+      const token = tab || shared;
+      ws.send(JSON.stringify({ type: "hello", room, as, token, claimIfFree: !!shared, gmKey, name: token ? undefined : getName && getName(), reclaim: token ? undefined : reclaim }));
     };
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
       if (msg.type === "welcome") {
-        try { if (msg.token) localStorage.setItem(key, msg.token); } catch {}
+        if (msg.token) { mine = msg.token; tabStore.set(key, msg.token); browserStore.set(key, msg.token); }
         onStatus && onStatus("connected");
         onWelcome && onWelcome(msg);
       } else if (msg.type === "view") onView(msg);
+      else if (msg.type === "notes") onNotes && onNotes(msg.notes, !!msg.all);
       else if (msg.type === "rejected") onRejected && onRejected(msg.reason, msg.seq);
-      else if (msg.type === "removed") { stopped = true; try { localStorage.removeItem(key); } catch {} onError && onError("The GM removed your seat."); }
+      else if (msg.type === "removed") { stopped = true; forget(); onError && onError("The GM removed your seat."); }
       else if (msg.type === "error") onError && onError(msg.reason);
     };
     ws.onclose = () => {
@@ -45,16 +55,23 @@ export function connect({ room, as, gmKey, getName, reclaim, onView, onWelcome, 
       if (!stopped) setTimeout(open, (wait = Math.min(wait * 2, 8000)));
     };
   };
+  // Forget this tab's seat; the browser's memory too, if it points at the same seat.
+  const forget = () => {
+    const t = mine || tabStore.get(key);
+    tabStore.del(key);
+    if (t && browserStore.get(key) === t) browserStore.del(key);
+    mine = null;
+  };
   open();
   return {
     act(action) { const s = ++seq; if (ws.readyState === 1) ws.send(JSON.stringify({ type: "action", seq: s, action })); else toast("Reconnecting… try again in a moment."); return s; },
     manage(op) { const s = ++seq; if (ws.readyState === 1) ws.send(JSON.stringify({ type: "manage", seq: s, ...op })); return s; },
-    forget() { try { localStorage.removeItem(key); } catch {} },
+    forget,
     stop() { stopped = true; try { ws.close(); } catch {} },
   };
 }
 
-export const hasToken = (room, as) => { try { return !!localStorage.getItem(`trick:${room}:${as}`); } catch { return false; } };
+export const hasToken = (room, as) => !!(tabStore.get(`trick:${room}:${as}`) || browserStore.get(`trick:${room}:${as}`));
 
 // ---- DOM ----
 
@@ -158,7 +175,14 @@ function menuItem(it, level) {
   const btn = h("button", { class: `menu-item${it.danger ? " danger" : ""}`, role: "menuitem", disabled: it.disabled, "data-tip": it.tip, "aria-haspopup": sub ? "menu" : undefined, "aria-expanded": sub ? "false" : undefined },
     h("span", { class: "menu-label" }, it.label), it.hint ? h("span", { class: "menu-hint" }, it.hint) : null, sub ? h("span", { class: "menu-arrow", "aria-hidden": "true" }, "›") : null);
   if (!sub) {
-    btn.addEventListener("click", () => { closeMenus(); it.onclick && it.onclick(); });
+    btn.addEventListener("click", () => {
+      if (it.confirm && !btn.classList.contains("danger-armed")) {
+        btn.classList.add("danger-armed");
+        btn.querySelector(".menu-label").textContent = it.confirm;
+        return;
+      }
+      closeMenus(); it.onclick && it.onclick();
+    });
     btn.addEventListener("pointerenter", (e) => { if (e.pointerType !== "touch" && !narrow()) closeMenus(level + 1); });
     return btn;
   }
@@ -305,6 +329,9 @@ export function cardText(c) {
   return entry ? entry.description : "";
 }
 
+// A consolation's rule, as RULES.md words it (via card_rules.js): consolationText("S") is Brace's.
+export const consolationText = (suit) => `${SUITS[suit].consolation}: ${cardText({ suit, v: 1 })}`;
+
 // The card's art file in exports/web (served at /cards/light and /cards/dark).
 const STATUS_ART = { S: "injury", D: "dazed", I: "stress", W: "curse" };
 export function artName(c) {
@@ -384,19 +411,12 @@ if (typeof document !== "undefined") {
   document.addEventListener("contextmenu", (e) => { if (e.target.closest && e.target.closest(".cf")) e.preventDefault(); });
 }
 
-// Who we're waiting on: initials that pulse while someone is choosing and settle once they've locked.
-export function waitingFaces(people) {
-  return h("div", { class: "faces", role: "list" }, people.map(({ name, done, me }) =>
-    h("span", { class: `face${done ? " done" : ""}${me ? " me" : ""}`, role: "listitem", "data-tip": `${name}: ${done ? "locked in" : "choosing"}` },
-      h("span", { class: "face-dot", "aria-hidden": "true" }, (name || "?").trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()),
-      h("span", { class: "face-name" }, me ? "You" : name))));
-}
 
 export const cardBack = (size = "md", extra = {}) => h("div", { class: `cf ${size} back ${extra.class || ""}`, role: "img", "aria-label": "a face-down card" });
 
-// The cards' typefaces, from Google Fonts, with serif fallbacks if they can't load.
+// The screens' typeface (Inter Tight) from Google Fonts, falling back to Helvetica or Arial if it can't load.
 if (!document.querySelector("link[data-fonts]")) {
-  document.head.append(h("link", { rel: "stylesheet", "data-fonts": "", href: "https://fonts.googleapis.com/css2?family=Alegreya:wght@400;700&family=Alegreya+SC:wght@700&family=Cormorant+Garamond:wght@700&family=Libre+Caslon+Text:wght@700&display=swap" }));
+  document.head.append(h("link", { rel: "stylesheet", "data-fonts": "", href: "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&display=swap" }));
 }
 
 // ---- Text ----
@@ -410,31 +430,26 @@ export const RESULT_NOTE = {
   bust: "Over the target: it goes wrong, loudly.",
 };
 
+// ---- Colour coding, the same on every screen ----
+
+// A suit's colour for anything that belongs to it: a character's trump or primary, a status, a consolation.
+// The class sets --tone (a fill) and --tone-ink (text); style.css decides what each element does with them.
+export const tone = (suit) => (suit && SUITS[suit] ? `tone-${suit}` : "");
+// A difficulty word in its band's colour, from easy (green) to extreme (black).
+export function difficultyPill(kind, target, attrs = {}) {
+  const word = difficultyWord(kind, target);
+  const band = /^beyond/.test(word) ? "beyond" : word.replace(/\s+/g, "-");
+  return h("span", { ...attrs, class: `pill diff diff-${band || "none"} ${attrs.class || ""}` }, word || "–");
+}
+// A result in its colour: green for success, amber for partial, red for failure and bust.
+export const resultPill = (result, attrs = {}) => h("span", { ...attrs, class: `pill res res-${result} ${attrs.class || ""}` }, RESULT[result]);
+// A running total against its target: on target, close, over.
+export const tallyClass = (total, target) => (target == null ? "" : total > target ? "tally-over" : total === target ? "tally-hit" : target - total <= 3 ? "tally-close" : "");
+
 // Difficulty bands a player can suggest: [name, low, high, the target it suggests].
-export function difficultyBands(kind) {
-  return kind === "standard"
-    ? [["Easy", 6, 8, 7], ["Moderate", 9, 11, 10], ["Hard", 12, 14, 13], ["Very hard", 15, 17, 16], ["Extreme", 18, 20, 19]]
-    : [["Easy", 6, 8, 7], ["Moderate", 9, 10, 9], ["Hard", 11, 12, 11]];
-}
-
-// A one-line hint for a target a player is thinking of: its difficulty, its band, and for standard checks
-// the simulated odds from RULES.md.
-const STANDARD_ODDS = { Easy: "exact hit 17–24%, bust 13–19%", Moderate: "exact hit 10–22%, bust 10–16%", Hard: "exact hit 7–15%, bust 7–11%", "Very hard": "exact hit 4–11%, bust 4–7%", Extreme: "exact hit 2–7%, bust 2–5%" };
-export function difficultyHint(kind, target) {
-  if (!Number.isInteger(target) || target < 1) return "Enter a whole number.";
-  const bands = difficultyBands(kind);
-  const [lo, hi] = [bands[0][1], bands[bands.length - 1][2]];
-  if (target < lo) return `Too low: below ${lo}, busts rise without making success likelier.`;
-  if (target > hi) return `Beyond ${bands[bands.length - 1][0].toLowerCase()}: ${kind} checks run ${lo}–${hi}.`;
-  const [name, blo, bhi] = bands.find(([, a, b]) => target >= a && target <= b);
-  return `${name} (${blo}–${bhi})${kind === "standard" ? `: ${STANDARD_ODDS[name]}` : ""}.`;
-}
-
-export function difficulty(kind, target) {
-  if (!Number.isInteger(target)) return "";
-  if (kind === "standard") return target < 6 ? "too low" : target <= 8 ? "easy" : target <= 11 ? "moderate" : target <= 14 ? "hard" : target <= 17 ? "very hard" : target <= 20 ? "extreme" : "beyond extreme";
-  return target < 6 ? "too low" : target <= 8 ? "easy" : target <= 10 ? "moderate" : target <= 12 ? "hard" : "beyond hard";
-}
+// Difficulty and check sizes come from the engine's rules.mjs (one home for RULES.md's numbers).
+export const difficultyBands = (kind) => DIFFICULTY[kind] || DIFFICULTY.standard;
+export { difficulty, difficultyHint, presetTricks, CHECK_KINDS } from "/engine/rules.mjs";
 
 // A sentence for a resolved trick, from the engine's log entry.
 export function trickSentence(e, names) {
@@ -465,6 +480,7 @@ export function eventText(e, names, items = {}) {
     case "survivalRequired": return `${n(e.id)} must survive: target ${e.target}.`;
     case "died": return `${n(e.id)} does not survive.`;
     case "resurrected": return `${n(e.id)} is back.`;
+    case "setupDefaulted": return `${n(e.id)} plays with ${SUITS[e.suit].sym} ${SUITS[e.suit].name} as trump, target ${e.target}.`;
     case "retired": return `${n(e.id)} retires.`;
     case "renamed": return `${e.from} is now ${e.to}.`;
     case "unretired": return `${n(e.id)} comes out of retirement.`;
@@ -557,3 +573,241 @@ export function chime(kind) {
 }
 export const buzz = (ms = 60) => { try { if (navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(ms); } catch {} };
 export const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---- Shared page pieces: every screen builds these the same way ----
+
+// Each page registers how to redraw itself, so shared controls can redraw after a local choice.
+let redrawPage = () => {};
+export const setRedraw = (fn) => { redrawPage = fn; };
+const redraw = () => redrawPage();
+
+// Small form fields that keep their draft across redraws.
+export const sel = (key, opts, value, label) => h("select", { "data-key": key, "aria-label": label || key }, opts.map(([v, t]) => h("option", { value: v, selected: v === value }, t)));
+export const num = (key, value, attrs = {}) => h("input", { type: "number", "data-key": key, value, ...attrs });
+
+// A small choice shown as a row of buttons instead of a dropdown. With onpick, picking acts at once;
+// without it, the choice is remembered under key (read it with picked(key)).
+const choices = {};
+export const picked = (key, fallback) => choices[key] ?? fallback;
+export const setPicked = (key, v) => { choices[key] = v; };
+export function segmented(key, options, value, onpick, label) {
+  const cur = onpick ? value : picked(key, value);
+  return h("div", { class: "seg", role: "group", "aria-label": label || key }, options.map(([v, text, tip]) =>
+    h("button", { class: "small", "aria-pressed": String(v === cur), "data-tip": tip, onclick: () => { if (onpick) { if (v !== cur) onpick(v); } else { choices[key] = v; redraw(); } } }, text)));
+}
+
+// The four suits as a row of buttons: four across where they fit, two by two where they don't.
+// tip(k) gives each suit's tooltip; exclude leaves suits out.
+export function suitChoice(key, value, onpick, label = "Suit", { tip, exclude = [] } = {}) {
+  const el = segmented(key, Object.entries(SUITS).filter(([k]) => !exclude.includes(k)).map(([k, x]) => [k, `${x.sym} ${x.name}`, tip ? tip(k) : undefined]), value, onpick, label);
+  el.classList.add("suits");
+  const keys = Object.keys(SUITS).filter((k) => !exclude.includes(k));
+  [...el.children].forEach((b, i) => b.classList.add(tone(keys[i])));
+  markSuits(el);
+  return el;
+}
+
+// A drastic action: click once to arm, again within a few seconds to confirm. Menus use the same pattern
+// through an item's `confirm` label.
+let armed = null;
+export function confirmButton(key, label, confirmLabel, run, tip) {
+  const on = armed === key;
+  return h("button", { class: `small${on ? " danger-armed" : " ghost"}`, "data-tip": tip, onclick: () => {
+    if (on) { armed = null; run(); return; }
+    armed = key; redraw();
+    setTimeout(() => { if (armed === key) { armed = null; redraw(); } }, 4000);
+  } }, on ? confirmLabel : label);
+}
+
+// Whether a seat is here, in the same words on every screen. A bot is always "bot", never "away".
+export const presence = (s, botKind) => s.role === "bot"
+  ? h("span", { class: "presence" }, h("span", { class: "dot bot" }), botKind === "ltr" ? " left-to-right bot" : botKind ? " greedy bot" : " bot")
+  : h("span", { class: "presence", "data-tip": s.connected ? "Connected now." : "Not connected." }, h("span", { class: `dot${s.connected ? " on" : ""}` }), s.connected ? " here" : " away");
+
+// Events that are too routine to announce on any screen.
+export const QUIET_EVENTS = new Set(["reshuffled", "trickResolved", "trickReady", "locked", "unlocked", "peekAnswered", "approachDeclared", "goalSet"]);
+// One toast for what just happened, kept short: a bot joining is quiet, the defaults filled in at the deal become one
+// line, and a Peek's outcome joins the trick popup when one is open (its .peek-slot) instead of covering it.
+export function announce(events, names, items, ms) {
+  const out = [];
+  const defaults = [];
+  for (const e of events || []) {
+    if (QUIET_EVENTS.has(e.type) || (e.type === "characterCreated" && e.bot)) continue;
+    if (e.type === "setupDefaulted") { defaults.push(e); continue; }
+    const text = eventText(e, names, items);
+    const slot = /^peek(Kept|Replaced)$/.test(e.type) && document.querySelector(".peek-slot");
+    if (slot && text) { slot.append(h("div", {}, text)); markSuits(slot); continue; }
+    out.push(text);
+  }
+  if (defaults.length) {
+    const same = defaults.every((e) => e.target === defaults[0].target);
+    out.unshift(`Dealt${same ? `, target ${defaults[0].target}` : ""}: ${defaults.map((e) => `${names[e.id] || e.id} ${SUITS[e.suit].sym}${same ? "" : ` ${e.target}`}`).join(", ")}.`);
+  }
+  toast(out, ms);
+}
+
+// The header every screen shares: the title, a connection dot, and one menu (Rules and Sound, plus the page's own items).
+export function mountHeader({ items = () => [], tip = "Rules, sound and more." } = {}) {
+  const status = document.getElementById("status");
+  let state = "connecting";
+  document.getElementById("tools").replaceChildren(menu("Menu", () => [
+    { heading: state === "connected" ? "Connected" : state === "offline" ? "Reconnecting…" : "Connecting…" },
+    ...items(),
+    { label: "Rules", hint: "new tab", onclick: () => window.open("/rules", "_blank") },
+    { label: isSoundOn() ? "Turn sound off" : "Turn sound on", onclick: () => setSoundOn(!isSoundOn()) },
+  ], { class: "small ghost", tip }));
+  return {
+    setTitle: (t) => { document.getElementById("title").textContent = t; },
+    setStatus: (s) => {
+      state = s;
+      status.className = `dot${s === "connected" ? " on" : ""}`;
+      status.setAttribute("data-tip", s === "connected" ? "Connected" : s === "offline" ? "Reconnecting…" : "Connecting…");
+    },
+  };
+}
+
+// ---- Notes: plain text kept by the game, edited in place on every screen ----
+// A panel that slides in from the side (a sheet from the bottom on phones). Tabs for the notes this screen may see:
+// Shared (everyone edits), Mine (only you), GM (only the GM). Typing saves after a pause; other screens update live.
+const NOTE_TABS = { shared: ["Shared", "Everyone at the table reads and edits these."], mine: ["Mine", "Only you see these."], gm: ["GM", "Only the GM sees these."] };
+export function notesPanel({ send, editable = true }) {
+  const notes = {}; // scope -> { text, by, at }
+  let scope = null, dirty = false, timer = null;
+  const status = h("span", { class: "small muted" });
+  const area = h("textarea", { class: "notes-text", maxlength: 20000, spellcheck: "true", "aria-label": "Notes", readonly: !editable });
+  const tabs = h("div", { class: "notes-tabs" });
+  const importBtn = editable ? h("button", { class: "small ghost", "data-tip": "Add the text of a Google Doc shared as Anyone with the link to the end of these notes.", onclick: (e) => openMenuAt(e.currentTarget, [
+    { label: "Import a Google Doc", fields: [{ type: "text", placeholder: "https://docs.google.com/document/d/…", maxlength: 400 }], submit: "Add its text", onsubmit: ([url]) => { if (url) { status.textContent = "Importing…"; send({ op: "importNotes", scope, url }); } } },
+  ]) }, "Import a Google Doc") : null;
+  const panel = h("aside", { class: "notes-panel", hidden: true, "aria-label": "Notes" },
+    h("div", { class: "notes-head" }, h("strong", {}, "Notes"), tabs, h("button", { class: "small ghost push", "aria-label": "Close notes", onclick: () => toggle(false) }, "Close")),
+    area, h("div", { class: "row" }, status, importBtn ? h("span", { class: "push" }, importBtn) : null));
+  document.body.append(panel);
+  const save = () => { if (!scope || !dirty) return; dirty = false; send({ op: "editNotes", scope, text: area.value }); status.textContent = "Saved"; };
+  area.addEventListener("input", () => { dirty = true; status.textContent = "Saving…"; clearTimeout(timer); timer = setTimeout(save, 600); });
+  area.addEventListener("blur", () => { clearTimeout(timer); save(); });
+  const ago = (t) => { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? "just now" : s < 3600 ? `${Math.round(s / 60)} min ago` : new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); };
+  const showStatus = () => { const n = notes[scope]; if (!dirty) status.textContent = n && n.at ? `Last edited by ${n.by}, ${ago(n.at)}` : editable ? "Nothing yet. Start typing." : "Nothing yet."; };
+  function show(next) {
+    if (dirty) { clearTimeout(timer); save(); }
+    scope = next;
+    tabs.replaceChildren(...Object.keys(notes).map((k) => h("button", { class: "small", "aria-pressed": String(k === scope), "data-tip": NOTE_TABS[k][1], onclick: () => show(k) }, NOTE_TABS[k][0])));
+    area.value = (notes[scope] && notes[scope].text) || "";
+    area.placeholder = scope === "shared" ? "Shared notes: names, places, clues, plans…" : scope === "gm" ? "Your GM notes: only you see these." : "Your own notes: only you see these.";
+    showStatus();
+  }
+  function toggle(open = panel.hidden) {
+    panel.hidden = !open;
+    document.body.classList.toggle("notes-open", open);
+    if (open) { show(scope && notes[scope] ? scope : Object.keys(notes)[0]); if (editable) area.focus({ preventScroll: true }); }
+    else save();
+  }
+  return {
+    // New text from the host. While you're typing in the same notes, your text stays; your next save wins.
+    receive(incoming) {
+      Object.assign(notes, incoming);
+      if (!scope || !notes[scope]) scope = Object.keys(notes)[0];
+      if (panel.hidden) return;
+      if (!dirty && incoming[scope]) {
+        const [a, b] = [area.selectionStart, area.selectionEnd];
+        area.value = incoming[scope].text || "";
+        if (document.activeElement === area) try { area.setSelectionRange(a, b); } catch {}
+      }
+      if (Object.keys(incoming).some((k) => !tabs.textContent.includes(NOTE_TABS[k][0]))) show(scope);
+      else showStatus();
+    },
+    toggle,
+    item: () => ({ label: panel.hidden ? "Notes" : "Hide notes", hint: Object.keys(notes).map((k) => NOTE_TABS[k][0].toLowerCase()).join(" · "), tip: "Plain-text notes, kept with the campaign.", onclick: () => toggle() }),
+  };
+}
+
+// Every trick so far, newest first: the same block on every screen.
+export const trickLog = (log, names, { open = false } = {}) => (log && log.length
+  ? h("details", { class: "panel", open }, h("summary", {}, "Every trick so far"), h("div", { class: "log log-full" }, [...log].reverse().map((e) => h("div", { class: e.winner ? "won" : "kept" }, `${e.trick + 1}. ${trickSentence(e, names)}`))))
+  : null);
+
+// Each participant's result, with what it calls for.
+export const resultsList = (results, names) => h("ul", { class: "results" }, Object.entries(results).map(([id, r]) =>
+  h("li", {}, h("strong", {}, `${names[id]} `), resultPill(r.result), " ", h("span", { class: "muted" }, `(${r.tally} of ${r.target}). `), RESULT_NOTE[r.result], r.dies ? h("strong", {}, " Does not survive.") : null)));
+
+// Whether someone is still choosing this trick, shown inline with their name: a pulsing "choosing…" or "locked in".
+// A chip that has just turned from choosing to locked in glows briefly, so the change is noticed without reading.
+const chipSeen = { choosing: new Set(), lockedAt: new Map() };
+export function choosingChip(ck, id) {
+  if (!ck || ck.phase !== "play") return null;
+  const p = ck.players[id];
+  const key = `${ck.trick}:${id}`;
+  if (p.locked) {
+    if (chipSeen.choosing.has(key) && !chipSeen.lockedAt.has(key)) chipSeen.lockedAt.set(key, Date.now());
+    const fresh = Date.now() - (chipSeen.lockedAt.get(key) ?? 0) < 1500;
+    return h("span", { class: `pill chip-locked${fresh ? " just" : ""}`, "data-tip": "Locked in a card for this trick." }, "locked in");
+  }
+  if (p.handCount) chipSeen.choosing.add(key);
+  if (!p.handCount) return h("span", { class: "pill muted", "data-tip": "No cards left: sits this trick out." }, "sits out");
+  return h("span", { class: "pill chip-choosing", "data-tip": "Still choosing a card for this trick." }, h("span", { class: "pulse-dot", "aria-hidden": "true" }), "choosing…");
+}
+
+// Each participant's name with their choosing / locked-in chip: the same indication on every screen.
+export const choosingList = (ck, names, me) => h("div", { class: "people choosing-list" }, ck.participants.map((id) =>
+  h("div", { class: `person-row${id === me ? " me" : ""}` }, h("strong", {}, id === me ? `${names[id]} (you)` : names[id]), choosingChip(ck, id))));
+
+// List or grid: each screen can show its people as a list or as a grid of cards. "auto" (the default) follows the
+// window: a grid when it's wide, a list when it's narrow, switching live as the window is resized or a tablet turns.
+// A screen's choice is saved on this device; the menu cycles auto → grid → list.
+const WIDE = "(min-width: 900px)";
+export function layoutSwitch(page) {
+  const key = `trick:layout:${page}`;
+  let mode = "auto";
+  try { const saved = localStorage.getItem(key); if (["auto", "grid", "list"].includes(saved)) mode = saved; } catch {}
+  const wide = matchMedia(WIDE);
+  const showing = () => (mode === "auto" ? (wide.matches ? "grid" : "list") : mode);
+  const apply = () => document.body.classList.toggle("layout-grid", showing() === "grid");
+  wide.addEventListener("change", () => { if (mode === "auto") { apply(); redraw(); } });
+  apply();
+  const NEXT = { auto: "grid", grid: "list", list: "auto" };
+  return {
+    item: () => ({ label: `Layout: ${mode === "auto" ? `auto (${showing()} now)` : mode}`, hint: `next: ${NEXT[mode]}`,
+      tip: "Auto shows a grid on wide screens and a list on narrow ones, and follows the window as it changes.",
+      onclick: () => { mode = NEXT[mode]; try { localStorage.setItem(key, mode); } catch {} apply(); redraw(); } }),
+  };
+}
+
+
+// What a card counts for beating right now, with Brace, Mirror and the GM's adjustment (the engine's countsAs).
+export const countsNow = (c, p) => (c.blessed ? null : countsAs(c, p.mirror) + (p.brace || 0) + (p.boost || 0));
+
+// A hand to choose from: tap to choose, tap again to see the card full size; a white bar across each card that
+// can beat the world card, and the value it counts now when an effect changes it. The phone and the GM's own
+// character both use it. ui is { chosen, price } and is updated in place.
+export function handDock({ hand, legal, p, w, ui, onLock, size = "md" }) {
+  const chosen = hand.find((c) => c.id === ui.chosen);
+  const needsPrice = chosen && chosen.status && chosen.suit === "D" && hand.some((c) => c.id !== chosen.id && !c.status && !c.blessed);
+  const forced = legal.length < hand.length;
+  const toBeat = w.beat ?? w.v;
+  const hint = forced ? `The situation finds your weakness: you must play your ${SUITS[w.suit].status}.`
+    : needsPrice ? (ui.price ? "Price chosen. Lock in when ready." : "Stumble's Price: tap an ordinary card to discard.")
+    : chosen ? `${cardLabel(chosen)}: ${cardText(chosen)}`
+    : `Pick a card. A white bar means it can beat the ${w.label}${w.beat != null ? ` (counts ${w.beat})` : ""}. Hold a card to see it full size.`;
+  return [
+    h("p", { class: `hint${forced || needsPrice ? " pill warn" : ""}` }, hint),
+    h("div", { class: "fan" }, hand.map((c) => {
+      const isLegal = legal.includes(c.id);
+      const pickPrice = needsPrice && c.id !== chosen.id && !c.status && !c.blessed;
+      const n = countsNow(c, p);
+      const canBeat = isLegal && (c.blessed || c.suit === w.suit || c.suit === p.approach) && (c.blessed || n > toBeat);
+      return cardFace(c, size, {
+        class: [ui.chosen === c.id ? "chosen" : "", ui.price === c.id ? "price" : "", forced && isLegal ? "forced" : "", canBeat && !needsPrice ? "can-beat" : ""].join(" "),
+        disabled: !(isLegal || pickPrice),
+        badge: n != null && n !== c.v ? String(n) : null,
+        title: `${c.label}${n != null && n !== c.v ? ` (counts ${n} now)` : ""}. ${cardText(c)}`,
+        onclick: () => {
+          if (pickPrice) ui.price = c.id;
+          else if (ui.chosen === c.id) return zoomCard(c);
+          else { ui.chosen = c.id; ui.price = null; }
+          redraw();
+        },
+      });
+    })),
+    h("button", { class: "primary big", disabled: !chosen || (needsPrice && !ui.price), onclick: () => { const cardId = chosen.id, priceCardId = ui.price || undefined; ui.chosen = null; ui.price = null; onLock(cardId, priceCardId); } }, chosen ? `Lock in ${chosen.label}` : "Choose a card"),
+  ];
+}

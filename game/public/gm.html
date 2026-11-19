@@ -10,25 +10,28 @@
 <script src="/races/race_catalog.js"></script>
 </head>
 <body>
-<header class="spread"><h1 id="title">GM</h1><div class="row"><span id="status" class="pill">…</span><a class="small" href="/rules" target="_blank">Rules</a><span id="tools"></span></div></header>
+<header class="phone-head"><h1 id="title">GM</h1><span id="status" class="dot" data-tip="Connecting…"></span><span id="tools"></span></header>
 <main id="main"></main>
 <script type="module">
-import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, RESULT, trickSentence, eventText, toast, difficulty, soundToggle, chime, itemsById, racesById, stripTags, menu, openMenuAt } from "/shared/client.js";
+import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, eventText, toast, chime, itemsById, racesById, stripTags, menu, openMenuAt, presetTricks, CHECK_KINDS, num, segmented, picked, confirmButton, mountHeader, setRedraw, trickLog, consolationText, choosingChip, layoutSwitch, notesPanel, suitChoice, tone, difficultyPill, resultPill, tallyClass } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEMS = itemsById();
 const RACES = racesById();
 const ITEM_NAMES = Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, v.label]));
-document.getElementById("tools").append(soundToggle());
+const layout = layoutSwitch("gm");
+const notes = notesPanel({ send: (op) => conn.manage(op) });
+const header = mountHeader({ items: () => [layout.item(), notes.item(), { label: "Open the table screen", hint: "new tab", onclick: () => window.open(`/table?room=${room}`, "_blank") }] });
+setRedraw(() => draw());
 let last = null;
 let feed = [];
 let tab = "check";
-let mine = { chosen: null, price: null };
 const openEditors = new Set(); // characters whose card editor is open
 
 const conn = connect({
   room, as: "gm", gmKey: params.get("key"),
-  onStatus: (s) => { document.getElementById("status").textContent = s; },
+  onStatus: (s) => header.setStatus(s),
+  onNotes: (n) => notes.receive(n),
   onView: (msg) => {
     last = msg;
     const names = Object.fromEntries(Object.values(msg.view.characters).map((c) => [c.id, c.name]));
@@ -44,29 +47,14 @@ const conn = connect({
   onError: (r) => toast(r),
 });
 const act = (a) => conn.act(a);
-const sel = (key, opts, value, label) => h("select", { "data-key": key, "aria-label": label || key }, opts.map(([v, t]) => h("option", { value: v, selected: v === value }, t)));
-const num = (key, value, attrs = {}) => h("input", { type: "number", "data-key": key, value, ...attrs });
+// Shortcut: D deals while a check is being set up (not while typing).
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() !== "d" || e.ctrlKey || e.metaKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+  const ck = last && last.view.check;
+  if (ck && ck.phase === "setup") { e.preventDefault(); act({ type: "deal" }); }
+});
 const val = (key, fallback = "") => draft(key) ?? fallback;
 
-// A small choice shown as a row of buttons instead of a dropdown. With onpick, picking acts at once;
-// without it, the choice is remembered under key (read it with picked(key)).
-const choices = {};
-const picked = (key, fallback) => choices[key] ?? fallback;
-function segmented(key, options, value, onpick, label) {
-  const cur = onpick ? value : picked(key, value);
-  return h("div", { class: "seg", role: "group", "aria-label": label || key }, options.map(([v, text, tip]) =>
-    h("button", { class: "small", "aria-pressed": String(v === cur), "data-tip": tip, onclick: () => { if (onpick) { if (v !== cur) onpick(v); } else { choices[key] = v; draw(); } } }, text)));
-}
-// Click once to arm, again within a few seconds to confirm.
-let armed = null;
-function confirmButton(key, label, confirmLabel, run, tip) {
-  const on = armed === key;
-  return h("button", { class: `small${on ? " danger-armed" : " ghost"}`, "data-tip": tip, onclick: () => {
-    if (on) { armed = null; run(); return; }
-    armed = key; draw();
-    setTimeout(() => { if (armed === key) { armed = null; draw(); } }, 4000);
-  } }, on ? confirmLabel : label);
-}
 const renaming = new Set(); // seats whose name is being edited in place
 
 // ---- Menu builders and tips shared by the tabs ----
@@ -99,13 +87,23 @@ function adjustItems(ck, view, id, late = false) {
   ].filter(Boolean);
 }
 
-// Where a selected card can go.
-function moveItems(c, card, canHand) {
-  return [
-    { heading: card.label },
-    { label: "Move to", items: PLACES.filter(([v]) => v !== "hand" || canHand).map(([v, t]) => ({ label: t, onclick: () => act({ type: "gmMoveCard", charId: c.id, cardId: card.id, to: v }) })) },
-    { label: "Remove", tip: "Back to their reserve, out of play.", danger: true, onclick: () => act({ type: "gmMoveCard", charId: c.id, cardId: card.id, to: "reserve" }) },
-  ];
+// Cards are picked the way the phone picks them: select a card, then act on it right there.
+let selected = null; // { scope, charId, cardId }
+const isSelected = (scope, charId, cardId) => selected && selected.scope === scope && selected.charId === charId && selected.cardId === cardId;
+const selectable = (scope, charId, card, extra = {}) => cardFace(card, "sm", { ...extra, class: `${extra.class || ""} ${isSelected(scope, charId, card.id) ? "chosen" : ""}`,
+  title: `${card.label}. Select to move or remove it.`,
+  onclick: () => { selected = isSelected(scope, charId, card.id) ? null : { scope, charId, cardId: card.id }; draw(); } });
+// The actions for the selected card, shown under the cards it came from.
+function cardActions(scope, charId, cards, canHand, locked) {
+  if (!selected || selected.scope !== scope || selected.charId !== charId) return null;
+  const card = cards.find((x) => x.id === selected.cardId);
+  if (!card) return null;
+  const go = (to) => { selected = null; act({ type: "gmMoveCard", charId, cardId: card.id, to }); };
+  if (locked === card.id) return h("div", { class: "row card-actions" }, h("strong", {}, card.label), h("span", { class: "muted small" }, "is locked in for this trick."));
+  return h("div", { class: "row card-actions" }, h("strong", {}, `${card.label}:`), h("span", { class: "small muted" }, "move to"),
+    PLACES.filter(([v]) => v !== "hand" || canHand).map(([v, t]) => h("button", { class: "small", onclick: () => go(v) }, t)),
+    h("button", { class: "small ghost", "data-tip": "Back to their reserve, out of play.", onclick: () => go("reserve") }, "Remove"),
+    h("button", { class: "small ghost", onclick: () => { selected = null; draw(); } }, "Cancel"));
 }
 
 // Add a card: a suit, then a value; or a status or Blessed.
@@ -129,24 +127,30 @@ function nextStep(info, view, names) {
     const noTarget = ck.participants.filter((id) => ck.players[id].target == null).map((id) => names[id]);
     const noAppr = ck.participants.filter((id) => !ck.players[id].approach).map((id) => names[id]);
     const unset = ck.participants.filter((id) => ck.players[id].approach && !ck.players[id].approved).map((id) => names[id]);
-    if (noAppr.length) return ["Set each trump and target.", `No trump yet: ${noAppr.join(", ")}. Players can choose on their phones, or set them yourself below.`, tab !== "check" ? { label: "Go to setup", run: () => { tab = "check"; draw(); } } : null];
-    if (unset.length || noTarget.length) return ["Set a target for each goal.", `Still needed: ${[...new Set([...unset, ...noTarget])].join(", ")}.`, tab !== "check" ? { label: "Go to the goals", run: () => { tab = "check"; draw(); } } : null];
-    return ["Everything is set.", "Deal the world and draw hands.", { label: "Deal", run: () => act({ type: "deal" }) }];
+    const notSet = [...new Set([...noAppr, ...unset, ...noTarget])];
+    const deal = { label: "Deal", run: () => act({ type: "deal" }) };
+    // Dealing never waits on players: anyone not set up gets their primary suit and the default (or suggested) target.
+    if (notSet.length) return ["Ready when you are.", `Not set up yet: ${notSet.join(", ")}. Deal now and they get their primary suit and their suggested or default target, or set them below.`, deal];
+    return ["Everything is set.", "Deal the world and draw hands.", deal];
   }
   if (ck.waitingOn.length) return ["Waiting on players.", ck.waitingOn.map((w) => `${names[w.charId]}: ${w.type === "peek" ? "Peek (replace or keep the next world card)" : w.type}`).join(", ")];
-  if (ck.phase === "play") return [`Trick ${ck.trick + 1} of ${ck.tricks}.`, `Waiting for: ${ck.participants.filter((id) => !ck.players[id].locked && ck.players[id].handCount).map((id) => names[id]).join(", ") || "the reveal"}.`];
+  if (ck.phase === "play") {
+    const choosing = ck.participants.filter((id) => !ck.players[id].locked && ck.players[id].handCount).length;
+    return [`Trick ${ck.trick + 1} of ${ck.tricks}.`, choosing ? `${choosing} still choosing. Select a card in anyone's hand to play it for them.` : "Everyone's locked in. Revealing…"];
+  }
   if (ck.phase === "resolve") return ["The check is resolved.", "Narrate each result from the fiction, add any status consequences, then clean up.", { label: "Clean up and end the check", run: () => act({ type: "endCheck" }) }];
-  return [ck.phase, ""];
+  return ["Between tricks.", "The next trick starts in a moment."];
 }
 
 function draw() {
   if (!last) return;
   const { room: info, view } = last;
-  document.getElementById("title").textContent = `GM · ${info.name}`;
+  header.setTitle(`GM · ${info.name}`);
   const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
   const [what, detail, step] = nextStep(info, view, names);
+  const phase = view.check && view.check.phase !== "closed" ? view.check.phase : "between";
   const parts = [
-    h("div", { class: "panel banner next-step" }, h("div", { class: "row" }, h("div", {}, h("h2", {}, what), h("p", { class: "muted", style: "margin:4px 0 0" }, detail)),
+    h("div", { class: `panel banner next-step phase-${phase}` }, h("div", { class: "row" }, h("div", {}, h("h2", {}, what), h("p", { class: "muted note-gap" }, detail)),
       step ? h("button", { class: "primary", onclick: step.run }, step.label) : null)),
     h("div", { class: "tabs" }, [["check", "The check"], ["chars", "Characters"], ["room", "Room and seats"]].map(([k, t]) => h("button", { "aria-pressed": String(tab === k), onclick: () => { tab = k; draw(); } }, t))),
   ];
@@ -162,121 +166,126 @@ function draw() {
 function checkTab(info, view, names) {
   const ck = view.check && view.check.phase !== "closed" ? view.check : null;
   const out = [];
-  const myChar = info.you.charId;
   if (!ck) {
     const played = new Set(info.seats.filter((s) => s.charId).map((s) => s.charId));
     const alive = Object.values(view.characters).filter((c) => c.alive && !c.retired && played.has(c.id));
     const benched = Object.values(view.characters).filter((c) => !alive.includes(c));
     // Presets fill in the number of tricks for the people ticked; the GM can type any number.
-    const SIZES = { standard: (n) => 3 * n + 1, quick: (n) => 2 * n + 1, solo: () => 6 };
     const ticked = alive.filter((c) => (draft(`begin-${c.id}`) ?? true)).length || 1;
     const k = picked("begin-kind", "standard");
-    const presetTricks = SIZES[k](ticked);
+    const preset = presetTricks(k, ticked);
     const tricksKey = `begin-tricks-${k}-${ticked}`; // the box refills when the preset or the players change
     const kind = h("span", { class: "row" },
-      segmented("begin-kind", [["standard", "Standard", "3 tricks per player, +1. Targets 6–20."], ["quick", "Quick", "2 tricks per player, +1. Targets 6–12."], ["solo", "Solo", "One player, 6 tricks. Targets 6–12."]], "standard", null, "Check size"),
-      h("span", { class: "small muted" }, "Tricks"), num(tricksKey, presetTricks, { min: 1, max: 40, "aria-label": "Number of tricks" }),
-      h("span", { class: "small muted" }, `preset ${presetTricks} for ${ticked} player${ticked === 1 ? "" : "s"}`));
+      segmented("begin-kind", Object.entries(CHECK_KINDS).map(([key, x]) => [key, x.label, x.about]), "standard", null, "Check size"),
+      h("span", { class: "small muted" }, "Tricks"), num(tricksKey, preset, { min: 1, max: 40, "aria-label": "Number of tricks" }),
+      h("span", { class: "small muted" }, `preset ${preset} for ${ticked} player${ticked === 1 ? "" : "s"}`));
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Start a check"),
-      h("p", { class: "small muted" }, "Choose who takes part. Each player states their goal and its suit on their phone; you set the difficulty from the goal."),
+      h("p", { class: "small muted" }, "Choose who takes part and begin. Players can fill in their goal and trump from their phones, or you set them. Deal whenever you're ready."),
       h("div", { class: "row" }, h("span", { class: "small muted" }, "Size"), kind),
       alive.length ? h("div", { class: "row" }, alive.map((c) => h("label", { class: "pill" }, h("input", { type: "checkbox", "data-key": `begin-${c.id}`, checked: true, onchange: () => draw() }), c.name, c.survival ? " (survival)" : ""))) : h("p", { class: "muted" }, "Nobody can take part yet: each player needs a living character."),
       benched.length ? h("p", { class: "small muted" }, "Not available: ", benched.map((c) => `${c.name} (${!c.alive ? "dead" : c.retired ? "retired" : "not being played"})`).join(", "), ".") : null,
       h("button", { class: "primary big", onclick: () => {
         const ids = alive.filter((c) => (draft(`begin-${c.id}`) ?? true)).map((c) => c.id);
-        const n = Number(draft(tricksKey) ?? presetTricks);
-        act({ type: "beginCheck", kind: k, participants: ids, tricks: n === presetTricks ? undefined : n });
+        const n = Number(draft(tricksKey) ?? preset);
+        act({ type: "beginCheck", kind: k, participants: ids, tricks: n === preset ? undefined : n });
       } }, "Begin")));
     return out;
   }
 
-  out.push(h("div", { class: "panel" }, h("div", { class: "headrow" }, h("strong", {}, `${ck.kind} check · ${ck.tricks} tricks`), h("span", { class: "small muted" }, ck.phase),
+  out.push(h("div", { class: "panel" }, h("div", { class: "headrow" }, h("strong", {}, `${(CHECK_KINDS[ck.kind] && CHECK_KINDS[ck.kind].label) || ck.kind} check · ${ck.tricks} tricks`),
       confirmButton("cancel-check", "Cancel check", "Yes, cancel it", () => act({ type: "cancelCheck" }), "Everyone goes back to how they were before it began. Nothing is recorded.")),
-    ck.phase !== "setup" ? h("div", { class: "row", style: "margin-top:8px" }, ck.worldRow.map((c, i) => {
+    ck.phase !== "setup" ? h("div", { class: "row mt" }, ck.worldRow.map((c, i) => {
       const cur = i === ck.trick && ck.phase !== "resolve";
       const open = i >= ck.trick && ck.phase !== "resolve";
       return cardFace(c, cur ? "md" : "sm", { class: cur ? "current" : i < ck.trick ? "past" : "",
         onclick: open ? (e) => openMenuAt(e.currentTarget, [{ heading: `World card ${i + 1}: ${c.label}` },
           { label: "Counts as, for beating", tip: "Players must beat this number instead. It still scores its printed value.", fields: [{ type: "number", value: c.beat ?? c.v, min: 0, max: 20 }, why], submit: "Set", onsubmit: ([n, w]) => act({ type: "gmWorldValue", index: i, value: n, reason: w || undefined }) }]) : undefined });
     })) : null,
-    ck.phase !== "setup" && ck.phase !== "resolve" ? h("p", { class: "small muted", style: "margin:8px 0 0" }, "Select an upcoming world card to change what it takes to beat it.") : null));
+    ck.phase !== "setup" && ck.phase !== "resolve" ? h("p", { class: "small muted note-gap" }, "Select an upcoming world card to change what it takes to beat it.") : null));
 
   if (ck.phase === "setup") {
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Trumps, goals and targets"),
       h("p", { class: "small muted" }, "You set each one. Players can fill in theirs from their phones to save you the typing; bots pick their primary suit. ",
         ck.kind === "standard" ? "Targets: 6–8 easy · 9–11 moderate · 12–14 hard · 15–17 very hard · 18–20 extreme. Default 10." : "Targets 6–12. Default 6."),
-      ck.participants.map((id) => {
+      // One target for everyone (survival goals keep theirs).
+      ck.participants.filter((id) => !ck.players[id].survival).length > 1 ? h("div", { class: "row" }, h("span", { class: "small muted field-label" }, "Everyone"),
+        num("t-all", CHECK_KINDS[ck.kind].defaultTarget, { min: 1, max: 40, "aria-label": "One target for everyone", oninput: () => draw() }),
+        difficultyPill(ck.kind, Number(val("t-all", CHECK_KINDS[ck.kind].defaultTarget))),
+        h("button", { class: "small", "data-tip": "Set this target for every participant without a survival goal.", onclick: () => {
+          const n = Number(val("t-all", CHECK_KINDS[ck.kind].defaultTarget));
+          for (const id of ck.participants) if (!ck.players[id].survival) act({ type: "setGoal", charId: id, target: n });
+        } }, "Set for everyone")) : null,
+      h("div", { class: "people" }, ck.participants.map((id) => {
         const p = ck.players[id];
         const ch = view.characters[id];
         // The box resets when the player's suggestion or the set target changes.
         const tk = `t-${id}-${p.suggested ?? ""}-${p.target ?? ""}`;
         const t = Number(val(tk, p.target ?? p.suggested ?? (ck.kind === "standard" ? 10 : 6)));
         const set = (fields) => act({ type: "setGoal", charId: id, ...fields });
-        const who = ch.bot ? (ch.bot === "ltr" ? "bot · left to right" : "bot · greedy") : null;
-        return h("div", { class: "panel stack" },
-          h("div", { class: "headrow" }, h("h2", {}, names[id]), who ? h("span", { class: "pill" }, who) : null,
+        const who = ch.bot ? (ch.bot === "ltr" ? "left-to-right bot" : "greedy bot") : null;
+        return h("div", { class: `panel stack toned ${tone(p.approach || ch.primary)}` },
+          h("div", { class: "headrow" }, h("h2", {}, names[id]), who ? h("span", { class: "small muted" }, who) : null),
+          h("div", { class: "row" },
             p.survival ? h("span", { class: "pill bad", "data-tip": "A forced goal: survive. The target is fixed at 3 × Injuries." }, `Survival: target ${p.target}`)
               : p.approved ? h("span", { class: "pill good" }, `Ready · target ${p.target}`)
-              : p.approach && p.target != null ? h("span", { class: "pill warn" }, "Their goal changed: confirm the target") : h("span", { class: "pill" }, "Needs a trump and a target")),
+              : h("span", { class: `pill tinted ${tone(p.approach || ch.primary)}`, "data-tip": "What they get if you deal now. Change anything below." }, `If you deal now: ${SUITS[p.approach || ch.primary].sym} ${SUITS[p.approach || ch.primary].name}, target ${p.target ?? p.suggested ?? CHECK_KINDS[ck.kind].defaultTarget}`)),
           // Goal: written straight into the card. Blank is fine: it may be spoken at the table.
-          h("div", { class: "row" }, h("span", { class: "small muted", style: "min-width:4.5em" }, "Goal"),
+          h("div", { class: "row" }, h("span", { class: "small muted field-label" }, "Goal"),
             p.survival ? h("strong", {}, "Survive")
               : (() => {
                   const gk = `g-${id}-${p.goal ?? ""}`; // resets when the goal changes elsewhere
                   const box = h("input", { "data-key": gk, value: p.goal || "", placeholder: ch.bot ? "Optional: what the bot is doing" : "Optional: what they're doing, and how", maxlength: 100,
-                    "aria-label": `${names[id]}'s goal`, style: "width:min(100%, 34em)",
+                    "aria-label": `${names[id]}'s goal`, class: "input-goal",
                     onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); set({ goal: e.target.value }); } } });
                   return [box, h("button", { class: "small", "data-tip": "Save the goal. Leave it blank if it's spoken at the table.", onclick: () => set({ goal: draft(gk) ?? "" }) }, "Save goal")];
                 })()),
           // Trump
-          h("div", { class: "row" }, h("span", { class: "small muted", style: "min-width:4.5em" }, "Trump"),
-            segmented(`trump-${id}`, Object.entries(SUITS).map(([k, x]) => [k, `${x.sym} ${x.name}`, k === ch.primary ? "Their primary suit." : undefined]), p.approach, (k) => set({ suit: k }), "Trump"),
-            p.approach ? null : h("span", { class: "small muted" }, ch.bot ? "The bot picks its primary in a moment." : "Waiting for their phone, or choose it yourself.")),
+          h("div", { class: "row" }, h("span", { class: "small muted field-label" }, "Trump"),
+            suitChoice(`trump-${id}`, p.approach, (k) => set({ suit: k }), "Trump", { tip: (k) => (k === ch.primary ? "Their primary suit." : undefined) }),
+            p.approach || ch.bot ? null : h("span", { class: "small muted" }, "Waiting for their phone, or pick one.")),
           // Target
-          p.survival ? null : h("div", { class: "row" }, h("span", { class: "small muted", style: "min-width:4.5em" }, "Target"),
-            num(tk, p.target ?? p.suggested ?? (ck.kind === "standard" ? 10 : 6), { min: 1, max: 40, oninput: () => draw() }), h("span", { class: "pill" }, difficulty(ck.kind, t)),
+          p.survival ? null : h("div", { class: "row" }, h("span", { class: "small muted field-label" }, "Target"),
+            num(tk, p.target ?? p.suggested ?? (ck.kind === "standard" ? 10 : 6), { min: 1, max: 40, oninput: () => draw() }), difficultyPill(ck.kind, t),
             p.suggested != null ? h("span", { class: "small muted", "data-tip": "What the player suggested from their phone." }, `they suggest ${p.suggested}`) : null,
             h("button", { class: !p.approved ? "primary" : "", onclick: () => set({ target: Number(val(tk, t)) }) }, p.approved ? "Change target" : p.target != null ? "Confirm target" : "Set target")));
-      }),
-      h("button", { class: "primary big", onclick: () => act({ type: "deal" }) }, "Deal")));
+      })),
+      h("button", { class: "primary big", "data-tip": "Shortcut: D", onclick: () => act({ type: "deal" }) }, "Deal")));
   }
 
-  if (view.hands && ck.phase !== "setup") {
-    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Hands"), ck.participants.map((id) => {
+  // Hands while tricks are played; once resolved, Results takes over.
+  if (view.hands && ck.phase !== "setup" && ck.phase !== "resolve") {
+    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Hands"), h("div", { class: "people" }, ck.participants.map((id) => {
       const p = ck.players[id];
       const lockId = view.locks && view.locks[id] && view.locks[id].cardId;
       const canHand = ["play", "consolation"].includes(ck.phase);
-      return h("div", { class: "stack", style: "border-bottom:1px dashed var(--rule-soft); padding-bottom:10px" },
-        h("div", { class: "headrow" }, h("strong", {}, names[id]),
+      return h("div", { class: `stack divided toned ${tone(p.approach)}` },
+        h("div", { class: "headrow" }, h("strong", { "data-tip": p.approach ? `Trump: ${SUITS[p.approach].name}. Cards in it can win any trick.` : undefined }, p.approach ? `${SUITS[p.approach].sym} ` : "", names[id]),
           h("div", { class: "facts small" },
-            h("span", { class: "pill", "data-tip": "What they've scored, against their target." }, `${p.total} / ${p.target}`),
-            p.brace ? h("span", { class: "pill good", "data-tip": "Brace: their next card counts this much higher for beating." }, `Brace +${p.brace}`) : null,
-            p.mirror ? h("span", { class: "pill good", "data-tip": "Mirror: their next card counts 11 minus its value for beating (a 2 counts 9, a 9 counts 2). Statuses stay at 0." }, "Mirror") : null,
+            h("span", { class: `pill ${tallyClass(p.total, p.target)}`, "data-tip": "What they've scored, against their target." }, `${p.total} / ${p.target}`),
+            p.brace ? h("span", { class: `pill tinted ${tone("S")}`, "data-tip": consolationText("S") }, `Brace +${p.brace}`) : null,
+            p.mirror ? h("span", { class: `pill tinted ${tone("W")}`, "data-tip": consolationText("W") }, "Mirror") : null,
             p.boost ? h("span", { class: "pill good", "data-tip": "Your adjustment to their next card, for beating." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null,
-            p.locked ? h("span", { class: "pill", "data-tip": "They've locked in a card for this trick." }, "locked") : null),
+            choosingChip(ck, id)),
           menu("Adjust", () => adjustItems(ck, view, id), { class: "small", tip: "Items, peoples and story effects for this player." })),
-        h("div", { class: "row" }, view.hands[id].map((c) => cardFace(c, "sm", { class: c.id === lockId ? "chosen" : "",
-          onclick: (e) => openMenuAt(e.currentTarget, c.id === lockId ? [{ heading: `${c.label}: locked in` }] : moveItems({ id }, c, canHand)) }))));
-    })));
+        h("div", { class: "row" }, view.hands[id].map((c) => selectable("hand", id, c, { class: c.id === lockId ? "locked-card" : "" }))),
+        cardActions("hand", id, view.hands[id], canHand, lockId));
+    }))));
   }
-
-  if (myChar && ck.players[myChar]) out.push(...myPlay(view, ck, myChar));
 
 
   if (ck.phase === "resolve") {
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Results"),
       h("table", {}, h("tbody", {}, Object.entries(ck.results).map(([id, r]) => h("tr", {}, h("td", {}, names[id]),
-        h("td", {}, h("strong", { "data-tip": RESULT_TIPS[r.result] }, RESULT[r.result])), h("td", {}, `${r.tally} of ${r.target}`), h("td", {}, r.dies ? h("span", { class: "pill bad", "data-tip": "A failed survival goal: the character dies at cleanup." }, "dies") : ""),
+        h("td", {}, resultPill(r.result, { "data-tip": RESULT_TIPS[r.result] })), h("td", { class: tallyClass(r.tally, r.target) }, `${r.tally} of ${r.target}`), h("td", {}, r.dies ? h("span", { class: "pill bad", "data-tip": "A failed survival goal: the character dies at cleanup." }, "dies") : ""),
         h("td", {}, h("div", { class: "row" },
           h("span", { class: "small muted" }, "Add"),
-          ["S", "D", "I"].map((s) => h("button", { class: "small", "data-tip": `${STATUS_TIP(s)} Goes into their discard at cleanup.`, onclick: () => act({ type: "addConsequence", charId: id, suit: s }) }, SUITS[s].status)),
-          h("button", { class: "small", "data-tip": `${STATUS_TIP("W")} You'll be asked for the compulsion.`, onclick: (e) => openMenuAt(e.currentTarget, [{ label: "The compulsion", fields: [{ type: "text", placeholder: "e.g. never refuse a dare" }], submit: "Add Curse", onsubmit: ([c]) => act({ type: "addConsequence", charId: id, suit: "W", compulsion: c || undefined }) }]) }, "Curse…"),
+          ["S", "D", "I"].map((s) => h("button", { class: `small toned-btn ${tone(s)}`, "data-tip": `${STATUS_TIP(s)} Goes into their discard at cleanup.`, onclick: () => act({ type: "addConsequence", charId: id, suit: s }) }, SUITS[s].status)),
+          h("button", { class: `small toned-btn ${tone("W")}`, "data-tip": `${STATUS_TIP("W")} You'll be asked for the compulsion.`, onclick: (e) => openMenuAt(e.currentTarget, [{ label: "The compulsion", fields: [{ type: "text", placeholder: "e.g. never refuse a dare" }], submit: "Add Curse", onsubmit: ([c]) => act({ type: "addConsequence", charId: id, suit: "W", compulsion: c || undefined }) }]) }, "Curse…"),
           menu("Adjust", () => adjustItems(ck, view, id, true), { class: "small" }))))))),
       h("p", { class: "small muted" }, "Hover a result for what it calls for. Statuses added here go into discards at cleanup; Injuries go on top last."),
-      ck.consequences.length ? h("ul", {}, ck.consequences.map((c) => h("li", {}, `${names[c.charId]}: ${SUITS[c.suit].status}${c.compulsion ? ` (${c.compulsion})` : ""}`))) : h("p", { class: "small muted" }, "No status consequences yet."),
-      h("button", { class: "primary big", onclick: () => act({ type: "endCheck" }) }, "Clean up and end the check")));
+      ck.consequences.length ? h("div", { class: "row" }, ck.consequences.map((c) => h("span", { class: `pill tinted ${tone(c.suit)}` }, `${names[c.charId]}: ${SUITS[c.suit].sym} ${SUITS[c.suit].status}${c.compulsion ? ` (${c.compulsion})` : ""}`))) : h("p", { class: "small muted" }, "No status consequences yet. Clean up from the banner when you're done.")));
   }
-  if (ck.log.length) out.push(h("div", { class: "panel log" }, [...ck.log].reverse().map((e) => h("div", {}, `${e.trick + 1}. ${trickSentence(e, names)}`))));
+  out.push(trickLog(ck.log, names, { open: true }));
   return out;
 }
 
@@ -288,32 +297,6 @@ const RESULT_TIPS = {
   bust: "Over the target: a loud consequence, which may be a status.",
 };
 
-// The GM's own character.
-function myPlay(view, ck, me) {
-  const out = [];
-  if (ck.phase === "play" && !(view.locks && view.locks[me]) && view.hands[me].length) {
-    const hand = view.hands[me];
-    const legal = view.legal[me] || [];
-    const c = hand.find((x) => x.id === mine.chosen);
-    const needsPrice = c && c.status && c.suit === "D" && hand.some((x) => x.id !== c.id && !x.status && !x.blessed);
-    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Your play"),
-      needsPrice ? h("p", { class: "pill warn" }, "Stumble's Price: choose an ordinary card to discard.") : null,
-      h("div", { class: "hand" }, hand.map((x) => {
-        const pick = needsPrice && x.id !== c.id && !x.status && !x.blessed;
-        return cardFace(x, "md", { class: `${mine.chosen === x.id ? "chosen" : ""} ${mine.price === x.id ? "price" : ""}`, disabled: !(legal.includes(x.id) || pick), onclick: () => { if (pick) mine.price = x.id; else { mine.chosen = x.id; mine.price = null; } draw(); } });
-      })),
-      h("button", { class: "primary", disabled: !c || (needsPrice && !mine.price), onclick: () => { act({ type: "lockCard", charId: me, cardId: mine.chosen, priceCardId: mine.price || undefined }); mine = { chosen: null, price: null }; } }, "Lock in")));
-  }
-  for (const pr of (view.pending || []).filter((x) => x.charId === me)) {
-    if (pr.type === "peek") out.push(h("div", { class: "panel row" }, `Your Peek: replace the next world card (${view.check.worldRow[view.check.trick].label}) unseen?`,
-      h("button", { onclick: () => act({ type: "peek", charId: me, replace: true }) }, "Replace it"), h("button", { onclick: () => act({ type: "peek", charId: me, replace: false }) }, "Keep it")));
-    if (pr.type === "recalculate") out.push(h("div", { class: "panel row" }, "Your Recalculate: discard ", view.hands[me].map((x) => cardFace(x, "sm", { onclick: () => act({ type: "recalculate", charId: me, cardId: x.id }) }))));
-    if (pr.type === "evolve") out.push(h("div", { class: "panel row" }, "Evolution offered.", pr.suits.map((s) => h("button", { onclick: () => act({ type: "evolve", charId: me, suit: s, mode: "gain" }) }, `Return a ${SUITS[s].status}, gain a card`)), h("button", { onclick: () => act({ type: "evolve", charId: me, skip: true }) }, "Skip")));
-    if (pr.type === "evolvePick") out.push(h("div", { class: "panel row" }, "Keep one: ", pr.options.map((id) => h("button", { onclick: () => act({ type: "evolvePick", charId: me, cardId: id }) }, id.split("/")[1]))));
-  }
-  return out;
-}
-
 // ---------------- Characters ----------------
 
 // Free card editing for one character: select any card to move or remove it, or add one.
@@ -321,20 +304,21 @@ function cardEditor(c, view) {
   const ck = view.check && view.check.phase !== "closed" ? view.check : null;
   const hand = ck && view.hands && view.hands[c.id];
   const canHand = !!(hand && ["play", "consolation"].includes(ck.phase));
-  const pick = (x) => cardFace(x, "sm", { title: `${x.label}. Select to move or remove.`, onclick: (e) => openMenuAt(e.currentTarget, moveItems(c, x, canHand)) });
-  const pile = (title, cards, tip) => h("div", { class: "stack" }, h("div", { class: "small" }, h("strong", { "data-tip": tip }, title)),
-    cards && cards.length ? h("div", { class: "row" }, cards.map(pick)) : h("div", { class: "small muted" }, "empty"));
+  const pile = (scope, title, cards, tip) => h("div", { class: "stack" }, h("div", { class: "small" }, h("strong", { "data-tip": tip }, title)),
+    cards && cards.length ? h("div", { class: "row" }, cards.map((x) => selectable(`ed-${scope}`, c.id, x))) : h("div", { class: "small muted" }, "empty"),
+    cardActions(`ed-${scope}`, c.id, cards || [], canHand, null));
   const where = `ce-to-${c.id}`;
   return h("div", { class: "stack editor" },
-    h("div", { class: "headrow" }, h("h3", { style: "margin:0" }, "Cards"),
+    h("div", { class: "headrow" }, h("h3", { class: "flush" }, "Cards"),
       menu("Add a card", () => addItems(c, where), { class: "small", tip: "From their reserve if one matches; otherwise an extra copy made for them." }),
       h("span", { class: "small muted" }, "into"), segmented(where, PLACES.filter(([v]) => v !== "hand" || canHand).map(([v, t]) => [v, t]), "discard", null, "Where the new card goes"),
       h("button", { class: "small ghost", "data-tip": "Shuffle their deck into a new random order.", onclick: () => act({ type: "gmShuffleDeck", charId: c.id }) }, "Shuffle deck"),
       h("button", { class: "small ghost push", onclick: () => { openEditors.delete(c.id); draw(); } }, "Done")),
-    canHand ? pile(`Hand (${hand.length})`, hand, "Cards in their hand this check.") : null,
-    pile(`Deck (${c.deckCount})`, c.deckCards, "What's in their deck. The order stays hidden, even from you."),
-    pile(`Discard (${c.discardCount})`, c.discard, "Their discard, top card last."),
-    h("details", {}, h("summary", { class: "small" }, `Reserve (${(c.reserveCards || []).length})`), h("p", { class: "small muted" }, "Cards out of play. Select one to bring it in."), h("div", { class: "row" }, (c.reserveCards || []).map(pick))));
+    canHand ? pile("hand", `Hand (${hand.length})`, hand, "Cards in their hand this check.") : null,
+    pile("deck", `Deck (${c.deckCount})`, c.deckCards, "What's in their deck. The order stays hidden, even from you."),
+    pile("discard", `Discard (${c.discardCount})`, c.discard, "Their discard, top card last."),
+    h("details", { open: !!(selected && selected.scope === "ed-reserve" && selected.charId === c.id) }, h("summary", { class: "small" }, `Reserve (${(c.reserveCards || []).length})`), h("p", { class: "small muted" }, "Cards out of play. Select one to bring it in."),
+      pile("reserve", "", c.reserveCards, "")));
 }
 
 // Everything the GM can do to a character, between checks or during one.
@@ -356,7 +340,7 @@ function characterItems(c, inCheck) {
     { label: "Rename", items: [{ label: "New name", fields: [{ type: "text", value: c.name, maxlength: 24 }], submit: "Rename", onsubmit: ([name]) => act({ type: "renameCharacter", charId: c.id, name }) }] },
     c.alive ? null : { label: `Bring ${c.name} back`, disabled: inCheck, tip: "Their cards stay as they are, so survival may come up again.", onclick: () => act({ type: "resurrect", charId: c.id }) },
     c.retired ? { label: "Bring out of retirement", tip: "They can take part in checks again.", onclick: () => act({ type: "retireCharacter", charId: c.id, retired: false }) }
-      : { label: "Retire", danger: true, tip: "They stay in the campaign but take no part in checks until you bring them back.", items: [{ label: `Yes, retire ${c.name}`, danger: true, onclick: () => act({ type: "retireCharacter", charId: c.id }) }] },
+      : { label: "Retire", danger: true, confirm: `Yes, retire ${c.name}`, tip: "They stay in the campaign but take no part in checks until you bring them back.", onclick: () => act({ type: "retireCharacter", charId: c.id }) },
   ].filter(Boolean);
 }
 
@@ -364,26 +348,26 @@ function charsTab(info, view, names) {
   const chars = Object.values(view.characters).sort((a, b) => (a.retired - b.retired) || (!a.alive - !b.alive));
   if (!chars.length) return [h("div", { class: "panel muted" }, "No characters yet.")];
   const inCheck = !!(view.check && view.check.phase !== "closed");
-  return chars.map((c) => {
+  return [h("div", { class: "people" }, chars.map((c) => {
     const race = c.race && RACES[c.race];
     const out = (s) => 6 - ((c.reserveStatuses || {})[s] || 0);
-    return h("div", { class: "panel stack" },
+    return h("div", { class: `panel stack toned ${tone(c.primary)}${!c.alive || c.retired ? " benched" : ""}` },
       h("div", { class: "headrow" }, h("h2", {}, c.name),
         c.alive ? null : h("span", { class: "pill bad", "data-tip": "Dead. Bring them back from Actions, or the player can make a new character." }, "dead"),
         c.retired ? h("span", { class: "pill warn", "data-tip": "Retired: no checks until you bring them back (Actions)." }, "retired") : null,
         menu("Actions", () => characterItems(c, inCheck), { tip: "Statuses, rest, Blessed, items, cards." })),
       h("div", { class: "facts small" },
-        h("span", { "data-tip": `${SUITS[c.primary].name} primary: A, 2, 4, 5, 7, 8, 10. ${SUITS[c.secondary].name} secondary: A, 3, 6, 9, 10.` }, `${SUITS[c.primary].sym} ${SUITS[c.primary].name} · ${SUITS[c.secondary].sym} ${SUITS[c.secondary].name}`),
+        h("span", { "data-tip": `${SUITS[c.primary].name} primary: A, 2, 4, 5, 7, 8, 10. ${SUITS[c.secondary].name} secondary: A, 3, 6, 9, 10.` }, h("span", { class: `suit-word ${tone(c.primary)}` }, `${SUITS[c.primary].sym} ${SUITS[c.primary].name}`), " · ", h("span", { class: `suit-word ${tone(c.secondary)}` }, `${SUITS[c.secondary].sym} ${SUITS[c.secondary].name}`)),
         race ? h("span", { "data-tip": `${race.abilityTitle}: ${(race.rules || []).map(stripTags).join(" ")}` }, `· ${race.label}`) : null,
         h("span", { class: "muted" }, `· deck ${c.deckCount} · discard ${c.discardCount}`)),
       c.survival ? h("p", { class: "pill bad", "data-tip": "2 or more Injuries near the top of their discard: their next goal is to survive." }, `Survival: ${c.survival.M} Injuries, target ${c.survival.target}`) : null,
       c.compulsion.length ? h("p", { class: "small" }, h("strong", { "data-tip": STATUS_TIP("W") }, "Compulsion: "), c.compulsion.join("; ")) : null,
       h("div", { class: "facts" },
-        ["S", "D", "I", "W"].map((s) => out(s) ? h("span", { class: "pill", "data-tip": `${out(s)} of 6 ${SUITS[s].status} cards are in play for them. ${STATUS_TIP(s)}` }, `${SUITS[s].status} ×${out(s)}`) : null),
+        ["S", "D", "I", "W"].map((s) => out(s) ? h("span", { class: `pill tinted ${tone(s)}`, "data-tip": `${out(s)} of 6 ${SUITS[s].status} cards are in play for them. ${STATUS_TIP(s)}` }, `${SUITS[s].status} ×${out(s)}`) : null),
         c.items.map((id) => h("span", { class: "pill", "data-tip": itemTip(id) }, ITEM_NAMES[id] || id)),
-        h("span", { class: "pill", "data-tip": cardText({ blessed: true }) }, `Blessed ${c.reserveBlessed} in reserve`)),
+        h("span", { class: "pill tinted tone-B", "data-tip": cardText({ blessed: true }) }, `Blessed ${c.reserveBlessed} in reserve`)),
       openEditors.has(c.id) ? cardEditor(c, view) : null);
-  });
+  }))];
 }
 
 // ---------------- Room ----------------
@@ -391,7 +375,8 @@ function charsTab(info, view, names) {
 function roomTab(info, view, names) {
   const out = [];
   out.push(h("div", { class: "panel stack" }, h("h2", {}, "Join"), h("p", {}, "Players join at ", h("a", { href: info.joinUrl, target: "_blank" }, info.joinUrl), " or with code ", h("strong", {}, info.code), "."),
-    h("p", {}, h("a", { href: `/table?room=${info.code}`, target: "_blank" }, "Open the table screen"))));
+    h("p", {}, h("a", { href: `/table?room=${info.code}`, target: "_blank" }, "Open the table screen")),
+    h("p", { class: "small muted" }, "To play a character yourself, open the join link in another tab: each tab is its own seat.")));
   const botTip = (id) => (view.characters[id] && view.characters[id].bot === "ltr" ? "Left to right (Lantern): plays its leftmost legal card every trick, with its hand face up for everyone, like the Wake Lantern's dead hand. It never Peeks and Recalculates its leftmost card." : 'Greedy: goes for any world card it can take without busting, using its lowest winning card; otherwise it plays its least useful card. Its hand is hidden.');
   const others = (s) => Object.entries(names).filter(([id]) => id !== s.charId);
   out.push(h("div", { class: "panel stack" }, h("h2", {}, "Seats"),
@@ -399,7 +384,7 @@ function roomTab(info, view, names) {
       h("td", {}, s.role === "bot" ? h("span", { class: "pill", "data-tip": botTip(s.charId) }, view.characters[s.charId] && view.characters[s.charId].bot === "ltr" ? "bot · left to right" : "bot · greedy")
         : h("span", { class: `dot${s.connected ? " on" : ""}`, "data-tip": s.connected ? "Connected now." : "Not connected." })),
       h("td", {}, renaming.has(s.id)
-        ? h("span", { class: "row" }, h("input", { "data-key": `rn-${s.id}`, value: s.name, maxlength: 24, style: "width:12em", onkeydown: (e) => { if (e.key === "Enter") { renaming.delete(s.id); act({ type: "renameCharacter", charId: s.charId, name: e.target.value }); } if (e.key === "Escape") { renaming.delete(s.id); draw(); } } }),
+        ? h("span", { class: "row" }, h("input", { "data-key": `rn-${s.id}`, value: s.name, maxlength: 24, class: "input-short", onkeydown: (e) => { if (e.key === "Enter") { renaming.delete(s.id); act({ type: "renameCharacter", charId: s.charId, name: e.target.value }); } if (e.key === "Escape") { renaming.delete(s.id); draw(); } } }),
             h("button", { class: "small primary", onclick: () => { renaming.delete(s.id); act({ type: "renameCharacter", charId: s.charId, name: draft(`rn-${s.id}`) || s.name }); } }, "Save"),
             h("button", { class: "small ghost", onclick: () => { renaming.delete(s.id); draw(); } }, "Cancel"))
         : h("span", {}, h("strong", {}, s.name), s.role === "gm" ? " (you)" : "", s.role === "player" && s.charId ? h("span", { class: "muted" }, ` · plays ${names[s.charId]}`) : s.role === "player" ? h("span", { class: "muted" }, " · no character") : null)),
@@ -411,23 +396,10 @@ function roomTab(info, view, names) {
         s.role === "player" || s.role === "bot" ? confirmButton(`rm-${s.id}`, "Remove", `Yes, remove ${s.name}`, () => conn.manage({ op: "remove", seatId: s.id }), s.role === "bot" ? "Its character stays in the campaign but sits out until a seat plays it." : "Their phone is disconnected and can't rejoin this seat.") : null)))))),
     // Add a bot, right under the seats.
     h("div", { class: "add-bot row" }, h("strong", { class: "small" }, "Add a bot"),
-      h("input", { "data-key": "bot-name", placeholder: "Name (optional)", maxlength: 24, style: "width:13em" }),
+      h("input", { class: "input-short", "data-key": "bot-name", placeholder: "Name (optional)", maxlength: 24 }),
       segmented("bot-kind", [["greedy", "Greedy", 'Greedy: goes for any world card it can take without busting, using its lowest winning card; otherwise it plays its least useful card. Its hand is hidden.'], ["ltr", "Left to right", "Left to right (Lantern): plays its leftmost legal card every trick, with its hand face up for everyone, like the Wake Lantern's dead hand. It never Peeks and Recalculates its leftmost card."]], "greedy", null, "Kind of bot"),
-      segmented("bot-suit", Object.entries(SUITS).map(([k, x]) => [k, `${x.sym} ${x.name}`, "Its primary suit."]), "S", null, "Primary suit"),
+      suitChoice("bot-suit", "S", null, "Primary suit"),
       h("button", { class: "small primary", onclick: () => { conn.manage({ op: "addBot", kind: picked("bot-kind", "greedy"), primary: picked("bot-suit", "S"), name: (draft("bot-name") || "").trim() || undefined }); const box = document.querySelector('[data-key="bot-name"]'); if (box) box.value = ""; forget("bot-name"); } }, "Add bot"))));
-  if (!info.you.charId) {
-    out.push(h("div", { class: "panel stack" }, h("h2", {}, "Play a character too"),
-      h("input", { "data-key": "my-name", placeholder: "Character name", maxlength: 24 }),
-      h("div", { class: "row" }, h("span", { class: "small muted", style: "min-width:6em" }, "Primary"), segmented("my-prim", Object.entries(SUITS).map(([k, x]) => [k, `${x.sym} ${x.name}`, "A, 2, 4, 5, 7, 8, 10."]), "S", null, "Primary suit")),
-      h("div", { class: "row" }, h("span", { class: "small muted", style: "min-width:6em" }, "Secondary"), segmented("my-sec", Object.entries(SUITS).map(([k, x]) => [k, `${x.sym} ${x.name}`, "A, 3, 6, 9, 10."]), "D", null, "Secondary suit")),
-      h("div", { class: "row" }, "People", sel("my-race", [["", "Human"], ...Object.values(RACES).map((r) => [r.id, r.label])], "")),
-      h("button", { onclick: () => {
-        const prim = picked("my-prim", "S"), sec = picked("my-sec", "D");
-        if (prim === sec) return toast("Pick a different secondary suit.");
-        const rest = Object.keys(SUITS).filter((s) => s !== prim && s !== sec);
-        act({ type: "createCharacter", name: draft("my-name") || "GM", primary: prim, secondary: sec, others: rest, race: draft("my-race") || null });
-      } }, "Create"), h("p", { class: "small muted" }, "Your 2, 3, 6, 9 go to the first remaining suit in ♥ ♠ ♦ ♣ order.")));
-  }
   return out;
 }
 </script>

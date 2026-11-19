@@ -357,6 +357,96 @@ test("the GM adds bots; they declare, answer and play on their own; a left-to-ri
   }
 });
 
+test("the host closes a campaign: screens disconnect, the save stays, and it opens again", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  const { host, port, api } = await startHost(dir);
+  try {
+    const { id, code } = (await api("/api/campaigns", { name: "Closing", seed: "close" })).body.rooms[0];
+    const table = client(port, { room: code, as: "table" });
+    await table.ready;
+    const told = table.waitFor((m) => m.type === "error" && /closed this campaign/.test(m.reason));
+    const closed = await api("/api/close", { id });
+    assert.equal(closed.status, 200);
+    assert.ok(!closed.body.rooms.some((r) => r.id === id), "the room is no longer open");
+    assert.ok(closed.body.campaigns.some((c) => c.id === id), "the save stays");
+    await told;
+    assert.equal((await api("/api/close", { id })).status, 400);
+    assert.ok((await api("/api/open", { id })).body.rooms.some((r) => r.id === id), "it opens again");
+    await table.close();
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a browser's remembered seat isn't taken over by a second tab; that tab joins as someone else", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  const { host, port, api } = await startHost(dir);
+  try {
+    const { code } = (await api("/api/campaigns", { name: "Tabs", seed: "tabs" })).body.rooms[0];
+    const tab1 = client(port, { room: code, as: "player", name: "Tess" });
+    const w1 = await tab1.ready;
+    // A second tab offers the browser's remembered token: the seat is open, so it's refused.
+    const tab2 = client(port, { room: code, as: "player", token: w1.token, claimIfFree: true });
+    assert.match((await tab2.ready).reason, /open in another tab/);
+    await tab2.close();
+    // It joins fresh instead, as a new seat.
+    const tab2b = client(port, { room: code, as: "player", name: "Tess (second tab)" });
+    const w2 = await tab2b.ready;
+    assert.equal(w2.type, "welcome");
+    assert.notEqual(w2.seatId, w1.seatId);
+    // Once the first tab closes, a later tab can pick up the remembered seat again.
+    await tab1.close();
+    await settle();
+    const tab3 = client(port, { room: code, as: "player", token: w1.token, claimIfFree: true });
+    assert.equal((await tab3.ready).seatId, w1.seatId);
+    for (const c of [tab2b, tab3]) await c.close();
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("notes: shared text everyone edits, the GM's only for the GM, a player's own only for that player", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  let { host, port, api } = await startHost(dir);
+  try {
+    const { code, gmKey, id } = (await api("/api/campaigns", { name: "Notes", seed: "notes" })).body.rooms[0];
+    const gm = client(port, { room: code, as: "gm", gmKey });
+    const ana = client(port, { room: code, as: "player", name: "Tess" });
+    const ben = client(port, { room: code, as: "player", name: "Rob" });
+    const table = client(port, { room: code, as: "table" });
+    for (const c of [gm, ana, ben, table]) await c.ready;
+    await settle();
+    const first = (c) => c.all.find((m) => m.type === "notes" && m.all).notes;
+    assert.deepEqual(Object.keys(first(gm)).sort(), ["gm", "shared"]);
+    assert.deepEqual(Object.keys(first(ana)).sort(), ["mine", "shared"]);
+    assert.deepEqual(Object.keys(first(table)), ["shared"]);
+    assert.equal((await ana.manage({ op: "editNotes", scope: "shared", text: "The bell rings at dusk." })).type, "ok", "players edit shared notes");
+    assert.equal((await gm.manage({ op: "editNotes", scope: "gm", text: "The sheriff is lying." })).type, "ok");
+    assert.equal((await ana.manage({ op: "editNotes", scope: "mine", text: "I owe Ben a favour." })).type, "ok");
+    assert.equal((await ana.manage({ op: "editNotes", scope: "gm", text: "x" })).type, "rejected", "only the GM keeps GM notes");
+    assert.equal((await ana.manage({ op: "importNotes", scope: "mine", url: "https://example.com/x" })).type, "rejected", "imports take Google Docs links");
+    await settle();
+    const heard = (c, text) => c.all.some((m) => m.type === "notes" && JSON.stringify(m.notes).includes(text));
+    for (const c of [gm, ana, ben, table]) assert.ok(heard(c, "The bell rings at dusk."), "everyone hears shared notes");
+    assert.ok(heard(gm, "The sheriff is lying.") && ![ana, ben, table].some((c) => heard(c, "The sheriff is lying.")), "only the GM hears GM notes");
+    assert.ok(heard(ana, "I owe Ben a favour.") && ![gm, ben, table].some((c) => heard(c, "I owe Ben a favour.")), "only Ana hears her notes");
+    const sharedNote = gm.all.filter((m) => m.type === "notes" && m.notes.shared).pop().notes.shared;
+    assert.equal(sharedNote.by, "Tess");
+    for (const c of [gm, ana, ben, table]) await c.close();
+    // The notes are kept with the campaign.
+    await host.close();
+    ({ host, port, api } = await startHost(dir));
+    const room = host.openRoom(id);
+    assert.equal(room.notesFor(room.seatById("gm")).gm.text, "The sheriff is lying.");
+    assert.equal(room.notesFor(room.seatById("p1")).mine.text, "I owe Ben a favour.");
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("pages and the join link are served", async () => {
   const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
   const { host, port } = await startHost(dir);

@@ -49,11 +49,11 @@ The **target sets the difficulty**. Each player may have their own target if the
 
 | Target | Difficulty | Exact hit | 7 or more short | Bust |
 | --- | --- | --- | --- | --- |
-| 6–8 | Easy | 18–27% | 0–8% | 11–15% |
-| 9–11 | Moderate | 11–24% | 8–21% | 8–13% |
-| 12–14 | Hard | 7–16% | 20–42% | 5–8% |
-| 15–17 | Very hard | 4–11% | 38–62% | 3–5% |
-| 18–20 | Extreme | 2–7% | 56–77% | 2–3% |
+| 6–8 | Easy | 20–24% | 0–12% | 11–18% |
+| 9–11 | Moderate | 12–21% | 10–21% | 7–14% |
+| 12–14 | Hard | 7–13% | 23–40% | 4–8% |
+| 15–17 | Very hard | 4–9% | 41–62% | 3–5% |
+| 18–20 | Extreme | 2–6% | 59–76% | 1–3% |
 
 Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
 

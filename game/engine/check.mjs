@@ -1,13 +1,10 @@
 // A Tally check, from setup to cleanup (RULES.md: Start a check, Play the tricks, Consolations,
 // Statuses, Blessed, Resolve the check, Survival).
 import { SUITS, SUIT_INFO, worldCards, isOrdinary, isStatus, isBlessed, label, countsAs } from "./cards.mjs";
-import { rule, character, drawOwed, gainStatus, returnToReserve, injuriesInTop, scanAfterInjury } from "./campaign.mjs";
+import { CHECK_KINDS } from "./rules.mjs";
+import { rule, character, drawOwed, gainStatus, returnToReserve, injuriesInTop, scanAfterInjury, moveCard } from "./campaign.mjs";
 
-export const CHECK_KINDS = {
-  standard: { tricks: (n) => 3 * n + 1, targets: [6, 20], defaultTarget: 10 },
-  quick: { tricks: (n) => 2 * n + 1, targets: [6, 12], defaultTarget: 6 },
-  solo: { tricks: () => 6, targets: [6, 12], defaultTarget: 6 },
-};
+export { CHECK_KINDS } from "./rules.mjs";
 
 export const RESULT_RANK = { critical: 4, success: 3, partial: 2, failure: 1, bust: 0 };
 
@@ -130,25 +127,25 @@ export function declareApproach(ctx, { charId, suit, approach, goal, suggested }
   ctx.events.push({ type: "approachDeclared", id: charId, suit });
 }
 
-// Kept so older saves replay; the pages accept a goal by setting its target.
-export function approveApproach(ctx, { charId, approved = true }) {
-  const ck = activeCheck(ctx.state, ["setup"]);
-  const p = participant(ck, charId);
-  if (!p.approach) throw rule("No approach has been declared.");
-  p.approved = !!approved;
-  if (!approved) p.approach = null;
-  ctx.events.push({ type: approved ? "approachApproved" : "approachRejected", id: charId });
-}
 
 // Deal the world row and draw hands.
+// The GM can deal at any time: nobody has to submit anything first. Anyone not set up gets their primary suit as
+// trump and their suggested target, or the check's default; whatever the participant last declared stands.
+export function defaultsFor(st, ck, id) {
+  const p = ck.players[id];
+  return { suit: p.approach || st.characters[id].primary, target: p.target ?? p.suggested ?? CHECK_KINDS[ck.kind].defaultTarget };
+}
+
 export function deal(ctx) {
   const st = ctx.state;
   const ck = activeCheck(st, ["setup"]);
   for (const id of ck.participants) {
     const p = ck.players[id];
-    if (!Number.isInteger(p.target)) throw rule(`${st.characters[id].name} has no target.`);
-    if (!p.approach) throw rule(`${st.characters[id].name} hasn't stated a goal and suit.`);
-    if (!p.approved) throw rule(`Confirm ${st.characters[id].name}'s target for their new goal.`);
+    const d = defaultsFor(st, ck, id);
+    if (!p.approach || p.target == null) ctx.events.push({ type: "setupDefaulted", id, suit: d.suit, target: d.target });
+    p.approach = d.suit;
+    p.target = d.target;
+    p.approved = true;
   }
   const world = ctx.rng.shuffle(worldCards());
   ck.worldRow = world.splice(0, ck.tricks);
@@ -276,7 +273,7 @@ function resolveTrick(ctx) {
   });
   // Consolations, all at once, for everyone who did not win; none after the final trick.
   if (!last) {
-    // Peek: each player who lost with a Spade chooses, in secret, whether to replace the next world card
+    // Peek: each player who lost with a Dexterity card chooses, in secret, whether to replace the next world card
     // with the world deck's unseen top card. It is replaced once if any of them chooses to.
     // Saves made while Peek was automatic replay with rules.peek "auto".
     const peekers = plays.filter((x) => x !== winner && !isBlessed(x.card) && x.card.suit === "D").map((x) => x.id);
@@ -494,94 +491,12 @@ export function gmDraw(ctx, { charId, n = 1 }) {
   ctx.events.push({ type: "gmDrew", id: charId, n });
 }
 
+// Discard a card from a participant's hand: the shared card move, limited to hands during play.
 export function gmDiscard(ctx, { charId, cardId }) {
   const ck = activeCheck(ctx.state, ["play", "consolation"]);
   const p = participant(ck, charId);
-  if (ck.locks[charId] && ck.locks[charId].cardId === cardId) throw rule("That card is locked in.");
-  const card = take(p.hand, (c) => c.id === cardId);
-  if (!card) throw rule("That card isn't in their hand.");
-  ctx.state.characters[charId].discard.push(card);
-  ctx.events.push({ type: "gmDiscarded", id: charId, card: label(card) });
-}
-
-// ---- The GM's free card editing: a stand-in for items, people and story effects ----
-
-const PLACES = ["deck-top", "deck-bottom", "deck-shuffle", "discard", "hand", "reserve"];
-
-// Where a character's card is now: deck, discard, reserve, or (in a check) hand.
-function findCard(st, ch, cardId) {
-  const p = st.check && st.check.phase !== "closed" && st.check.players[ch.id];
-  const piles = [["deck", ch.deck], ["discard", ch.discard], ["reserve", ch.reserve], ...(p ? [["hand", p.hand]] : [])];
-  for (const [name, pile] of piles) {
-    const i = pile.findIndex((c) => c.id === cardId);
-    if (i >= 0) return { name, pile, i };
-  }
-  return null;
-}
-
-function place(ctx, ch, card, to) {
-  const st = ctx.state;
-  if (to === "deck-top") ch.deck.push(card); // a deck's top is its last card
-  else if (to === "deck-bottom") ch.deck.unshift(card);
-  else if (to === "deck-shuffle") ch.deck.splice(ctx.rng.int(ch.deck.length + 1), 0, card);
-  else if (to === "discard") {
-    ch.discard.push(card);
-    if (isStatus(card) && card.suit === "S" && !(st.check && st.check.phase !== "closed")) scanAfterInjury(ctx, ch);
-  } else if (to === "reserve") returnToReserve(ch, card);
-  else if (to === "hand") st.check.players[ch.id].hand.push(card);
-}
-
-function checkPlace(st, ch, to) {
-  if (!PLACES.includes(to)) throw rule(`Move a card to ${PLACES.join(", ")}.`);
-  if (to === "hand") {
-    const ck = st.check;
-    if (!ck || !["play", "consolation"].includes(ck.phase) || !ck.players[ch.id]) throw rule("A card goes to a hand only during a check they're in.");
-  }
-}
-
-// Move one of a character's cards between deck, discard, hand and reserve. Removing a card returns it to reserve.
-export function gmMoveCard(ctx, { charId, cardId, to }) {
-  const st = ctx.state;
-  const ch = character(st, charId);
-  checkPlace(st, ch, to);
-  const at = findCard(st, ch, cardId);
-  if (!at) throw rule("That card isn't in their deck, discard, hand or reserve.");
-  if (at.name === "hand" && st.check.locks[charId] && st.check.locks[charId].cardId === cardId) throw rule("That card is locked in.");
-  const [card] = at.pile.splice(at.i, 1);
-  place(ctx, ch, card, to);
-  ctx.events.push({ type: "gmCardMoved", id: charId, card: label(card), from: at.name, to });
-}
-
-// Add a card: from the character's reserve if one matches, otherwise an extra copy made for them.
-export function gmAddCard(ctx, { charId, kind = "ordinary", suit, v, to = "discard" }) {
-  const st = ctx.state;
-  const ch = character(st, charId);
-  checkPlace(st, ch, to);
-  if (to === "reserve") throw rule("Add a card to their deck, discard or hand.");
-  let match;
-  if (kind === "blessed") match = (c) => isBlessed(c);
-  else if (kind === "status") { if (!SUITS.includes(suit)) throw rule("Choose a status suit."); match = (c) => isStatus(c) && c.suit === suit; }
-  else {
-    if (!SUITS.includes(suit) || !Number.isInteger(v) || v < 1 || v > 10) throw rule("Choose a suit and a value from A to 10.");
-    match = (c) => isOrdinary(c) && c.suit === suit && c.v === v;
-  }
-  let card = take(ch.reserve, match);
-  const extra = !card;
-  if (!card) {
-    ch.extraCards = (ch.extraCards || 0) + 1;
-    const id = `${ch.id}/gm.${ch.extraCards}`;
-    card = kind === "blessed" ? { id, owner: ch.id, v: 0, blessed: true }
-      : kind === "status" ? { id, owner: ch.id, suit, v: 0, status: true }
-      : { id, owner: ch.id, suit, v };
-  }
-  place(ctx, ch, card, to);
-  ctx.events.push({ type: "gmCardAdded", id: charId, card: label(card), to, extra });
-}
-
-export function gmShuffleDeck(ctx, { charId }) {
-  const ch = character(ctx.state, charId);
-  ctx.rng.shuffle(ch.deck);
-  ctx.events.push({ type: "gmDeckShuffled", id: charId });
+  if (!p.hand.some((c) => c.id === cardId)) throw rule("That card isn't in their hand.");
+  moveCard(ctx, { charId, cardId, to: "discard" });
 }
 
 // The GM cancels the running check: every participant goes back to how they were before it began, and
@@ -594,3 +509,6 @@ export function cancelCheck(ctx) {
   st.check = null;
   ctx.events.push({ type: "checkCancelled", id: ck.id });
 }
+
+// Shared with legacy.mjs, which replays older saves.
+export { activeCheck, participant };

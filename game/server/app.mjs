@@ -82,6 +82,8 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
         return serveFile(res, file);
       }
       if (SHARED_FROM_REPO.has(path)) return serveFile(res, join(REPO, SHARED_FROM_REPO.get(path)));
+      // The engine's modules, so the pages share its rules and constants instead of copying them.
+      if (/^\/engine\/[a-z_]+\.mjs$/.test(path)) return serveFile(res, join(REPO, "game", "engine", path.slice("/engine/".length)));
       // Card art at web size, light and dark, from npm run export:web-cards.
       if (/^\/cards\/(light|dark)\/[a-z0-9-]+\.png$/.test(path)) return serveFile(res, join(REPO, "exports", "web", path.slice("/cards/".length)), "public, max-age=86400");
       if (path === "/qr.svg") {
@@ -125,6 +127,15 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
           return send(res, 200, info());
         }
         // Archive: close the room and move the save out of the list.
+        // Close an open campaign: its screens disconnect and the room unloads; the save stays where it is.
+        if (path === "/api/close" && req.method === "POST") {
+          const body = await readJson(req);
+          const id = String(body.id);
+          let closed = false;
+          for (const [code, r] of rooms) if (r.save.id === id) { for (const c of r.clients) { c.send({ type: "error", reason: "The host closed this campaign." }); c.close(); } r.stop(); rooms.delete(code); closed = true; }
+          if (!closed) return send(res, 400, { error: "That campaign isn't open." });
+          return send(res, 200, info());
+        }
         if (path === "/api/archive" && req.method === "POST") {
           const body = await readJson(req);
           const id = String(body.id);
@@ -180,11 +191,12 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
           room = roomByCode(msg.room);
           if (!room) return reply({ type: "error", reason: "No room with that code." });
           const as = ["table", "gm", "player"].includes(msg.as) ? msg.as : "player";
-          const seat = room.join({ as, token: msg.token, name: msg.name, gmKey: msg.gmKey, reclaim: msg.reclaim });
+          const seat = room.join({ as, token: msg.token, name: msg.name, gmKey: msg.gmKey, reclaim: msg.reclaim, claimIfFree: !!msg.claimIfFree });
           clearTimeout(helloTimer);
           client = { seat, as, send: reply, close: () => ws.close(4001, "Removed") };
           room.clients.add(client);
           reply({ type: "welcome", token: seat ? seat.token : null, seatId: seat ? seat.id : null, role: seat ? seat.role : "table" });
+          reply({ type: "notes", notes: room.notesFor(seat), all: true });
           room.broadcast([{ type: "connected", seatId: seat ? seat.id : null }]);
           return;
         }
@@ -194,7 +206,12 @@ export function createServer({ port = 8787, savesDir = resolve(HERE, "../saves")
           return reply({ type: "ok", seq: msg.seq });
         }
         if (msg.type === "manage") {
-          room.manage(client.seat, msg);
+          // Some seat operations finish later (a doc import fetches from Google).
+          const done = room.manage(client.seat, msg);
+          if (done && typeof done.then === "function") {
+            done.then(() => reply({ type: "ok", seq: msg.seq }), (e) => reply({ type: "rejected", seq: msg.seq, reason: e instanceof RuleError ? e.message : "Something went wrong on the host." }));
+            return;
+          }
           return reply({ type: "ok", seq: msg.seq });
         }
         reply({ type: "error", reason: "Unknown message." });

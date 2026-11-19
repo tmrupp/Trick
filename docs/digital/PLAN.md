@@ -17,7 +17,7 @@ A plan for playing TRICK's Tally checks with one computer as the shared table an
 - Lobby: the host starts a room, and phones join over the internet by link, QR code or a four-letter room code.
 - Characters: players create their own on their phones: a name, primary and secondary suit, and the starter deck. Reserve, discard and statuses carry between checks.
 - Saves: the host keeps several campaigns and picks one to load.
-- The GM can also play a character.
+- The GM can also play a character, from the join link in another tab.
 - Checks: standard, quick and solo, every rule in RULES.md from *Start a check* through *Survival*.
 - GM tools: goals and targets, forced goals, approach approval, consequences, rest, Blessed grants, and Curse compulsions recorded as text.
 
@@ -151,7 +151,7 @@ Phases 1–3 give a usable playtest tool. Phase 1 is the largest single piece an
 
 ## Decisions
 
-1. **The GM can play a character** as well as run the game.
+1. **The GM can play a character** as well as run the game, by joining in another tab like any player. The GM screen has no separate section for it.
 2. **Several saved campaigns,** chosen when the host starts.
 3. **Players create their own characters** on their phones.
 4. **No table-talk banner.** The rule is implied, and enforcing it is up to the GM.

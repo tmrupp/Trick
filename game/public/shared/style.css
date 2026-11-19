@@ -1,28 +1,34 @@
-/* TRICK screens, in the style of the printed cards: tinted paper, suit inks, ruled borders,
-   Caslon numerals, Garamond small-caps titles, Alegreya text, and the engraved hatching of the card back.
-   Dark mode follows the device and matches the dark card art. */
+/* TRICK screens in the Swiss Grid style: a flat ground, hard edges, one grotesque (Inter Tight), flat suit colours,
+   huge numerals and one red for the main action. Dark mode follows the device: the same grid on a near-black ground. */
 :root {
-  --paper: #ece6d9;          /* the table */
-  --card: #fbf9f4;           /* panels: the card paper */
-  --ink: #1b1917;
-  --muted: #5d574c;
-  --rule: color-mix(in srgb, var(--ink) 70%, transparent);
-  --rule-soft: color-mix(in srgb, var(--ink) 22%, transparent);
-  --hatch: color-mix(in srgb, var(--ink) 5%, transparent);
-  --s: #7a1f16; --d: #1f5e2d; --i: #1f4072; --w: #4f2a73; --b: #80601a;
-  --good: #1f5e2d; --bad: #7a1f16; --warn: #80601a;
-  --display: "Cormorant Garamond", Garamond, Georgia, serif;
-  --label: "Alegreya SC", "Alegreya", Georgia, serif;
-  --text: "Alegreya", Georgia, "Times New Roman", serif;
-  --num: "Libre Caslon Text", "Libre Caslon", Georgia, serif;
-  --ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --paper: #f2f1ec;          /* the ground */
+  --card: #ffffff;           /* panels */
+  --ink: #111111;
+  --muted: #55534d;
+  --rule: var(--ink);
+  --rule-soft: color-mix(in srgb, var(--ink) 18%, transparent);
+  --track: #e1e0da;          /* empty bars and progress */
+  /* Suit colours for text and marks; the *-fill colours are the card faces, with white type on them. */
+  --s: #d7261e; --d: #0e7a45; --i: #1546c9; --w: #6a2bc8; --b: #8a6200;
+  --s-fill: #d7261e; --d-fill: #0e7a45; --i-fill: #1546c9; --w-fill: #6a2bc8; --b-fill: #e0b21a; --b-ink: #111111;
+  --accent: #d7261e;         /* the one red: the main action on a screen */
+  --good: #0e7a45; --bad: #d7261e; --warn: #9a5b00;
+  --hard: #111111;           /* hard offset shadows */
+  --display: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --label: var(--display);
+  --text: var(--display);
+  --num: var(--display);
+  --ui: var(--display);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #0f0e0b; --card: #17150f; --ink: #ece6d6; --muted: #aca592;
-    --s: #ec8f7c; --d: #86cf99; --i: #97b8ef; --w: #c8a3e8; --b: #e4c46d;
-    --good: #86cf99; --bad: #ec8f7c; --warn: #e4c46d;
+    --paper: #0f0f0e; --card: #1a1a18; --ink: #f2f1ec; --muted: #a8a69e; --track: #34332f;
+    --s: #ff6156; --d: #3fc987; --i: #82a4ff; --w: #b78fff; --b: #e6bd3a;
+    --s-fill: #d7261e; --d-fill: #0e7a45; --i-fill: #1d50d8; --w-fill: #7434d6; --b-fill: #e0b21a;
+    --accent: #e8342a;
+    --good: #3fc987; --bad: #ff6156; --warn: #f0a640;
+    --hard: rgba(0, 0, 0, .7);
     color-scheme: dark;
   }
 }
@@ -31,55 +37,55 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; color: var(--ink); font: 17px/1.45 var(--text);
   background-color: var(--paper);
-  background-image:
-    repeating-linear-gradient(45deg, var(--hatch) 0 1px, transparent 1px 14px),
-    repeating-linear-gradient(-45deg, var(--hatch) 0 1px, transparent 1px 14px);
+  font-weight: 500; -webkit-font-smoothing: antialiased;
   padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left));
   overflow-x: clip; /* nothing should ever scroll the page sideways */
 }
-h1, h2 { font-family: var(--display); font-weight: 700; font-variant: small-caps; letter-spacing: .02em; margin: 0; text-wrap: balance; }
-h1 { font-size: 34px; line-height: 1.05; margin: 6px 0 10px; }
-h2 { font-size: 25px; line-height: 1.1; margin-bottom: 6px; }
-h3 { font: 700 16px/1.2 var(--label); letter-spacing: .06em; margin: 12px 0 6px; }
+h1, h2 { font-family: var(--display); font-weight: 900; letter-spacing: -.03em; margin: 0; text-wrap: balance; }
+h1 { font-size: 34px; line-height: 1; margin: 6px 0 10px; }
+h2 { font-size: 24px; font-weight: 800; line-height: 1.05; margin-bottom: 6px; }
+h3 { font: 700 15px/1.2 var(--label); margin: 12px 0 6px; }
 a { color: var(--i); }
-.muted { color: var(--muted); } .small { font-size: 14px; } .big { font: 700 24px/1 var(--num); }
+.muted { color: var(--muted); } .small { font-size: 14px; } .big { font: 900 26px/1 var(--num); letter-spacing: -.04em; }
 .panel {
-  background: var(--card); border: 2px solid var(--rule); border-radius: 6px; padding: 14px 16px; margin: 12px 0;
-  box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 4px var(--rule-soft);
+  background: var(--card); border: 2px solid var(--rule); border-radius: 0; padding: 14px 16px; margin: 12px 0;
 }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .spread { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .stack > * + * { margin-top: 10px; }
-button, select, input, textarea { font: 17px/1.2 var(--text); color: var(--ink); background: var(--card); border: 1.5px solid var(--rule); border-radius: 4px; padding: 9px 12px; min-height: 44px; }
+button, select, input, textarea { font: 17px/1.2 var(--text); color: var(--ink); background: var(--card); border: 2px solid var(--rule); border-radius: 0; padding: 9px 12px; min-height: 44px; }
 input::placeholder, textarea::placeholder { color: var(--muted); }
-button { cursor: pointer; font-family: var(--label); font-weight: 700; letter-spacing: .04em; }
+button { cursor: pointer; font-family: var(--label); font-weight: 700; letter-spacing: -.01em; }
 button:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 6%, var(--card)); }
 button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--i); outline-offset: 2px; }
 button.primary { background: var(--ink); color: var(--card); border-color: var(--ink); }
 button.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 85%, var(--card)); }
-button.big { width: 100%; padding: 14px 20px; font-size: 19px; }
+button.big { width: 100%; padding: 14px 20px; font-size: 19px; font-weight: 800; }
+/* The one big action on a screen is red. */
+button.primary.big { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary.big:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 85%, #000); }
 button.ghost { background: transparent; } button.small { min-height: 36px; padding: 4px 12px; font-size: 14px; }
 button:disabled { opacity: .4; cursor: default; }
-input[type=number] { width: 5.5em; font-family: var(--num); }
-.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border: 1.5px solid var(--rule-soft); border-radius: 3px; font: 700 14px/1.6 var(--label); letter-spacing: .04em; background: var(--card); }
+input[type=number] { width: 5.5em; font-family: var(--num); font-weight: 800; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border: 1.5px solid color-mix(in srgb, var(--ink) 35%, transparent); border-radius: 0; font: 700 13px/1.6 var(--label); background: var(--card); }
 .pill.good { color: var(--good); border-color: currentColor; } .pill.bad { color: var(--bad); border-color: currentColor; } .pill.warn { color: var(--warn); border-color: currentColor; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; } .dot.on { background: var(--good); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; } .dot.on { background: var(--good); } .dot.bot { background: var(--i); border-radius: 2px; }
 table { border-collapse: collapse; width: 100%; } td, th { text-align: left; padding: 8px; border-bottom: 1px solid var(--rule-soft); vertical-align: middle; }
-th { font: 700 13px var(--label); letter-spacing: .06em; color: var(--muted); }
+th { font: 700 12px var(--label); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .scroll { overflow-x: auto; }
 code { font: 13px ui-monospace, Consolas, monospace; }
 
 /* Card art: the exported card images (exports/web), light or dark to match the device. */
-.cf { position: relative; display: inline-block; width: var(--cw, 64px); aspect-ratio: 5 / 7; flex: none; border-radius: calc(var(--cw, 64px) * .035); line-height: 0; }
+.cf { position: relative; display: inline-block; width: var(--cw, 64px); aspect-ratio: 5 / 7; flex: none; border-radius: 0; line-height: 0; }
 .cf picture, .cf img { display: block; width: 100%; height: 100%; }
-.cf img { border-radius: inherit; box-shadow: 0 1px 3px rgba(0, 0, 0, .28); }
+.cf img { border-radius: calc(var(--cw, 64px) * .035); box-shadow: 0 1px 3px rgba(0, 0, 0, .28); }
 button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: pointer; transition: transform .15s ease; }
 .cf.sm { --cw: 46px; } .cf.md { --cw: 72px; } .cf.lg { --cw: 104px; } .cf.xl { --cw: 150px; }
 .cf.empty { border: 1.5px dashed var(--rule-soft); }
-.cf .beat { position: absolute; top: -10px; right: -8px; line-height: 1; background: var(--ink); color: var(--card); font: 700 12px var(--label); padding: 4px 6px; border-radius: 3px; }
-.cf.current { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--ink), 0 8px 20px rgba(0, 0, 0, .18); }
-.cf.past { opacity: .5; filter: saturate(.5); }
-.cf.chosen { transform: translateY(-10px); box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--i), 0 10px 20px rgba(0, 0, 0, .25); }
+.cf .beat { position: absolute; top: -10px; right: -8px; line-height: 1; background: var(--ink); color: var(--card); font: 700 12px var(--label); padding: 4px 6px; border-radius: 0; }
+.cf.current { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink); }
+.cf.past { opacity: .35; filter: saturate(.4); }
+.cf.chosen { transform: translateY(-10px); box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--ink); }
 .cf.forced { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--warn); }
 .cf.price { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--bad); }
 .cf[disabled], .cf[aria-disabled=true] { opacity: .45; }
@@ -88,20 +94,19 @@ button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: poin
 
 /* Players' lanes on the big screen */
 .lanes { display: grid; gap: 10px; }
-.lane { background: var(--card); border: 2px solid var(--rule); border-radius: 6px; padding: 12px 14px; display: grid; grid-template-columns: minmax(140px, 220px) 1fr auto; gap: 14px; align-items: center;
-  box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 4px var(--rule-soft); }
-.lane .who { font: 700 24px/1.1 var(--display); font-variant: small-caps; } .lane .tally { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
-.bar { position: relative; height: 8px; border: 1.5px solid var(--rule); border-radius: 2px; overflow: hidden; margin-top: 6px; background: var(--card); }
+.lane { background: var(--card); border: 2px solid var(--rule); border-radius: 0; padding: 12px 14px; display: grid; grid-template-columns: minmax(140px, 220px) 1fr auto; gap: 14px; align-items: center; }
+.lane .who { font: 800 24px/1.05 var(--display); letter-spacing: -.03em; } .lane .tally { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
+.bar { position: relative; height: 10px; border: 0; border-radius: 0; overflow: hidden; margin-top: 6px; background: var(--track); }
 .bar > span { position: absolute; inset: 0 auto 0 0; background: var(--ink); } .bar.over > span { background: var(--bad); }
 @media (max-width: 640px) { .lane { grid-template-columns: 1fr; } }
 
 /* The reveal */
 .reveal { position: fixed; inset: 0; background: color-mix(in srgb, var(--paper) 86%, transparent); display: grid; place-items: center; z-index: 20; padding: 20px; }
-.reveal .inner { background: var(--card); border: 6px double var(--ink); border-radius: 6px; padding: 24px; max-width: 920px; width: 100%; text-align: center; }
+.reveal .inner { background: var(--card); border: 2px solid var(--ink); border-radius: 0; padding: 24px; max-width: 920px; width: 100%; text-align: center; box-shadow: 12px 12px 0 var(--hard); }
 .reveal .plays { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 18px 0; }
-.reveal .play { display: grid; justify-items: center; gap: 6px; font: 700 18px var(--label); }
+.reveal .play { display: grid; justify-items: center; gap: 6px; font: 800 18px var(--label); letter-spacing: -.02em; }
 .reveal .play.won .cf { box-shadow: 0 0 0 4px var(--card), 0 0 0 8px var(--good); }
-.reveal .line { font: 700 26px/1.25 var(--display); }
+.reveal .line { font: 800 26px/1.2 var(--display); letter-spacing: -.02em; }
 @media (prefers-reduced-motion: no-preference) {
   .reveal .play .cf { animation: flip .45s ease both; } .reveal .play:nth-child(2) .cf { animation-delay: .08s; } .reveal .play:nth-child(3) .cf { animation-delay: .16s; } .reveal .play:nth-child(4) .cf { animation-delay: .24s; } .reveal .play:nth-child(5) .cf { animation-delay: .32s; }
   .lane.flash { animation: flash 1.2s ease; }
@@ -111,42 +116,42 @@ button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: poin
 
 .toasts { position: fixed; left: 50%; top: max(10px, env(safe-area-inset-top)); transform: translateX(-50%); display: grid; gap: 6px; z-index: 30; width: min(92vw, 540px); pointer-events: none; }
 .toast { pointer-events: auto; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .22); }
-.toast { background: var(--ink); color: var(--card); padding: 10px 16px; border-radius: 4px; text-align: center; font-family: var(--text); }
-.qr svg { width: 150px; height: 150px; background: #fff; padding: 6px; border-radius: 4px; display: block; border: 2px solid var(--rule); }
-.code { font: 700 34px/1 var(--num); letter-spacing: 6px; }
+.toast { background: var(--ink); color: var(--card); padding: 10px 16px; border-radius: 0; text-align: center; font-family: var(--text); font-weight: 600; }
+.qr svg { width: 150px; height: 150px; background: #fff; padding: 6px; border-radius: 0; display: block; border: 2px solid var(--rule); }
+.code { font: 900 34px/1 var(--num); letter-spacing: .12em; }
 .log { max-height: 280px; overflow: auto; font-size: 15px; } .log > div { padding: 4px 0; border-bottom: 1px solid var(--rule-soft); }
-.banner { border: 4px double var(--ink); box-shadow: none; }
+.banner { border: 2px solid var(--ink); border-top-width: 8px; box-shadow: none; }
 .banner.bad { border-color: var(--bad); } .banner.warn { border-color: var(--warn); }
-details > summary { cursor: pointer; font: 700 16px var(--label); letter-spacing: .05em; }
+details > summary { cursor: pointer; font: 800 15px var(--label); letter-spacing: -.01em; }
 .sheet .cf { --cw: 52px; }
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; } .tabs button[aria-pressed=true] { background: var(--ink); color: var(--card); border-color: var(--ink); }
 label { display: block; }
 label.pill { display: inline-flex; }
 
 /* Tooltips */
-.tip { position: fixed; z-index: 60; max-width: min(320px, 90vw); background: var(--ink); color: var(--card); font: 15px/1.35 var(--text); padding: 8px 12px; border-radius: 4px;
+.tip { position: fixed; z-index: 60; max-width: min(320px, 90vw); background: var(--ink); color: var(--card); font: 500 15px/1.35 var(--text); padding: 8px 12px; border-radius: 0;
   box-shadow: 0 4px 14px rgba(0, 0, 0, .25); pointer-events: none; }
 .tip::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; background: inherit; transform: translateX(-50%) rotate(45deg); }
 .tip.below::after { bottom: auto; top: -6px; }
-[data-tip]:not(button):not(.cf):not(input):not(.face) { text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 3px; cursor: help; }
+[data-tip]:not(button):not(.cf):not(input):not(.face):not(.pill):not(.presence) { text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 3px; cursor: help; }
 .pill[data-tip] { text-decoration: none; }
 
 /* Menus */
 .menu-button { display: inline-flex; align-items: center; gap: 8px; }
 .menu-caret { font-size: 12px; opacity: .7; }
 .menu { position: fixed; z-index: 50; min-width: 220px; max-width: min(360px, 94vw); max-height: min(70vh, 560px); overflow: auto; padding: 6px;
-  background: var(--card); border: 2px solid var(--rule); border-radius: 6px; box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 4px var(--rule-soft), 0 10px 28px rgba(0, 0, 0, .22); }
-.menu-item { display: flex; width: 100%; align-items: center; gap: 10px; min-height: 38px; padding: 6px 10px; border: 0; border-radius: 3px; background: transparent; text-align: left;
-  font: 16px/1.25 var(--text); letter-spacing: 0; }
+  background: var(--card); border: 2px solid var(--rule); border-radius: 0; box-shadow: 6px 6px 0 var(--hard); }
+.menu-item { display: flex; width: 100%; align-items: center; gap: 10px; min-height: 38px; padding: 6px 10px; border: 0; border-radius: 0; background: transparent; text-align: left;
+  font: 500 16px/1.25 var(--text); letter-spacing: 0; }
 .menu-item:hover:not(:disabled), .menu-item:focus-visible, .menu-item[aria-expanded=true] { background: color-mix(in srgb, var(--ink) 9%, var(--card)); outline: none; }
 .menu-item.danger { color: var(--bad); }
 .menu-label { flex: 1; } .menu-hint { color: var(--muted); font-size: 13px; } .menu-arrow { color: var(--muted); font-size: 18px; line-height: 1; }
-.menu-head { font: 700 12px/1.2 var(--label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px 4px; }
+.menu-head { font: 700 12px/1.2 var(--label); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 8px 10px 4px; }
 .menu-sep { height: 1px; background: var(--rule-soft); margin: 6px 4px; }
 .menu-form { padding: 4px 6px 8px; } .menu-form .menu-head { padding-left: 4px; } .menu-form input { min-height: 36px; padding: 6px 8px; font-size: 15px; } .menu-form input[type=text] { flex: 1; min-width: 9em; } .menu-form select { min-height: 36px; padding: 4px 8px; font-size: 15px; }
 .menu-inline { margin: 2px 0 6px 12px; padding-left: 8px; border-left: 2px solid var(--rule-soft); }
 .menu .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 4px; }
-.menu .grid .menu-item { justify-content: center; font: 700 16px var(--num); }
+.menu .grid .menu-item { justify-content: center; font: 900 17px var(--num); }
 /* Quiet header rows with a title and its menus */
 /* Buttons sit right beside what they act on: a header's title doesn't push them to the far edge. */
 .headrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .headrow > h2 { margin: 0; }
@@ -155,7 +160,7 @@ label.pill { display: inline-flex; }
 
 /* Card zoom: the card full size with its rule in large type */
 .cf img { -webkit-touch-callout: none; user-select: none; }
-.cf .beat.badge { background: var(--good); top: 56%; right: auto; bottom: auto; left: 50%; transform: translate(-50%, -50%); min-width: 24px; text-align: center; font: 700 14px var(--num); padding: 4px 5px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
+.cf .beat.badge { background: var(--ink); color: var(--card); top: 56%; right: auto; bottom: auto; left: 50%; transform: translate(-50%, -50%); min-width: 24px; text-align: center; font: 900 14px var(--num); padding: 4px 5px; border-radius: 0; }
 .zoom { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(2px); }
 .zoom-inner { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; justify-content: center; max-width: 760px; }
 .cf.zoomed { --cw: min(76vw, 330px); }
@@ -166,7 +171,7 @@ label.pill { display: inline-flex; }
 /* Waiting faces */
 .faces { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .face { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; min-width: 44px; }
-.face-dot { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 700 14px var(--label); letter-spacing: .04em;
+.face-dot { width: 36px; height: 36px; border-radius: 0; display: grid; place-items: center; font: 700 14px var(--label); letter-spacing: .04em;
   border: 2px dashed var(--rule); background: var(--card); color: var(--muted); }
 .face.done .face-dot { border-style: solid; border-color: var(--ink); background: var(--ink); color: var(--card); }
 .face.me .face-dot { outline: 2px solid var(--i); outline-offset: 2px; }
@@ -178,90 +183,93 @@ label.pill { display: inline-flex; }
 .phone-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
 .phone-head h1 { flex: 1; font-size: 24px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .phone-head .dot { flex: none; }
-.hud { position: sticky; top: 0; z-index: 5; margin: 0 -16px 10px; padding: 8px 16px 10px; background: var(--card); border-bottom: 2px solid var(--rule);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, .08); }
+.hud { position: sticky; top: 0; z-index: 5; margin: 0 -16px 10px; padding: 8px 16px 10px; background: var(--card); border-bottom: 2px solid var(--rule); }
 .hud-top { display: flex; align-items: baseline; gap: 10px; }
 .hud-goal { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud-score { font: 700 26px/1 var(--num); white-space: nowrap; } .hud-score small { font: 15px var(--text); color: var(--muted); }
+.hud-score { font: 900 40px/.9 var(--num); letter-spacing: -.05em; white-space: nowrap; } .hud-score small { font: 500 16px var(--text); letter-spacing: 0; color: var(--muted); }
 .hud .bar { margin-top: 6px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .chips .pill { font-size: 13px; }
 .stage { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 6px 0 4px; }
 .stage > * { min-width: 0; }
 .stage-card { display: grid; justify-items: center; gap: 4px; }
-.stage-label { font: 700 13px var(--label); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+.stage-label { font: 700 12px var(--label); letter-spacing: .04em; color: var(--muted); text-transform: uppercase; }
 .cf.stage { --cw: clamp(116px, 34vw, 170px); }
 .strip { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 2px; }
 .strip .cf { --cw: 40px; }
 .dock { position: sticky; bottom: 0; z-index: 6; margin: 12px -16px 0; padding: 10px 16px max(12px, env(safe-area-inset-bottom)); background: var(--card);
-  border-top: 2px solid var(--rule); box-shadow: 0 -6px 16px rgba(0, 0, 0, .1); }
+  border-top: 2px solid var(--rule); }
 .dock .hint { font-size: 14px; color: var(--muted); margin: 0 0 6px; }
 /* The hand wraps into rows, so every card shows in full. */
 .fan { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 8px; padding: 14px 0 8px; }
 .fan .cf { --cw: clamp(50px, calc((100vw - 32px - 40px) / 6), 84px); transition: transform .15s ease, box-shadow .15s ease; }
 .fan .cf.chosen { transform: translateY(-8px); z-index: 1; }
-.fan .cf.can-beat::after { content: ""; position: absolute; left: 20%; right: 20%; bottom: -8px; height: 4px; border-radius: 2px; background: var(--good); }
+/* A card that can beat the world card: a white bar across its foot. */
+.fan .cf.can-beat::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: 6%; height: max(3px, calc(var(--cw) * .05)); background: #fff; }
+.fan .cf.can-beat .sn { bottom: 16%; }
 .dock button.big { margin-top: 8px; }
 .locked-row { display: flex; gap: 14px; align-items: center; }
 
 /* The phone's own reveal after each trick */
 .phone-reveal { position: fixed; left: 0; right: 0; top: 22%; margin: 0 auto; z-index: 40; width: min(92vw, 420px); padding: 16px 18px; text-align: center;
-  background: var(--card); border: 5px double var(--ink); border-radius: 8px; box-shadow: 0 16px 40px rgba(0, 0, 0, .3); }
+  background: var(--card); border: 2px solid var(--ink); border-radius: 0; box-shadow: 10px 10px 0 var(--hard); }
 .phone-reveal .cards { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin: 8px 0; }
 .phone-reveal .cards .cf { --cw: 82px; }
-.phone-reveal .vs { font: 700 14px var(--label); color: var(--muted); }
-.phone-reveal .headline { font: 700 24px/1.2 var(--display); font-variant: small-caps; }
+.phone-reveal .vs { font: 800 13px var(--label); text-transform: uppercase; color: var(--muted); }
+.phone-reveal .headline { font: 900 26px/1.1 var(--display); letter-spacing: -.03em; }
 .phone-reveal.won { border-color: var(--good); } .phone-reveal.won .headline { color: var(--good); }
 @media (prefers-reduced-motion: no-preference) { .phone-reveal { animation: pop .25s ease both; } }
 @keyframes pop { from { transform: translateY(10px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* First-time guide */
 .guide { position: fixed; inset: 0; z-index: 65; display: grid; place-items: end center; padding: 20px; background: color-mix(in srgb, var(--paper) 70%, transparent); }
-.guide-card { width: min(94vw, 460px); background: var(--card); border: 5px double var(--ink); border-radius: 8px; padding: 18px; box-shadow: 0 16px 40px rgba(0, 0, 0, .3); }
+.guide-card { width: min(94vw, 460px); background: var(--card); border: 2px solid var(--ink); border-radius: 0; padding: 18px; box-shadow: 10px 10px 0 var(--hard); }
 .guide-card h2 { font-size: 24px; } .guide-card p { font-size: 18px; }
-.guide-steps { display: flex; gap: 6px; margin-bottom: 8px; } .guide-steps span { width: 28px; height: 4px; border-radius: 2px; background: var(--rule-soft); } .guide-steps span.on { background: var(--ink); }
+.guide-steps { display: flex; gap: 6px; margin-bottom: 8px; } .guide-steps span { width: 28px; height: 6px; border-radius: 0; background: var(--track); } .guide-steps span.on { background: var(--ink); }
 
 /* The GM's next step stays in reach */
 .next-step { position: sticky; top: 0; z-index: 7; }
 .next-step .row { justify-content: space-between; }
 .face[data-tip] { text-decoration: none; cursor: default; }
 
-/* Simple card faces: a big value, the suit mark, and the consolation's name. The printed card is a hold away. */
-.cf.simple { --sc: var(--ink); background: color-mix(in srgb, var(--sc) 8%, var(--card)); color: var(--sc); border: max(1.5px, calc(var(--cw) * .028)) solid var(--sc);
-  border-radius: calc(var(--cw) * .09); box-shadow: 0 1px 3px rgba(0, 0, 0, .18); overflow: hidden; line-height: 1; }
-.cf.k-strength { --sc: var(--s); } .cf.k-dexterity { --sc: var(--d); } .cf.k-intelligence { --sc: var(--i); } .cf.k-weird { --sc: var(--w); } .cf.k-blessed { --sc: var(--b); }
-.cf.simple .sv { position: absolute; top: 7%; left: 10%; font: 700 calc(var(--cw) * .44) / 1 var(--num); letter-spacing: -.02em; }
-.cf.simple .si { position: absolute; top: 9%; right: 9%; width: calc(var(--cw) * .3); height: calc(var(--cw) * .3); }
+/* Simple card faces, Swiss style: a flat block of the suit's colour, a huge white numeral, the suit mark and the
+   consolation's name. The printed card is a hold away. */
+.cf.simple { --sc: var(--ink); --sf: var(--ink); background: var(--sf); color: #fff; border: 0; border-radius: 0; overflow: hidden; line-height: 1; }
+.cf.k-strength { --sc: var(--s); --sf: var(--s-fill); } .cf.k-dexterity { --sc: var(--d); --sf: var(--d-fill); } .cf.k-intelligence { --sc: var(--i); --sf: var(--i-fill); }
+.cf.k-weird { --sc: var(--w); --sf: var(--w-fill); } .cf.k-blessed { --sc: var(--b); --sf: var(--b-fill); color: var(--b-ink); }
+.cf.simple .sv { position: absolute; top: 5%; left: 8%; font: 900 calc(var(--cw) * .5) / .9 var(--num); letter-spacing: -.06em; }
+.cf.simple .si { position: absolute; top: 8%; right: 8%; width: calc(var(--cw) * .24); height: calc(var(--cw) * .24); }
 .cf.simple .si svg { width: 100%; height: 100%; display: block; }
-.cf.simple .sn { position: absolute; left: 4%; right: 4%; bottom: 8%; text-align: center; font: 700 max(9px, calc(var(--cw) * .135)) / 1.1 var(--label); letter-spacing: .02em;
+.cf.simple .sn { position: absolute; left: 8%; right: 6%; bottom: 7%; text-align: left; font: 800 max(9px, calc(var(--cw) * .13)) / 1.1 var(--label); letter-spacing: -.02em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* a faint large mark in the middle, so the suit reads at a glance */
-.cf.simple .sbig { position: absolute; left: 50%; top: 56%; width: calc(var(--cw) * .5); height: calc(var(--cw) * .5); transform: translate(-50%, -50%); opacity: .13; }
+
+.cf.simple .sbig { display: none; } /* Swiss faces stay flat: the small mark is enough */
 .cf.simple .sbig svg { width: 100%; height: 100%; display: block; }
 .cf.simple.is-blessed .sbig, .cf.simple.sm .sbig, .strip .cf.simple .sbig { display: none; }
-.cf.simple.is-status { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--sc) 6%, var(--card)) 0 6px, color-mix(in srgb, var(--sc) 15%, var(--card)) 6px 12px); border-style: dashed; }
-.cf.simple.is-blessed { background: color-mix(in srgb, var(--b) 16%, var(--card)); }
+/* Statuses: the suit's colour, hatched, so they never pass for a numbered card. */
+.cf.simple.is-status { background: repeating-linear-gradient(135deg, var(--sf) 0 7px, color-mix(in srgb, var(--sf) 72%, #000) 7px 14px); }
 .cf.simple.is-blessed .si { top: 18%; left: 50%; right: auto; width: calc(var(--cw) * .5); height: calc(var(--cw) * .5); transform: translateX(-50%); }
 /* very small cards keep just the value and mark */
 .cf.simple.sm .sn, .strip .cf.simple .sn { display: none; }
-.cf.simple.sm .sv, .strip .cf.simple .sv { font-size: calc(var(--cw) * .52); }
-.cf.simple.sm .si, .strip .cf.simple .si { top: auto; bottom: 8%; right: 8%; width: calc(var(--cw) * .36); height: calc(var(--cw) * .36); }
-.cf.back { background: repeating-linear-gradient(45deg, var(--ink) 0 2px, color-mix(in srgb, var(--ink) 80%, var(--card)) 2px 7px); border: max(2px, calc(var(--cw) * .04)) solid var(--card);
-  border-radius: calc(var(--cw) * .09); box-shadow: 0 0 0 1.5px var(--ink), 0 1px 3px rgba(0, 0, 0, .25); }
-.cf.simple.k-intelligence:not(.is-status) .sn { letter-spacing: -.03em; font-size: max(8px, calc(var(--cw) * .118)); }
+.cf.simple.sm .sv, .strip .cf.simple .sv { font-size: calc(var(--cw) * .56); }
+.cf.simple.sm .si, .strip .cf.simple .si { top: auto; bottom: 8%; right: 8%; width: calc(var(--cw) * .32); height: calc(var(--cw) * .32); }
+.cf.back { background: repeating-linear-gradient(45deg, var(--ink) 0 3px, color-mix(in srgb, var(--ink) 75%, var(--card)) 3px 8px); border: max(2px, calc(var(--cw) * .04)) solid var(--card);
+  border-radius: 0; box-shadow: 0 0 0 2px var(--ink); }
+.cf.simple.k-intelligence:not(.is-status) .sn { letter-spacing: -.04em; font-size: max(8px, calc(var(--cw) * .12)); }
+.cf.empty { border: 2px dashed var(--rule-soft); border-radius: 0; }
 
 /* Suit marks inside text */
 .mark { display: inline-block; width: 1em; height: 1em; vertical-align: -.15em; margin: 0 .04em; }
 .mark svg { width: 100%; height: 100%; display: block; }
 .mark.k-strength { color: var(--s); } .mark.k-dexterity { color: var(--d); } .mark.k-intelligence { color: var(--i); } .mark.k-weird { color: var(--w); }
-.toast .mark, .tip .mark, button.primary .mark, .tabs [aria-pressed=true] .mark { color: inherit; }
+.toast .mark, .tip .mark, button.primary .mark, .tabs [aria-pressed=true] .mark, .seg [aria-pressed=true] .mark { color: inherit; }
 
 /* A left-to-right bot's open hand: the leftmost card plays next. */
 .open-hand { margin-top: 12px; } .open-hand .row { margin-top: 6px; }
-.cf.next-up { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--warn); }
+.cf.next-up { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--ink); }
 
 /* A small choice as a row of buttons */
-.seg { display: inline-flex; flex-wrap: wrap; border: 1.5px solid var(--rule); border-radius: 5px; overflow: hidden; }
-.seg button { border: 0; border-radius: 0; border-right: 1px solid var(--rule-soft); min-height: 34px; padding: 4px 12px; background: var(--card); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 2px solid var(--rule); border-radius: 0; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; border-right: 2px solid var(--rule); min-height: 34px; padding: 4px 12px; background: var(--card); }
 .seg button:last-child { border-right: 0; }
 .seg button[aria-pressed=true] { background: var(--ink); color: var(--card); }
 button.danger-armed { background: var(--bad); color: var(--card); border-color: var(--bad); }
@@ -281,3 +289,147 @@ table.seats td { padding: 6px 8px; } table.seats td:first-child { width: 1%; whi
   .row { gap: 6px; }
   .panel .panel { margin: 6px 0; }
 }
+
+/* Small layout helpers, instead of one-off inline styles */
+.ml { margin-left: 8px; } .mt { margin-top: 6px; } .mb { margin-bottom: 8px; } .flush { margin: 0; }
+.note-gap { margin: 6px 0 0; }
+.align-right { text-align: right; } .align-end { align-items: flex-end; } .align-start-wide { align-items: flex-start; gap: 18px; }
+.row-center-wide { justify-content: center; gap: 28px; }
+.stack-center { display: grid; justify-items: center; gap: 6px; }
+.quote { font-style: italic; }
+.field-label { font-size: 14px; color: var(--muted); min-width: 4.5em; } .field-label.wide { min-width: 6em; }
+.input-short { width: 12.5em; } .input-goal { width: min(100%, 34em); }
+.textarea-full { width: 100%; resize: vertical; line-height: 1.35; }
+.narrow-note { max-width: 14em; }
+.divided { border-bottom: 1px dashed var(--rule-soft); padding-bottom: 10px; }
+.card-actions { padding: 6px 8px; background: color-mix(in srgb, var(--ink) 6%, var(--card)); border-left: 4px solid var(--ink); }
+.cf.locked-card { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--ink); }
+
+/* Inline: still choosing, or locked in */
+/* Choosing: a red outline. Locked in: solid ink. Both in capitals. */
+.chip-choosing, .chip-locked { text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: .03em; }
+.chip-choosing { color: var(--accent); border: 2px solid currentColor; background: transparent; }
+.chip-locked { color: var(--card); background: var(--ink); border: 2px solid var(--ink); }
+.pulse-dot { width: 7px; height: 7px; border-radius: 0; background: currentColor; display: inline-block; }
+@media (prefers-reduced-motion: no-preference) { .pulse-dot { animation: blink 1.2s ease-in-out infinite; } }
+@keyframes blink { 50% { opacity: .25; } }
+.who-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* The host's saved campaigns: one line per campaign, columns aligned */
+table.saved td { vertical-align: middle; }
+table.saved td:nth-child(2) { white-space: nowrap; }
+table.saved td:last-child { width: 1%; white-space: nowrap; }
+table.saved td:last-child .row { flex-wrap: nowrap; justify-content: flex-end; }
+
+/* People: a list (one row each) or, in grid view, a grid of cards. Each screen's menu switches between them. */
+.people { display: grid; gap: 8px; }
+.person-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 0; }
+.person-row.me strong { color: var(--ink); font-weight: 800; }
+body.layout-grid .people { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); align-items: stretch; }
+body.layout-grid .people > .divided { border: 2px solid var(--rule); border-radius: 0; padding: 10px 12px; }
+body.layout-grid .choosing-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
+body.layout-grid .choosing-list .person-row { border: 2px solid var(--rule); border-radius: 0; padding: 6px 8px; flex-direction: column; align-items: flex-start; }
+body.layout-grid .lanes { grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); align-items: stretch; }
+body.layout-grid .lane { grid-template-columns: 1fr auto; grid-template-areas: "who back" "mid mid"; }
+body.layout-grid .lane > :nth-child(1) { grid-area: who; } body.layout-grid .lane > :nth-child(2) { grid-area: mid; } body.layout-grid .lane > :nth-child(3) { grid-area: back; }
+body.layout-grid .setup-lane { grid-template-columns: 1fr; grid-template-areas: none; }
+body.layout-grid .setup-lane > :nth-child(n) { grid-area: auto; }
+body.layout-grid .setup-facts { justify-content: flex-start; }
+
+/* Notes: a side panel on wide screens, a sheet from the bottom on phones */
+.notes-panel { position: fixed; z-index: 45; right: 0; top: 0; bottom: 0; width: min(420px, 100vw); display: flex; flex-direction: column; gap: 8px; padding: 12px 14px;
+  background: var(--card); border-left: 2px solid var(--rule); box-shadow: -8px 0 0 var(--hard); }
+.notes-panel[hidden] { display: none; }
+.notes-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.notes-tabs { display: inline-flex; gap: 4px; } .notes-tabs button[aria-pressed=true] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.notes-text { flex: 1; width: 100%; resize: none; font: 500 16px/1.5 var(--text); padding: 10px 12px; min-height: 40vh; }
+@media (min-width: 900px) { body.notes-open { padding-right: calc(420px + 16px); } }
+@media (max-width: 899px) { .notes-panel { top: auto; height: 70vh; width: 100vw; border-left: 0; border-top: 2px solid var(--rule); box-shadow: none; border-radius: 0; } }
+
+.peek-slot:empty { display: none; } .peek-slot { margin-top: 6px; }
+
+/* The four suits as buttons: four across where they fit, two by two where they don't. */
+.seg.suits { display: grid; width: 100%; max-width: 560px; gap: 2px; background: var(--rule);
+  grid-template-columns: repeat(auto-fit, minmax(clamp(24.5%, (430px - 100%) * 999, 49.5%), 1fr)); }
+.seg.suits button { border: 0; white-space: nowrap; }
+.stack-tight { display: grid; gap: 4px; }
+/* The trick log shows every trick; only the longer event feed scrolls. */
+.log.log-full { max-height: none; overflow: visible; }
+.presence { white-space: nowrap; }
+/* The phone's world strip: a little smaller, so the cards still to come sit in even rows beside the world card. */
+.stage .strip { gap: 5px; } .stage .strip .cf { --cw: 36px; }
+/* Played world cards stay readable on a dark background. */
+@media (prefers-color-scheme: dark) { .cf.past { opacity: .5; } }
+@keyframes chip-glow { from { box-shadow: 0 0 0 4px color-mix(in srgb, var(--ink) 35%, transparent); } to { box-shadow: 0 0 0 0 transparent; } }
+.chip-locked.just { animation: chip-glow 1.2s ease-out; }
+@media (prefers-reduced-motion: reduce) { .chip-locked.just { animation: none; } }
+body.layout-grid .lane { align-content: start; }
+.seg.suits button:last-child:nth-child(odd) { grid-column: span 2; }
+@media (max-width: 600px) { .toast { font-size: 15px; padding: 7px 12px; } }
+/* A big action that isn't ready yet: grey, not a washed-out red. */
+button.primary.big:disabled { background: var(--track); border-color: var(--track); color: var(--muted); opacity: 1; }
+
+/* ---- Colour coding ----
+   Suits: anything that belongs to a suit (a trump, a primary, a status, a consolation) wears its colour through
+   a tone-* class, which sets --tone (a fill) and --tone-ink (text that reads on the ground).
+   Outcomes: green for success, amber for partial or moderate, red for failure, bust and the hardest targets. */
+:root { --good-fill: #0e7a45; --bad-fill: #d7261e; --hard-fill: #c25500; --warn-fill: #f2b233; }
+.tone-S { --tone: var(--s-fill); --tone-ink: var(--s); } .tone-D { --tone: var(--d-fill); --tone-ink: var(--d); }
+.tone-I { --tone: var(--i-fill); --tone-ink: var(--i); } .tone-W { --tone: var(--w-fill); --tone-ink: var(--w); }
+.tone-B { --tone: var(--b-fill); --tone-ink: var(--b); }
+/* A person's panel or lane carries their trump (or primary) as a thick top edge. */
+.toned:is(.tone-S, .tone-D, .tone-I, .tone-W),
+body.layout-grid .people > .toned:is(.tone-S, .tone-D, .tone-I, .tone-W) { border-top: 8px solid var(--tone); }
+.divided.toned:is(.tone-S, .tone-D, .tone-I, .tone-W),
+body.layout-grid .people > .divided.toned:is(.tone-S, .tone-D, .tone-I, .tone-W) { border-top-width: 6px; padding-top: 8px; }
+.pill.solid .mark { color: inherit; }
+.pill.tinted { color: var(--tone-ink); border-color: var(--tone); background: color-mix(in srgb, var(--tone) 13%, var(--card)); }
+.pill.solid { color: #fff; border-color: var(--tone); background: var(--tone); }
+.pill.solid.tone-B, .pill.tinted.tone-B { color: var(--b-ink); } .pill.tinted.tone-B { background: color-mix(in srgb, var(--b-fill) 30%, var(--card)); }
+@media (prefers-color-scheme: dark) { .pill.tinted.tone-B { color: var(--b); background: color-mix(in srgb, var(--b-fill) 16%, var(--card)); } }
+.suit-word { color: var(--tone-ink); font-weight: 800; }
+button.toned-btn { border-color: var(--tone); color: var(--tone-ink); border-left-width: 7px; }
+button.toned-btn:hover { background: color-mix(in srgb, var(--tone) 14%, var(--card)); }
+/* Suit buttons: a bar of the suit's colour; the picked one fills with it. */
+.seg.suits button[class*="tone-"] { box-shadow: inset 0 -5px 0 var(--tone); }
+.seg.suits button[class*="tone-"][aria-pressed=true] { background: var(--tone); color: #fff; box-shadow: none; }
+
+/* Difficulty, from easy to extreme. */
+.pill.diff { text-transform: uppercase; letter-spacing: .04em; font-size: 12px; }
+.pill.diff-easy { color: var(--good); border-color: var(--good); background: color-mix(in srgb, var(--good) 13%, var(--card)); }
+.pill.diff-moderate { color: #111; border-color: var(--warn-fill); background: var(--warn-fill); }
+.pill.diff-hard { color: #fff; border-color: var(--hard-fill); background: var(--hard-fill); }
+.pill.diff-very-hard { color: #fff; border-color: var(--bad-fill); background: var(--bad-fill); }
+.pill.diff-extreme { color: #fff; border: 2px solid var(--bad-fill); background: #111; }
+.pill.diff-too-low, .pill.diff-beyond, .pill.diff-none { color: var(--muted); border-style: dashed; }
+
+/* Results. */
+.pill.res { font-weight: 800; }
+.pill.res-critical { color: #fff; border-color: var(--good-fill); background: var(--good-fill); }
+.pill.res-success { color: var(--good); border-color: var(--good); background: color-mix(in srgb, var(--good) 13%, var(--card)); }
+.pill.res-partial { color: #111; border-color: var(--warn-fill); background: var(--warn-fill); }
+.pill.res-failure { color: var(--bad); border-color: var(--bad); background: color-mix(in srgb, var(--bad) 13%, var(--card)); }
+.pill.res-bust { color: #fff; border-color: var(--bad-fill); background: var(--bad-fill); }
+.res-text.res-critical, .res-text.res-success { color: var(--good); } .res-text.res-partial { color: var(--warn); }
+.res-text.res-failure, .res-text.res-bust { color: var(--bad); }
+.banner.res-critical, .banner.res-success { border-color: var(--good); } .banner.res-partial { border-color: var(--warn-fill); }
+.banner.res-failure, .banner.res-bust { border-color: var(--bad); }
+
+/* A running total against its target: close (within 3), on it, over it. */
+.pill.tally-close { color: var(--good); border-color: var(--good); }
+.pill.tally-hit { color: #fff; border-color: var(--good-fill); background: var(--good-fill); }
+.pill.tally-over { color: #fff; border-color: var(--bad-fill); background: var(--bad-fill); }
+:not(.pill).tally-hit, :not(.pill).tally-close { color: var(--good); font-weight: 800; } :not(.pill).tally-over { color: var(--bad); font-weight: 800; }
+
+/* The GM's banner says which part of the check this is: gold while setting up, red while playing, green when resolved. */
+.banner.phase-setup { border-top-color: var(--warn-fill); }
+.banner.phase-play, .banner.phase-consolation, .banner.phase-deal { border-top-color: var(--accent); }
+.banner.phase-resolve { border-top-color: var(--good-fill); }
+
+/* The trick log: a green edge where someone took the trick, grey where the world kept it. */
+.log-full > .won, .log-full > .kept { padding-left: 10px; }
+.log-full > .won { box-shadow: inset 4px 0 0 var(--good); } .log-full > .kept { box-shadow: inset 4px 0 0 var(--track); }
+
+/* Dead or retired characters recede. */
+.panel.benched { opacity: .62; }
+.mt-xs { margin-top: 4px; }
+.results .pill.res { margin: 0 4px 0 2px; }

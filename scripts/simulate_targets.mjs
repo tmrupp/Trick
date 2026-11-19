@@ -1,126 +1,68 @@
-// Outcome odds at every target, for choosing targets (RULES.md difficulty table).
-// Usage: node scripts/simulate_targets.mjs [trials per point]   (default 5000)
-// Random 21-card decks, trump = each deck's biggest suit; need-seeking bots that never bust by choice.
-// Rules: world leads; simultaneous; the single highest card wins if on-suit; the winner scores the world card
-// (Mirror: your next card counts 11 minus its value); suit-then-trump tie-break; Brace / Recalculate / Mirror; Dexterity is the blind Peek (adopted), or the Peek with a look,
-// Wait or the old Slip for comparison. Standard checks are 3 tricks per player + 1, quick checks 2 per player + 1, solo 6.
-const SUITS = ['S', 'D', 'I', 'W'];
-const sh = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const POOL = []; for (const s of SUITS) for (let v = 1; v <= 10; v++) { POOL.push({ s, v }); POOL.push({ s, v }); }
-function randomDeck() {
-  const d = sh([...POOL]).slice(0, 21).map((c) => ({ ...c }));
-  const cnt = { S: 0, D: 0, I: 0, W: 0 }; d.forEach((c) => cnt[c.s]++);
-  const tr = SUITS.reduce((a, b) => (cnt[b] > cnt[a] ? b : a));
-  return { deck: sh(d), tr };
-}
-const worldDeck = () => { const d = []; for (const s of SUITS) for (let v = 1; v <= 10; v++) d.push({ s, v }); return sh(d); };
+// The difficulty table in RULES.md, simulated with the rules engine itself (game/engine): the same rules and
+// bots the app uses, so there is one implementation of the rules to keep right.
+//
+//   node scripts/simulate_targets.mjs [checks per cell] [--json]      (default 2000)
+//
+// For each check kind, player count and target, greedy bots with random starter decks play whole checks, every
+// goal leaning on the player's primary suit. It prints RULES.md's table rows for standard checks (2–5 players)
+// and DIFFICULTY_ODDS for game/engine/rules.mjs; game/test/rules_sync.test.mjs checks those two match.
+import { createGame, apply } from "../game/engine/index.mjs";
+import { playCheck } from "../game/engine/bot.mjs";
+import { CHECK_KINDS, DIFFICULTY } from "../game/engine/rules.mjs";
 
-// What a card counts for beating, before Brace: Mirror turns an ordinary card into 11 minus its value.
-const cv = (c, p) => (p.mirror && !c.st ? 11 - c.v : c.v);
+const SUITS = ["S", "D", "I", "W"];
+const CHECKS = Number(process.argv.slice(2).find((a) => /^\d+$/.test(a))) || 2000;
+const JSON_OUT = process.argv.includes("--json");
 
-// Pick a card. `seen` is the list of revealed plays when Waiting, else null (choose blind against the world card).
-function pick(p, w, T, seen) {
-  const need = T - p.tally;
-  const prize = w.v;
-  let top = w.v, allyWinning = false;
-  if (seen) {
-    top = Math.max(w.v, ...seen.map((x) => x.bv));
-    const at = seen.filter((x) => x.bv === top);
-    allyWinning = top > w.v && at.length === 1 && at[0].on;
-  }
-  const opts = p.hand.map((c) => {
-    const bv = cv(c, p) + p.brace;
-    const on = c.s === p.tr || c.s === w.s;
-    const beats = on && bv > top;
-    let sc = beats ? (p.tally + prize > T ? 999 : need - prize) : need + bv * 0.01;
-    if (!beats && seen && allyWinning && bv >= top) sc += 50; // do not tie or block an ally who is winning
-    if (!beats && p.dex === 'slip' && c.s === 'D') sc -= 0.005; // a losing Spade comes back: the best pass
-    return { c, bv, on, beats, sc };
-  });
-  opts.sort((a, b) => a.sc - b.sc);
-  return opts[0];
+// A small deterministic shuffle for each bot's suits.
+function pickSuits(seed) {
+  const order = SUITS.slice();
+  let x = (seed * 2654435761) >>> 0;
+  for (let i = order.length - 1; i > 0; i--) { x = (x * 1664525 + 1013904223) >>> 0; const j = x % (i + 1); [order[i], order[j]] = [order[j], order[i]]; }
+  return order;
 }
 
-// Peek: how much a player wants this world card next (3 exact, 2 fits, 0 no use, -2 forces a busting win).
-function worth(p, wc, T) {
-  const need = T - p.tally, prize = wc.v;
-  const beats = p.hand.filter((c) => (c.s === p.tr || c.s === wc.s) && cv(c, p) + p.brace > wc.v);
-  if (p.hand.length && beats.length === p.hand.length && prize > need) return -2;
-  if (!beats.length || need <= 0 || prize > need) return 0;
-  return prize === need ? 3 : 2;
-}
-
-function run(P, T, dex, trials, tricks) {
-  const N = tricks(P); const tally = { crit: 0, succ: 0, part: 0, fail: 0, bust: 0 };
-  for (let t = 0; t < trials; t++) {
-    const pl = [];
-    for (let i = 0; i < P; i++) { const { deck, tr } = randomDeck(); pl.push({ tr, deck, hand: deck.splice(0, N), tally: 0, brace: 0, mirror: false, wait: false, dex }); }
-    const reserve = worldDeck(); const row = reserve.splice(0, N);
-    row.forEach((w, k) => {
-      const last = k === N - 1;
-      const plays = [], revealed = [];
-      for (const p of [...pl.filter((q) => !q.wait), ...pl.filter((q) => q.wait)]) {
-        if (!p.hand.length) { p.wait = false; continue; }
-        const o = pick(p, w, T, p.wait ? revealed : null);
-        p.hand.splice(p.hand.indexOf(o.c), 1);
-        const play = { p, c: o.c, bv: o.bv, on: o.on, mirrored: p.mirror };
-        p.brace = 0; p.mirror = false;
-        if (!p.wait) revealed.push(play);
-        p.wait = false;
-        plays.push(play);
-      }
-      const top = Math.max(w.v, ...plays.map((x) => x.bv));
-      const at = plays.filter((x) => x.bv === top);
-      let win = null;
-      if (top > w.v && at.every((x) => x.on)) {
-        if (at.length === 1) win = at[0];
-        else { // suit, then trump
-          const sc = at.map((x) => (x.c.s === w.s ? 2 : 0) + (x.c.s === x.p.tr ? 1 : 0)); const best = Math.max(...sc);
-          if (sc.filter((v) => v === best).length === 1) win = at[sc.indexOf(best)];
-        }
-      }
-      if (win) win.p.tally += w.v;
-      if (last) return;
-      const peekers = [];
-      for (const x of plays) {
-        if (x === win) continue;
-        const p = x.p, s = x.c.s;
-        if (s === 'S') p.brace = x.c.v;
-        else if (s === 'D') { if (dex === 'slip') p.hand.push(x.c); else if (dex === 'peek' || dex === 'blind' || dex === 'choose') peekers.push(p); else p.wait = true; }
-        else if (s === 'W') p.mirror = true;
-        else if (p.hand.length && p.deck.length) { // Recalculate: drop the highest card (least likely to land exactly), draw 1
-          p.hand.sort((a, b) => b.v - a.v); p.hand.shift(); p.hand.push(p.deck.shift());
-        }
-      }
-      if (dex === 'choose') { // Peek, adopted: each losing Spade chooses blind; replaced once if anyone wants a different card
-        if (reserve.length && peekers.some((p) => worth(p, row[k + 1], T) <= 0)) { const t = row[k + 1]; row[k + 1] = reserve.shift(); reserve.push(t); }
-      } else if (dex === 'blind') { // Peek, automatic (replaced): any losing Spade replaces the next world card, unseen, once
-        if (peekers.length && reserve.length) { const t = row[k + 1]; row[k + 1] = reserve.shift(); reserve.push(t); }
-      } else for (const p of peekers) { // Peek with a look: swap the world deck's top card in if it suits you better
-        if (reserve.length && worth(p, reserve[0], T) > worth(p, row[k + 1], T)) { const t = row[k + 1]; row[k + 1] = reserve.shift(); reserve.push(t); }
-      }
-    });
-    for (const p of pl) {
-      const d = T - p.tally;
-      tally[d < 0 ? 'bust' : d === 0 ? 'crit' : d <= 3 ? 'succ' : d <= 6 ? 'part' : 'fail']++;
+function cell(kind, players, target, checks) {
+  const counts = { critical: 0, success: 0, partial: 0, failure: 0, bust: 0 };
+  for (let i = 0; i < checks; i++) {
+    let state = createGame({ seed: `${kind}-${players}-${target}-${i}` });
+    const goals = {};
+    for (let p = 0; p < players; p++) {
+      const [primary, secondary, a, b] = pickSuits(i * 31 + p * 7 + target);
+      const id = `c${p}`;
+      state = apply(state, { type: "createCharacter", id, name: id, primary, secondary, others: [a, b] }, { inPlace: true }).state;
+      goals[id] = { target, approach: primary };
     }
+    const { results } = playCheck(state, { kind, goals });
+    for (const r of Object.values(results)) counts[r.result]++;
   }
-  const n = trials * P;
-  return Object.fromEntries(Object.entries(tally).map(([k, v]) => [k, Math.round((1000 * v) / n) / 10]));
+  const n = checks * players;
+  return Object.fromEntries(Object.entries(counts).map(([k, v]) => [k, Math.round((1000 * v) / n) / 10]));
 }
 
-const TRIALS = Number(process.argv[2]) || 5000;
-const out = { trials: TRIALS, standard: {}, quick: {}, solo: {} };
-const kinds = [
-  ["standard", [2, 3, 4, 5], 20, (P) => 3 * P + 1, ["choose", "blind", "peek", "wait", "slip"]],
-  ["quick", [2, 3, 4, 5], 12, (P) => 2 * P + 1, ["choose"]],
-  ["solo", [1], 12, () => 6, ["choose"]],
-];
-for (const [kind, Ps, maxT, tricks, dexes] of kinds) for (const dex of dexes) {
-  out[kind][dex] = {};
-  for (const P of Ps) {
-    out[kind][dex][P] = [];
-    for (let T = 1; T <= maxT; T++) out[kind][dex][P].push({ T, ...run(P, T, dex, P === 1 ? TRIALS * 4 : TRIALS, tricks) });
+const out = {};
+for (const [kind, spec] of Object.entries(CHECK_KINDS)) {
+  out[kind] = {};
+  for (const players of kind === "solo" ? [1] : [2, 3, 4, 5]) {
+    out[kind][players] = [];
+    for (let target = 1; target <= spec.targets[1]; target++) out[kind][players].push({ target, ...cell(kind, players, target, kind === "solo" ? CHECKS * 2 : CHECKS) });
   }
 }
-console.log(JSON.stringify(out));
+
+if (JSON_OUT) console.log(JSON.stringify(out));
+else {
+  const range = (rows, k) => { const v = rows.map((r) => r[k]); return `${Math.round(Math.min(...v))}–${Math.round(Math.max(...v))}%`; };
+  console.log(`Standard checks, 2–5 players, ${CHECKS} checks per cell. RULES.md rows:\n`);
+  console.log("| Target | Difficulty | Exact hit | 7 or more short | Bust |\n| --- | --- | --- | --- | --- |");
+  const odds = {};
+  for (const [name, lo, hi] of DIFFICULTY.standard) {
+    const rows = [2, 3, 4, 5].flatMap((p) => out.standard[p].filter((r) => r.target >= lo && r.target <= hi));
+    odds[name] = { exact: range(rows, "critical"), short: range(rows, "failure"), bust: range(rows, "bust") };
+    console.log(`| ${lo}–${hi} | ${name} | ${odds[name].exact} | ${odds[name].short} | ${odds[name].bust} |`);
+  }
+  console.log("\nDIFFICULTY_ODDS for game/engine/rules.mjs:\n" + JSON.stringify(odds, null, 2));
+  for (const kind of ["quick", "solo"]) {
+    const p = kind === "solo" ? 1 : 3;
+    console.log(`\n${kind} (${p} player${p > 1 ? "s" : ""}), exact / bust at targets 6, 9, 12: ` + [6, 9, 12].map((t) => { const r = out[kind][p].find((x) => x.target === t); return `${r.critical}% / ${r.bust}%`; }).join(", "));
+  }
+}

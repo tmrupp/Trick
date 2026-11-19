@@ -14,10 +14,10 @@ Each line is 20,000 checks. Two simulators produce the numbers:
 
 ```bash
 node scripts/simulate_tally.mjs 20000
-node scripts/simulate_targets.mjs 6000
+node scripts/simulate_targets.mjs 3000
 ```
 
-[`simulate_tally.mjs`](../../scripts/simulate_tally.mjs) runs the table situations and experiments with fresh starter decks. [`simulate_targets.mjs`](../../scripts/simulate_targets.mjs) runs every target from 1 to 20 with random 21-card decks, for the difficulty table in RULES.md.
+[`simulate_tally.mjs`](../../scripts/simulate_tally.mjs) runs the table situations and experiments with fresh starter decks. [`simulate_targets.mjs`](../../scripts/simulate_targets.mjs) runs every target from 1 to 20 through the rules engine itself (`game/engine`), with random starter decks and the engine's bots, for the difficulty table in RULES.md and `game/engine/rules.mjs`. `simulate_tally.mjs` is the variant lab: it carries its own copy of the rules so it can try alternatives the engine doesn't implement.
 
 **The bots are simple.**
 - A bot takes a world card when it can beat it without busting, using its lowest winning card.
@@ -351,7 +351,7 @@ It replaced a 21-card starter with 2, 4, 6 and 8 in every suit, A, 5 and 9 added
 
 ## Choosing a target
 
-From [`simulate_targets.mjs`](../../scripts/simulate_targets.mjs): random 21-card decks, with trump set to each deck's biggest suit. Ranges cover 2–5 players; larger tables hit more often and bust less. Starter decks land close to these figures: at target 10 with 3 players, 17% exact and 13% bust, against 17% and 12% here.
+From [`simulate_targets.mjs`](../../scripts/simulate_targets.mjs), which runs the rules engine: random starter decks, each goal on its primary suit. Ranges cover 2–5 players; larger tables hit more often and bust less. Starter decks land close to these figures: at target 10 with 3 players, 17% exact and 13% bust, against 17% and 12% here.
 
 **Standard checks** (3 tricks per player, +1):
 

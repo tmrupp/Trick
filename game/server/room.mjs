@@ -2,6 +2,9 @@
 import { apply, replay, viewFor, RuleError } from "../engine/index.mjs";
 import { nextBotAction } from "../engine/bot.mjs";
 import { newSecret } from "./store.mjs";
+import { charsOf, playedCharacters, returningSeats, playCharacter, assignCharacter, nextSeatId } from "./seats.mjs";
+
+export { charsOf };
 
 const MAX_SEATS = 10;
 
@@ -16,10 +19,24 @@ export function authorize(seat, action) {
   if (action.charId !== seat.charId) throw new RuleError("You can only act for your own character.");
 }
 
-// A seat's characters: the one it plays now (charId) and any others it has made or played.
-export const charsOf = (seat) => [...new Set([...(seat.chars || []), ...(seat.charId ? [seat.charId] : [])])];
 
 const SUIT_ORDER = ["S", "D", "I", "W"];
+
+// Notes are plain text kept with the campaign: shared (everyone edits), the GM's own, and each player's own.
+const NOTES_MAX = 20000;
+const cleanText = (t) => String(t ?? "").replace(/\r\n?/g, "\n").slice(0, NOTES_MAX);
+
+// The plain text of a Google Doc shared as "Anyone with the link", from Google's text export. No sign-in needed.
+async function fetchDocText(url) {
+  const m = String(url || "").match(/^https:\/\/docs\.google\.com\/document\/d\/([A-Za-z0-9_-]{20,})/);
+  if (!m) throw new RuleError("Paste a Google Docs link (https://docs.google.com/document/d/…).");
+  let res;
+  try { res = await fetch(`https://docs.google.com/document/d/${m[1]}/export?format=txt`, { redirect: "follow" }); }
+  catch { throw new RuleError("Couldn't reach Google Docs from the host."); }
+  const type = res.headers.get("content-type") || "";
+  if (!res.ok || !/text\/plain/.test(type)) throw new RuleError("Couldn't read that doc. In Google Docs, set Share → General access → Anyone with the link.");
+  return (await res.text()).replace(/^\uFEFF/, "");
+}
 const BOT_KINDS = { greedy: "Greedy", ltr: "Lantern" };
 
 export class Room {
@@ -74,14 +91,11 @@ export class Room {
 
   // Player seats with a character and no phone connected: someone returning on a new browser or link can take one back.
   returning() {
-    const connected = new Set([...this.clients].filter((c) => c.seat).map((c) => c.seat.id));
-    return this.save.seats
-      .filter((s) => s.role === "player" && !s.removed && s.charId && !connected.has(s.id) && this.state.characters[s.charId])
-      .map((s) => ({ seatId: s.id, name: s.name, character: this.state.characters[s.charId].name }));
+    return returningSeats(this.save, this.state, new Set([...this.clients].filter((c) => c.seat).map((c) => c.seat.id)));
   }
 
   // Join or rejoin. Returns the seat (null for a table screen).
-  join({ as, token, name, gmKey, reclaim }) {
+  join({ as, token, name, gmKey, reclaim, claimIfFree }) {
     if (as === "table") return null;
     if (as === "gm") {
       if (gmKey !== this.save.gmKey) throw new RuleError("That GM link isn't valid for this room.");
@@ -95,6 +109,8 @@ export class Room {
     }
     if (token) {
       const seat = this.save.seats.find((s) => s.token === token && s.role === "player");
+      // A browser's remembered seat, from a new tab: only if no other tab has it open.
+      if (seat && !seat.removed && claimIfFree && [...this.clients].some((c) => c.seat === seat)) throw new RuleError("That seat is open in another tab.");
       if (seat && !seat.removed) return seat;
       if (seat && seat.removed) throw new RuleError("The GM removed this seat.");
     }
@@ -109,8 +125,8 @@ export class Room {
     const clean = String(name || "").trim().slice(0, 24);
     if (!clean) throw new RuleError("Enter your name to join.");
     if (this.save.seats.filter((s) => s.role === "player" && !s.removed).length >= MAX_SEATS) throw new RuleError("This room is full.");
-    const n = this.save.seats.filter((s) => s.role === "player").length + 1; // removed seats keep their numbers
-    const seat = { id: `p${n}`, token: newSecret(), name: clean, role: "player", charId: null };
+    const id = nextSeatId(this.save, "player"); // removed seats keep their numbers
+    const seat = { id, token: newSecret(), name: clean, role: "player", charId: null };
     this.save.seats.push(seat);
     this.persist();
     return seat;
@@ -125,7 +141,7 @@ export class Room {
     let a = { ...action };
     if (a.type === "beginCheck") {
       // Only characters someone is playing right now can take part.
-      const played = new Set(this.save.seats.filter((s) => !s.removed && s.charId).map((s) => s.charId));
+      const played = playedCharacters(this.save);
       for (const id of a.participants || []) {
         const c = this.state.characters[id];
         if (c && !played.has(id)) throw new RuleError(`${c.name} isn't being played by anyone right now.`);
@@ -142,13 +158,39 @@ export class Room {
     const { state, events } = apply(this.state, a);
     this.state = state;
     this.save.actions = state.actions;
-    if (a.type === "createCharacter") { seat.chars = [...charsOf(seat), a.id]; seat.charId = a.id; }
+    if (a.type === "createCharacter") playCharacter(seat, a.id);
     if (a.type === "renameCharacter") for (const s of this.save.seats) if (s.role === "bot" && s.charId === a.charId) s.name = state.characters[a.charId].name;
     this.save.characterNames = Object.values(state.characters).map((c) => c.name);
     this.persist();
     this.broadcast(events);
     this.scheduleBots();
     return events;
+  }
+
+  // ---- Notes ----
+  notesOf(seat, scope) {
+    const note = scope === "mine" ? seat && seat.notes : this.save.notes && this.save.notes[scope];
+    return note && typeof note === "object" ? note : { text: "" }; // older saves held Google Docs links here
+  }
+
+  // What a screen may see: shared for everyone, the GM's for the GM, a player's own for that seat alone.
+  notesFor(seat) {
+    const out = { shared: this.notesOf(null, "shared") };
+    if (seat && seat.role === "gm") out.gm = this.notesOf(seat, "gm");
+    if (seat && seat.role === "player") out.mine = this.notesOf(seat, "mine");
+    return out;
+  }
+
+  setNotes(seat, scope, text) {
+    const note = { text, by: seat.name, at: Date.now() };
+    if (scope === "mine") seat.notes = note;
+    else this.save.notes = { shared: this.notesOf(null, "shared"), gm: this.notesOf(null, "gm"), [scope]: note };
+    this.persist();
+    // Only the screens that may see these notes hear about the change.
+    for (const c of this.clients) {
+      const sees = scope === "shared" || (scope === "gm" && c.seat && c.seat.role === "gm") || (scope === "mine" && c.seat === seat);
+      if (sees) c.send({ type: "notes", notes: { [scope]: note } });
+    }
   }
 
   inCheck(charId) {
@@ -158,11 +200,23 @@ export class Room {
 
   // Seat management, outside the engine. Any seat may switch between its own characters; the rest is the GM's.
   manage(seat, op) {
+    // Notes: shared (players and the GM edit), the GM's own, and a player's own.
+    if (seat && (op.op === "editNotes" || op.op === "importNotes")) {
+      const scope = op.scope;
+      if (scope === "gm" && seat.role !== "gm") throw new RuleError("Only the GM keeps GM notes.");
+      if (scope === "mine" && seat.role !== "player") throw new RuleError("Only a player keeps personal notes.");
+      if (!["shared", "gm", "mine"].includes(scope)) throw new RuleError("Notes are shared, the GM's, or your own.");
+      if (op.op === "editNotes") return this.setNotes(seat, scope, cleanText(op.text));
+      // Import: a Google Doc's text, added to the end of these notes.
+      return fetchDocText(op.url).then((text) => {
+        const current = this.notesOf(seat, scope).text;
+        this.setNotes(seat, scope, cleanText(current ? `${current}\n\n${text}` : text));
+      });
+    }
     if (seat && op.op === "switch") {
       if (!charsOf(seat).includes(op.charId) || !this.state.characters[op.charId]) throw new RuleError("That isn't one of your characters.");
       if (seat.charId && seat.charId !== op.charId && this.inCheck(seat.charId)) throw new RuleError("Finish this check before switching characters.");
-      seat.chars = charsOf(seat);
-      seat.charId = op.charId;
+      playCharacter(seat, op.charId);
       this.persist();
       this.broadcast([{ type: "seatSwitched", seatId: seat.id, charId: op.charId }]);
       return;
@@ -172,13 +226,14 @@ export class Room {
       const kind = op.kind === "ltr" ? "ltr" : "greedy";
       const primary = SUIT_ORDER.includes(op.primary) ? op.primary : "S";
       const rest = SUIT_ORDER.filter((s) => s !== primary);
-      const n = this.save.seats.filter((s) => s.role === "bot").length + 1;
-      const id = `b${n}`;
-      const name = String(op.name || `${BOT_KINDS[kind]} ${n}`).trim().slice(0, 24);
+      const id = nextSeatId(this.save, "bot");
+      const name = String(op.name || `${BOT_KINDS[kind]} ${id.slice(1)}`).trim().slice(0, 24);
       const { state, events } = apply(this.state, { type: "createCharacter", id, name, primary, secondary: rest[0], others: [rest[1], rest[2]], controller: "bot", bot: kind });
       this.state = state;
       this.save.actions = state.actions;
-      this.save.seats.push({ id, token: newSecret(), name, role: "bot", charId: id, chars: [id] });
+      const botSeat = { id, token: newSecret(), name, role: "bot", charId: null };
+      playCharacter(botSeat, id);
+      this.save.seats.push(botSeat);
       this.save.characterNames = Object.values(state.characters).map((c) => c.name);
       this.persist();
       this.broadcast(events);
@@ -200,16 +255,8 @@ export class Room {
       if (!target || target.removed || target.role !== "player") throw new RuleError("Choose a player seat.");
       if (target.charId && this.inCheck(target.charId)) throw new RuleError("That seat is in a check.");
       if (!this.state.characters[op.charId]) throw new RuleError("No such character.");
-      // The character leaves its old seat; a player seat left with no characters is removed.
-      for (const s of this.save.seats) {
-        if (s === target || !charsOf(s).includes(op.charId)) continue;
-        s.chars = charsOf(s).filter((id) => id !== op.charId);
-        if (s.charId === op.charId) s.charId = s.chars[s.chars.length - 1] || null;
-        if (s.role === "player" && !s.chars.length) s.removed = true;
-      }
-      target.chars = [...charsOf(target), op.charId];
-      target.charId = op.charId;
-      for (const c of this.clients) if (c.seat && c.seat.removed) { c.send({ type: "removed" }); c.close(); }
+      const removed = assignCharacter(this.save, target, op.charId);
+      for (const c of this.clients) if (removed.includes(c.seat)) { c.send({ type: "removed" }); c.close(); }
       this.persist();
       this.broadcast([{ type: "seatAssigned", seatId: target.id, charId: op.charId }]);
       return;

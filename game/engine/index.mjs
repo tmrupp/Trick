@@ -3,18 +3,20 @@
 //   const { state, events } = apply(game, { type: "createCharacter", id: "ana", ... });
 // apply() never mutates its input unless { inPlace: true } is passed (bots and replays use that for speed).
 // An illegal action throws a RuleError whose message can be shown to the player as it is.
+import { LEGACY_HANDLERS } from "./legacy.mjs";
 import { seedFrom, rngFor } from "./rng.mjs";
 import * as campaign from "./campaign.mjs";
 import * as check from "./check.mjs";
 
 export { RuleError } from "./campaign.mjs";
+export { CHECK_KINDS as KINDS, presetTricks, DIFFICULTY, DIFFICULTY_ODDS, difficulty, difficultyHint, bandOf } from "./rules.mjs";
 export { label, SUITS, SUIT_INFO, STARTER, isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
 export { CHECK_KINDS, RESULT_RANK, resultFor, compareGoals, legalCards, trickWinner } from "./check.mjs";
 export { viewFor } from "./views.mjs";
 
 export const ENGINE_VERSION = 1;
 
-// rules.peek: "choose" (each losing Spade chooses, blind) or "auto" (saves from when Peek always replaced).
+// rules.peek: "choose" (each losing Dexterity card chooses, blind) or "auto" (saves from when Peek always replaced).
 export function createGame({ seed = Date.now(), gmSeat = 0, rules = {} } = {}) {
   return {
     version: ENGINE_VERSION,
@@ -62,7 +64,6 @@ const HANDLERS = {
   beginCheck: check.beginCheck,
   setGoal: check.setGoal,
   declareApproach: check.declareApproach,
-  approveApproach: check.approveApproach,
   peek: check.peek,
   deal: check.deal,
   lockCard: check.lockCard,
@@ -77,10 +78,13 @@ const HANDLERS = {
   gmAdjustTarget: check.gmAdjustTarget,
   gmDraw: (ctx, a) => { check.gmDraw(ctx, a); check.settle(ctx); },
   gmDiscard: check.gmDiscard,
-  gmMoveCard: (ctx, a) => { check.gmMoveCard(ctx, a); check.settle(ctx); },
-  gmAddCard: (ctx, a) => { check.gmAddCard(ctx, a); check.settle(ctx); },
-  gmShuffleDeck: check.gmShuffleDeck,
+  gmMoveCard: (ctx, a) => { campaign.moveCard(ctx, a); check.settle(ctx); },
+  gmAddCard: (ctx, a) => { campaign.gmAddCard(ctx, a); check.settle(ctx); },
+  gmShuffleDeck: campaign.gmShuffleDeck,
 };
+
+// Older saves' actions, kept apart in legacy.mjs.
+Object.assign(HANDLERS, LEGACY_HANDLERS);
 
 export const ACTION_TYPES = Object.keys(HANDLERS);
 

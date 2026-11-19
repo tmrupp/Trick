@@ -14,6 +14,7 @@
     "export:print": "node export_print_cards.mjs",
     "test": "node --test \"game/test/*.test.mjs\"",
     "sim:engine": "node game/sim/engine_bots.mjs",
+    "sim:targets": "node scripts/simulate_targets.mjs",
     "start": "node game/server/main.mjs --tunnel",
     "start:local": "node game/server/main.mjs",
     "restart": "node game/server/main.mjs --tunnel --restart --open",

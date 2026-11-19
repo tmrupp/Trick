@@ -7,7 +7,7 @@ import { isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
 const total = (p) => p.tally.reduce((a, t) => a + t.score, 0);
 const onSuit = (c, p, w) => !isBlessed(c) && (c.suit === p.approach || c.suit === w.suit);
 
-// Which losing card to spend: statuses first, Spades and Clubs next, then Hearts, Diamonds, and Stumble last.
+// Which losing card to spend: statuses first, Dexterity and Weird next, then Strength, Intelligence, and Stumble last.
 function passOrder(c) {
   if (isBlessed(c)) return 9;
   if (isStatus(c)) return c.suit === "D" ? 6 : 1;

@@ -41,7 +41,7 @@
   .toast { font-size: clamp(16px, 1.2vw, 22px); }
   .setup-lane { grid-template-columns: minmax(200px, 300px) 1fr auto; }
   .setup-lane.ready { border-color: var(--good); }
-  .setup-lane .label { font: 700 clamp(14px, 1.1vw, 20px) var(--label); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .setup-lane .label, .situation-panel .label { font: 700 clamp(14px, 1.1vw, 20px) var(--label); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
   .goal-text { font: 800 clamp(20px, 1.7vw, 32px)/1.15 var(--display); letter-spacing: -.02em; }
   .setup-facts { display: flex; gap: clamp(20px, 3vw, 56px); text-align: center; }
   .setup-facts .fact { font: 900 clamp(26px, 2.3vw, 44px)/1 var(--num); letter-spacing: -.04em; }
@@ -137,6 +137,8 @@ function draw(info, view, names) {
     return render(main, parts);
   }
   sub.textContent = `${ck.kind[0].toUpperCase()}${ck.kind.slice(1)} check · ${ck.phase === "setup" ? "setting goals" : ck.phase === "resolve" ? "resolved" : `trick ${ck.trick + 1} of ${ck.tricks}`}`;
+  // The GM's description of what the check is about, above everything else.
+  if (ck.situation) parts.push(h("div", { class: "panel situation-panel" }, h("div", { class: "label" }, "The situation"), h("div", { class: "goal-text situation" }, ck.situation)));
   if (ck.phase !== "setup") {
     const live = ck.phase !== "resolve";
     parts.push(h("div", { class: "panel table-stage" },

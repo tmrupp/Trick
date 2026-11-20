@@ -48,6 +48,29 @@ test("check sizes: standard 3 per player + 1, quick 2 per player + 1", () => {
   assert.equal(s.check.tricks, 7);
 });
 
+test("the situation: set at the start, rewritten or cleared while the check runs, kept in the record", () => {
+  let s = game();
+  assert.throws(() => run(s, { type: "setSituation", situation: "Too soon" }), /No check is running/);
+  let events;
+  ({ state: s, events } = run(s, { type: "beginCheck", participants: ["ana", "ben", "cara"], situation: "  The bridge is burning  " }));
+  assert.equal(s.check.situation, "The bridge is burning");
+  assert.equal(events.find((e) => e.type === "checkBegun").situation, "The bridge is burning");
+  assert.equal(viewFor(s, { role: "player", charId: "ben" }).check.situation, "The bridge is burning");
+  ({ state: s } = run(s, { type: "setSituation", situation: "   " }));
+  assert.equal(s.check.situation, null, "blank clears it");
+  ({ state: s } = run(s, { type: "setSituation", situation: "x".repeat(400) }));
+  assert.equal(s.check.situation.length, 300);
+  s = dealt(game());
+  assert.equal(s.check.situation, null, "optional");
+  ({ state: s, events } = run(s, { type: "setSituation", situation: "The wagon is halfway across" }));
+  assert.equal(events[0].type, "situationSet");
+  s.check.trick = s.check.tricks - 1;
+  rig(s, { row: ["S5"], hands: { ana: ["S7"], ben: ["D1"], cara: ["I1"] } });
+  ({ state: s } = run(s, lock(s, "ana", "S7"), lock(s, "ben", "D1"), lock(s, "cara", "I1"), { type: "endCheck" }));
+  assert.equal(s.history[0].situation, "The wagon is halfway across");
+  assert.throws(() => run(s, { type: "setSituation", situation: "Too late" }), /No check is running/);
+});
+
 test("cleanup: unplayed cards, then the played row, then consequences with Injuries last", () => {
   let s = dealt(game());
   s.check.trick = s.check.tricks - 1;

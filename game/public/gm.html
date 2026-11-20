@@ -165,6 +165,13 @@ function draw() {
 
 // ---------------- The check ----------------
 
+// The check's overall situation, as the GM describes it. onsave, if given, runs on Enter (Shift+Enter for a new line).
+function situationBox(key, value, onsave) {
+  return h("textarea", { class: "textarea-full", "data-key": key, rows: 2, maxlength: 300, "aria-label": "The situation",
+    placeholder: "Optional: what's going on, e.g. The bridge is burning and the wagon is halfway across",
+    onkeydown: onsave ? (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onsave(); } } : undefined }, value);
+}
+
 function checkTab(info, view, names) {
   const ck = view.check && view.check.phase !== "closed" ? view.check : null;
   const out = [];
@@ -186,16 +193,26 @@ function checkTab(info, view, names) {
       h("div", { class: "row" }, h("span", { class: "small muted" }, "Size"), kind),
       alive.length ? h("div", { class: "row" }, alive.map((c) => h("label", { class: "pill" }, h("input", { type: "checkbox", "data-key": `begin-${c.id}`, checked: true, onchange: () => draw() }), c.name, c.survival ? " (survival)" : ""))) : h("p", { class: "muted" }, "Nobody can take part yet: each player needs a living character."),
       benched.length ? h("p", { class: "small muted" }, "Not available: ", benched.map((c) => `${c.name} (${!c.alive ? "dead" : c.retired ? "retired" : "not being played"})`).join(", "), ".") : null,
+      h("label", { class: "stack-tight" }, h("span", { class: "small muted" }, "Situation"), situationBox("begin-situation", "")),
       h("button", { class: "primary big", onclick: () => {
         const ids = alive.filter((c) => (draft(`begin-${c.id}`) ?? true)).map((c) => c.id);
         const n = Number(draft(tricksKey) ?? preset);
-        act({ type: "beginCheck", kind: k, participants: ids, tricks: n === preset ? undefined : n });
+        act({ type: "beginCheck", kind: k, participants: ids, tricks: n === preset ? undefined : n, situation: (draft("begin-situation") || "").trim() || undefined });
+        forget("begin-situation");
       } }, "Begin")));
     return out;
   }
 
   out.push(h("div", { class: "panel" }, h("div", { class: "headrow" }, h("strong", {}, `${(CHECK_KINDS[ck.kind] && CHECK_KINDS[ck.kind].label) || ck.kind} check · ${ck.tricks} tricks`),
       confirmButton("cancel-check", "Cancel check", "Yes, cancel it", () => act({ type: "cancelCheck" }), "Everyone goes back to how they were before it began. Nothing is recorded.")),
+    (() => {
+      // The situation: shown to everyone, rewritten here at any point in the check. The box resets when it changes.
+      const sk = `sit-${ck.id}-${ck.situation ?? ""}`;
+      const save = () => act({ type: "setSituation", situation: draft(sk) ?? "" });
+      return h("div", { class: "stack-tight mt" }, h("span", { class: "small muted" }, "Situation"),
+        h("div", { class: "row situation-row" }, situationBox(sk, ck.situation || "", save),
+          h("button", { class: "small", "data-tip": "Everyone sees the situation on their phone and the table. Leave it blank if it's spoken at the table.", onclick: save }, "Save situation")));
+    })(),
     ck.phase !== "setup" ? h("div", { class: "row mt" }, ck.worldRow.map((c, i) => {
       const cur = i === ck.trick && ck.phase !== "resolve";
       const open = i >= ck.trick && ck.phase !== "resolve";

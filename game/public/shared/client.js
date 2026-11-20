@@ -510,6 +510,7 @@ export function eventText(e, names, items = {}) {
     case "renamed": return `${e.from} is now ${e.to}.`;
     case "unretired": return `${n(e.id)} comes out of retirement.`;
     case "checkCancelled": return "The GM cancels the check. Everyone is back where they were.";
+    case "situationSet": return e.situation ? "The GM updates the situation." : "The GM clears the situation.";
     case "gmCardMoved": return e.to === "reserve" ? `GM: removes ${n(e.id)}'s ${e.card} from their ${e.from} (back to reserve).`
       : e.from === "reserve" ? `GM: brings ${n(e.id)}'s ${e.card} in from reserve, to ${PLACE_NAMES[e.to] || e.to}.`
       : `GM: ${n(e.id)}'s ${e.card} moves from ${e.from} to ${PLACE_NAMES[e.to] || e.to}.`;
@@ -869,7 +870,9 @@ function checkChapter(ch, view, names, items, seats) {
   }))) : h("p", { class: "small muted" }, ids.length ? `With ${ids.map((id) => names[id] || id).join(", ")}.` : "");
   const cons = rec && rec.consequences && rec.consequences.length ? h("div", { class: "row" }, h("span", { class: "small muted" }, "Consequences"),
     rec.consequences.map((c) => h("span", { class: `pill tinted ${tone(c.suit)}` }, `${names[c.charId] || c.charId}: ${SUITS[c.suit].sym} ${SUITS[c.suit].status}${c.compulsion ? ` (${c.compulsion})` : ""}`))) : null;
-  return h("section", { id: `history-check-${ch.id}`, class: `panel stack history-check${state === "cancelled" ? " benched" : ""}` }, head, rows, cons,
+  const situation = (rec && rec.situation) || (ch.start && ch.start.situation);
+  return h("section", { id: `history-check-${ch.id}`, class: `panel stack history-check${state === "cancelled" ? " benched" : ""}` }, head,
+    situation ? h("p", { class: "situation" }, h("em", {}, situation)) : null, rows, cons,
     eventLines(ch.events, names, items),
     rec && rec.log && rec.log.length ? h("details", {}, h("summary", { class: "small" }, `The ${rec.log.length} tricks`),
       h("div", { class: "log log-full" }, rec.log.map((e) => h("div", { class: e.winner ? "won" : "kept" }, `${e.trick + 1}. ${trickSentence(e, names)}`)))) : null);

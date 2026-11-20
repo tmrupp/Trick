@@ -53,6 +53,7 @@ function checkPublic(ck, state) {
   }
   return {
     id: ck.id, kind: ck.kind, tricks: ck.tricks, participants: ck.participants.slice(),
+    situation: ck.situation || null,
     phase: ck.phase, trick: ck.trick,
     worldRow: ck.worldRow.map((c) => ({ ...pub(c), beat: c.beat ?? null })),
     worldDeckCount: ck.worldDeck.length,

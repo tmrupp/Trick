@@ -42,8 +42,13 @@ function seatOrder(st, ids) {
 
 // ---- Setup ----
 
+// The GM's description of the overall situation the check is about. Optional: it may be spoken at the table.
+const SITUATION_MAX = 300;
+const situationText = (s) => String(s ?? "").trim().slice(0, SITUATION_MAX) || null;
+
 // kind sets the target range and the default size; tricks, if given, is the GM's exact number of tricks.
-export function beginCheck(ctx, { kind = "standard", participants, tricks: wanted }) {
+// situation, if given, is the GM's description of what the check is about.
+export function beginCheck(ctx, { kind = "standard", participants, tricks: wanted, situation }) {
   const st = ctx.state;
   if (st.check && st.check.phase !== "closed") throw rule("A check is already running.");
   const spec = CHECK_KINDS[kind];
@@ -81,12 +86,20 @@ export function beginCheck(ctx, { kind = "standard", participants, tricks: wante
   st.check = {
     id: (st.checkCount = (st.checkCount || 0) + 1),
     kind, tricks, participants: seatOrder(st, ids), players,
+    situation: situationText(situation),
     phase: "setup", worldRow: [], worldDeck: [], worldTaken: [], trick: 0,
     // Each participant as they were before the check, so the GM can cancel it as if it never began.
     before: Object.fromEntries(ids.map((id) => [id, structuredClone(st.characters[id])])),
     locks: {}, pending: [], log: [], consequences: [], results: null,
   };
-  ctx.events.push({ type: "checkBegun", kind, tricks, participants: st.check.participants });
+  ctx.events.push({ type: "checkBegun", kind, tricks, participants: st.check.participants, situation: st.check.situation });
+}
+
+// The GM describes, rewrites or clears the overall situation at any point while the check runs.
+export function setSituation(ctx, { situation }) {
+  const ck = activeCheck(ctx.state);
+  ck.situation = situationText(situation);
+  ctx.events.push({ type: "situationSet", situation: ck.situation });
 }
 
 // The GM sets up a participant directly: any of their trump (suit), goal and target. The GM has the final say;
@@ -440,7 +453,7 @@ export function endCheck(ctx) {
   ck.phase = "closed";
   st.lastCheckTricks = ck.tricks;
   for (const id of injured) scanAfterInjury(ctx, st.characters[id]);
-  st.history.push({ id: ck.id, kind: ck.kind, tricks: ck.tricks, results: ck.results, log: ck.log,
+  st.history.push({ id: ck.id, kind: ck.kind, tricks: ck.tricks, situation: ck.situation || null, results: ck.results, log: ck.log,
     // What each participant set out to do, and the statuses the GM gave at cleanup.
     players: Object.fromEntries(ck.participants.map((id) => { const p = ck.players[id]; return [id, { goal: p.goal || null, approach: p.approach || null, target: p.target, survival: !!p.survival }]; })),
     consequences: ck.consequences.map((c) => ({ ...c })) });

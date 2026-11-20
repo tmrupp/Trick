@@ -74,7 +74,8 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | --- | --- | --- |
 | `createCharacter { id, name, primary, secondary, others }` | Any time | A player. `others` lists the two remaining suits; the first takes 2, 3, 6, 9 |
 | `setSeats { seats, gmSeat }` | Any time | GM. No longer in the pages: it only sets display order. Kept so older saves replay |
-| `beginCheck { kind, participants }` | No check running | GM. Runs the survival scan |
+| `beginCheck { kind, participants, situation }` | No check running | GM. Runs the survival scan. `situation` is optional: the GM's description of what the check is about, up to 300 characters |
+| `setSituation { situation }` | Any time in a check | GM: describes, rewrites or clears (blank) the check's situation. Everyone sees it, and the check's record keeps it |
 | `declareApproach { charId, goal, suit, suggested }` | Setup | The player states their goal, the suit it leans on (their trump), and optionally a suggested target. A survival goal is fixed and accepted at once; restating a goal sends it back to the GM |
 | `setGoal { charId, suit, goal, target }` | Setup | GM: sets any of a participant's trump, goal and target directly, with or without their input; a player's `declareApproach` is a convenience that fills these in. A participant with a trump and a target is ready. A survival target is fixed at 3 × M. (`approveApproach` remains only so older saves replay) |
 | `peek { charId, replace }` | After a trick | A player who lost with a Spade: replace the next world card unseen, or keep it |

@@ -189,7 +189,7 @@ function createForm(you) {
     h("label", {}, "Name ", name),
     h("div", { class: "stack-tight" }, h("span", {}, "Primary suit"), suitChoice("c-prim", primary, null, "Primary suit"), h("div", { class: "small muted" }, "A, 2, 4, 5, 7, 8, 10: your strongest suit.")),
     h("div", { class: "stack-tight" }, h("span", {}, "Secondary suit"), suitChoice("c-sec", secondary, (k) => { setPicked("c-sec", k); draw(); }, "Secondary suit", { exclude: [primary] }), h("div", { class: "small muted" }, "A, 3, 6, 9, 10.")),
-    h("div", { class: "stack-tight" }, h("span", {}, "Which takes 2, 3, 6, 9?"), segmented("c-other", rest.map((s) => [s, `${SUITS[s].sym} ${SUITS[s].name}`]), other, (k) => { setPicked("c-other", k); draw(); }, "Which suit takes 2, 3, 6, 9"), h("div", { class: "small muted" }, "The other takes 4, 5, 7, 8.")),
+    h("div", { class: "stack-tight" }, h("span", {}, "Which takes 2, 3, 6, 9?"), suitChoice("c-other", other, (k) => { setPicked("c-other", k); draw(); }, "Which suit takes 2, 3, 6, 9", { exclude: [primary, secondary] }), h("div", { class: "small muted" }, "The other takes 4, 5, 7, 8.")),
     h("label", {}, "People ", race), raceInfo,
     h("button", { class: "primary big" }, "Create"),
     another ? h("button", { type: "button", class: "ghost", onclick: () => { ui.creating = false; draw(); } }, "Cancel") : null);
@@ -311,6 +311,10 @@ function checkView(view, info, me) {
   const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
   const w = ck.worldRow[ck.trick];
   const out = [hud(p, ck)];
+  // The GM's description of what the check is about: in full while goals are set, a line while cards are played.
+  if (ck.situation) out.push(ck.phase === "setup"
+    ? h("div", { class: "panel stack-tight" }, h("h3", {}, "The situation"), h("p", { class: "situation" }, ck.situation))
+    : h("div", { class: "small muted situation" }, ck.situation));
 
   if (ck.phase !== "setup") out.push(stage(ck));
 

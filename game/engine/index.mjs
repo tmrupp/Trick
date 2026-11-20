@@ -64,6 +64,7 @@ const HANDLERS = {
   evolvePick: (ctx, a) => { campaign.evolvePick(ctx, a); check.settle(ctx); },
   // a check
   beginCheck: check.beginCheck,
+  setSituation: check.setSituation,
   setGoal: check.setGoal,
   declareApproach: check.declareApproach,
   peek: check.peek,

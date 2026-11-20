@@ -300,6 +300,9 @@ table.seats td { padding: 6px 8px; } table.seats td:first-child { width: 1%; whi
 .field-label { font-size: 14px; color: var(--muted); min-width: 4.5em; } .field-label.wide { min-width: 6em; }
 .input-short { width: 12.5em; } .input-goal { width: min(100%, 34em); }
 .textarea-full { width: 100%; resize: vertical; line-height: 1.35; }
+/* The GM's description of the check's situation. */
+.situation-row { flex-wrap: nowrap; align-items: flex-end; } .situation-row textarea { flex: 1; min-width: 0; }
+.situation { white-space: pre-line; overflow-wrap: anywhere; }
 .narrow-note { max-width: 14em; }
 .divided { border-bottom: 1px dashed var(--rule-soft); padding-bottom: 10px; }
 .card-actions { padding: 6px 8px; background: color-mix(in srgb, var(--ink) 6%, var(--card)); border-left: 4px solid var(--ink); }
@@ -347,10 +350,10 @@ body.layout-grid .setup-facts { justify-content: flex-start; }
 
 .peek-slot:empty { display: none; } .peek-slot { margin-top: 6px; }
 
-/* The four suits as buttons: four across where they fit, two by two where they don't. */
-.seg.suits { display: grid; width: 100%; max-width: 560px; gap: 2px; background: var(--rule);
-  grid-template-columns: repeat(auto-fit, minmax(clamp(24.5%, (430px - 100%) * 999, 49.5%), 1fr)); }
-.seg.suits button { border: 0; white-space: nowrap; }
+/* The suits as buttons: four across where they fit, two by two where they don't. Buttons grow to
+   share their row, so three or two suits split the width evenly and a lone last one fills its row. */
+.seg.suits { display: flex; flex-wrap: wrap; width: 100%; max-width: 560px; gap: 2px; background: var(--rule); }
+.seg.suits button { border: 0; white-space: nowrap; flex: 1 1 clamp(24.5%, (430px - 100%) * 999, 49.5%); }
 .stack-tight { display: grid; gap: 4px; }
 /* The trick log shows every trick; only the longer event feed scrolls. */
 .log.log-full { max-height: none; overflow: visible; }
@@ -363,7 +366,6 @@ body.layout-grid .setup-facts { justify-content: flex-start; }
 .chip-locked.just { animation: chip-glow 1.2s ease-out; }
 @media (prefers-reduced-motion: reduce) { .chip-locked.just { animation: none; } }
 body.layout-grid .lane { align-content: start; }
-.seg.suits button:last-child:nth-child(odd) { grid-column: span 2; }
 @media (max-width: 600px) { .toast { font-size: 15px; padding: 7px 12px; } }
 /* A big action that isn't ready yet: grey, not a washed-out red. */
 button.primary.big:disabled { background: var(--track); border-color: var(--track); color: var(--muted); opacity: 1; }

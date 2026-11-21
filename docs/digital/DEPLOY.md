@@ -14,7 +14,7 @@ Two ways to put a game online. Both run the same server, and saves move between 
 2. Double-click it. A window opens with the links, and your browser opens the host page, the table screen and the GM page for your most recent campaign. Players join with the public link or QR code on the host page.
 3. Keep the window open while you play. Close it to stop the game.
 
-- Campaigns are saved in a `TRICK Campaigns` folder in your Documents (wherever Windows keeps them, OneDrive included). To bring campaigns from `npm start`, copy their `.json` files from `game/saves` into that folder, or use Download and Import on the host page.
+- Campaigns are saved in a `TRICK Campaigns` folder in your Documents (wherever Windows keeps them, OneDrive included), the same folder `npm start` uses.
 - Starting it again stops the copy already running, like `npm run restart`.
 - The first start of each new build unpacks its files into `%LOCALAPPDATA%\TRICK\app`, which takes a few seconds.
 - It isn't code-signed, so on another computer Windows may warn about it the first time ("More info", then "Run anyway").
@@ -31,6 +31,14 @@ Two ways to put a game online. Both run the same server, and saves move between 
    npm start
    ```
 3. Open the private host page it prints. The public link (`https://….trycloudflare.com`) is new each time you start, and works only while your computer is on and the terminal is open.
+
+Campaigns are saved in the `TRICK Campaigns` folder that `TRICK.exe` uses, so both see the same campaigns. `SAVES_DIR` or `--saves <folder>` picks another. Campaigns from before this were kept in `game/saves`; the host names any still there when it starts, so you can copy them over.
+
+## Between your computers
+
+If Documents is in OneDrive (Windows often sets this up) on both computers, with the same account, the `TRICK Campaigns` folder syncs by itself: start a game on either and it has the same campaigns, room codes and GM links. Without OneDrive, copy a campaign's `.json` file from one `TRICK Campaigns` folder to the other.
+
+**Host a campaign on one computer at a time.** A running host keeps its campaigns in memory and saves after every action, so two hosts would overwrite each other, and OneDrive may keep a conflict copy that shows up as a second campaign. Close the game on one computer and let OneDrive finish syncing before starting it on the other.
 
 ## On a cloud server (a permanent link)
 
@@ -57,7 +65,7 @@ Settings the server reads:
 | `PORT` | Port to listen on (default 8787) |
 | `ADMIN_TOKEN` | The host page's secret; random on each start if unset |
 | `PUBLIC_URL` | The address players use, for join links and QR codes |
-| `SAVES_DIR` | Where campaigns are saved (the Docker image uses `/data`) |
+| `SAVES_DIR` | Where campaigns are saved (default `Documents/TRICK Campaigns`; the Docker image uses `/data`) |
 
 ## Moving a campaign
 

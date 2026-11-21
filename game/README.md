@@ -34,7 +34,7 @@ Every screen draws the printed card art (`npm run export:web-cards` makes small 
 
 **Items and peoples** are chosen from `items/item_catalog.js` and `races/race_catalog.js`. Their effects are applied by the GM with adjustment tools: a boost to someone's next card, a world card's value for beating, a tally or target change, a draw or a discard. Each adjustment is announced to the table with its reason.
 
-Campaigns are saved in `game/saves/` (one file each, ignored by git) after every action, and replay exactly when reopened. To run on a cloud server with a permanent link, or to move a campaign between hosts, see [docs/digital/DEPLOY.md](../docs/digital/DEPLOY.md). Old join links keep working when the same campaign is opened again; the tunnel's address is new each time.
+Campaigns are saved in `Documents\TRICK Campaigns` (one file each; `SAVES_DIR` picks another folder) after every action, the same folder TRICK.exe uses, so OneDrive can carry them between computers, and replay exactly when reopened. To run on a cloud server with a permanent link, or to move a campaign between hosts, see [docs/digital/DEPLOY.md](../docs/digital/DEPLOY.md). Old join links keep working when the same campaign is opened again; the tunnel's address is new each time.
 
 **Keep two links private:** the host page link (it opens campaigns) and the GM link (it runs the game). The join link and room code are for players. Joins are rate-limited per address, rooms hold at most ten players, and the GM can remove a seat.
 

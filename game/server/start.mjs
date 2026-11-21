@@ -3,8 +3,10 @@
 import { createServer } from "./app.mjs";
 import { startTunnel } from "./tunnel.mjs";
 import { stopOldHost, waitForPort, openWindows } from "./launch.mjs";
+import { savesFolder, leftBehind } from "./saves_dir.mjs";
+import { fileURLToPath } from "node:url";
 
-// port: where to listen. savesDir: where campaigns are kept. restart: stop an older host on the port first.
+// port: where to listen. savesDir: where campaigns are kept (default: the shared folder, see saves_dir.mjs). restart: stop an older host on the port first.
 // tunnel: open a public link. open: true for the most recent campaign, or a campaign id; opens its windows.
 export async function startHost({ port: wantPort = 8787, savesDir, restart = false, tunnel = false, open = false, adminToken, publicUrl = null, log = console.log } = {}) {
   if (restart) {
@@ -14,11 +16,18 @@ export async function startHost({ port: wantPort = 8787, savesDir, restart = fal
     if (!(await waitForPort(wantPort))) throw new Error(`Port ${wantPort} is still busy.`);
   }
 
+  savesDir = savesDir || savesFolder();
   const host = createServer({ port: wantPort, savesDir, adminToken, publicUrl });
   const port = await host.listen();
   const local = `http://localhost:${port}`;
   const hostPage = `${local}/host?admin=${host.adminToken}`;
   log(`\nTRICK host running on ${local}`);
+  log(`Campaigns are saved in ${savesDir}`);
+  // Campaigns from before every host shared one folder, when npm start kept them in the repository.
+  if (!process.env.TRICK_ROOT) {
+    const behind = leftBehind(fileURLToPath(new URL("../saves", import.meta.url)), savesDir);
+    if (behind.length) log(`Still in game/saves, not shared: ${behind.join(", ")}. Copy any you want to keep playing.`);
+  }
   log(`Host page (keep this private): ${hostPage}`);
 
   let stopTunnel = () => {};

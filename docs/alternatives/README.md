@@ -19,3 +19,9 @@ Both can be tested with the existing 21-card starter: 3, 5, 7 of every suit; add
 **Start with Joinery** if the priority is collective problem-solving and expressing the scene through played cards. **Start with Undertow** if the priority is speed, suspense, and having the deck's composition directly determine risk.
 
 Both are unplaytested. The worked examples have been checked for arithmetic and component availability; numerical difficulty and injury pacing are starting proposals.
+
+A later exploration, [SIMPLER_CHECKS.md](SIMPLER_CHECKS.md), simplifies Trick's own check (world always leads, simultaneous answers, no follow-suit or consolations) and sketches three further non-trick resolutions: Fronts, Showdown, and Counter.
+
+[TALLY_SIMULATIONS.md](TALLY_SIMULATIONS.md) runs thirteen table situations and six experiments through the current rules, including ways to reduce collisions between allies.
+
+[TALLY.md](TALLY.md) builds on that core: each check has a target number (exact is a critical success, short is mixed, over is a bust), the single highest card on the table wins if it is on-suit and beats the world card, scoring the world card's value; the further short of the target, the worse the result; everyone else takes a consolation simultaneously.

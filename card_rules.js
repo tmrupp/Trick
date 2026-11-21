@@ -5,36 +5,36 @@ globalThis.TrickCoreCards = {
     "domain": "Hearts / Consolation",
     "title": "BRACE",
     "lines": [
-      "On your next play, add or subtract your losing card's printed value to or from the card you play, minimum 0. Choose which as you play the card."
+      "Your next card counts this card's printed value higher for beating. It never changes what you score."
     ],
-    "description": "On your next play, add or subtract your losing card's printed value to or from the card you play, minimum 0. Choose which as you play the card."
+    "description": "Your next card counts this card's printed value higher for beating. It never changes what you score."
   },
   "dexterity": {
     "suitLabel": "Spades — Dexterity",
     "domain": "Spades / Consolation",
-    "title": "REPOSITION",
+    "title": "SHAVE",
     "lines": [
-      "You may ignore follow-suit on your next play, which counts as being unable to follow, so your personal trump can win the trick."
+      "Your next card, if it wins, scores 1 less, never below 0. Shave a win to land exactly on your target."
     ],
-    "description": "You may ignore follow-suit on your next play, which counts as being unable to follow, so your personal trump can win the trick."
+    "description": "Your next card, if it wins, scores 1 less, never below 0. Shave a win to land exactly on your target."
   },
   "intelligence": {
     "suitLabel": "Diamonds — Intelligence",
     "domain": "Diamonds / Consolation",
     "title": "RECALCULATE",
     "lines": [
-      "Discard one card from hand, then draw one. You need a card to discard. If that draw reshuffles your deck, you may evolve."
+      "Draw one card."
     ],
-    "description": "Discard one card from hand, then draw one. You need a card to discard. If that draw reshuffles your deck, you may evolve."
+    "description": "Draw one card."
   },
   "weird": {
     "suitLabel": "Clubs — Weird",
     "domain": "Clubs / Consolation",
-    "title": "REVELATION",
+    "title": "MIRROR",
     "lines": [
-      "Choose one: ask the GM one question about the current situation and receive a brief, truthful answer, or put a status from discard on top of your deck; your next played card's suit becomes that status's suit instead of its own."
+      "Your next card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change. Statuses stay at 0."
     ],
-    "description": "Choose one: ask the GM one question about the current situation and receive a brief, truthful answer, or put a status from discard on top of your deck; your next played card's suit becomes that status's suit instead of its own."
+    "description": "Your next card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change. Statuses stay at 0."
   },
   "injury": {
     "suitLabel": "Hearts — Injury",
@@ -50,9 +50,9 @@ globalThis.TrickCoreCards = {
     "domain": "Spades / Status",
     "title": "STUMBLE",
     "lines": [
-      "If anyone plays Stumble, the world leads the next trick, regardless of who won."
+      "At cleanup, a played Stumble goes on top of your deck, not to discard: you draw it first next check, and rest can't reach it there."
     ],
-    "description": "If anyone plays Stumble, the world leads the next trick, regardless of who won."
+    "description": "At cleanup, a played Stumble goes on top of your deck, not to discard: you draw it first next check, and rest can't reach it there."
   },
   "stress": {
     "suitLabel": "Diamonds — Stress",
@@ -77,11 +77,10 @@ globalThis.TrickCoreCards = {
     "domain": "Joker / Blessed",
     "title": "BLESSED",
     "lines": [
-      "Blessed wins any trick it is played in, beating trump. It has no suit: it never follows suit and is always legal to play.",
-      "Leading Blessed sets no led suit; everyone else plays whatever they like.",
-      "If two Blessed meet in one trick, the earliest played wins.",
+      "Blessed always takes the trick it is played in and scores the world card. It has no suit.",
+      "If two Blessed meet in one trick, they tie, and the world takes it.",
       "A played Blessed returns to reserve, never reaching discard or a survival scan."
     ],
-    "description": "Blessed wins any trick it is played in, beating trump. It has no suit: it never follows suit and is always legal to play."
+    "description": "Blessed always takes the trick it is played in and scores the world card. It has no suit."
   }
 };

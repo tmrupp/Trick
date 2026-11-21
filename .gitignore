@@ -1,3 +1,6 @@
 node_modules/
 .codex/
 exports/qa/
+game/saves/
+dist/
+scripts/.targets-cells/

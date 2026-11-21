@@ -1,6 +1,7 @@
 {
   "name": "trick-card-export",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "build:guides": "node scripts/build_guides.mjs",
@@ -11,9 +12,26 @@
     "export:tts-item-deck": "node export_tts_item_deck.mjs",
     "export:reference-cards": "node export_reference_cards.mjs",
     "export:tts-reference-deck": "node export_tts_reference_deck.mjs",
-    "export:print": "node export_print_cards.mjs"
+    "export:print": "node export_print_cards.mjs",
+    "test": "node --test \"game/test/*.test.mjs\"",
+    "sim:engine": "node game/sim/engine_bots.mjs",
+    "sim:targets": "node scripts/simulate_targets.mjs",
+    "start": "node game/server/main.mjs --tunnel",
+    "start:local": "node game/server/main.mjs",
+    "restart": "node game/server/main.mjs --tunnel --restart --open",
+    "restart:local": "node game/server/main.mjs --restart --open",
+    "export:cards:dark": "node export_cards.mjs --dark",
+    "export:web-cards": "node export_web_cards.mjs",
+    "build:exe": "node scripts/build_exe.mjs"
   },
   "dependencies": {
-    "playwright": "^1.54.1"
+    "playwright": "^1.54.1",
+    "qrcode": "1.5.4",
+    "ws": "8.22.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.10",
+    "postject": "^1.0.0-alpha.6",
+    "rcedit": "^4.0.1"
   }
 }

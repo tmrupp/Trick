@@ -45,7 +45,7 @@ const RACE_ENTRIES = [
     rules: [
       "Any pact you make with a mortal binds both of you to its terms.",
       "Before drawing, name the bargain you would strike this check.",
-      "Once per check, before a lead, you may strike it: gain 1 Curse (compulsion: its terms), then shuffle and discard your hand and draw the same number of cards."
+      "Once per check, before a trick, you may strike it: gain 1 Curse (compulsion: its terms), then shuffle and discard your hand and draw the same number of cards."
     ],
     previewDescription: "Your pacts bind both sides; strike a named bargain for a Curse and a whole new hand."
   },
@@ -59,7 +59,7 @@ const RACE_ENTRIES = [
     rules: [
       "You sense warmth, movement, nearness, and drafts even in complete darkness, but cannot perceive color, writing, or other purely visual detail.",
       "When you must draw from an empty deck, after any evolution and before shuffling, you may return 1 Injury from discard to reserve.",
-      "When the scene is dark, once per check before a lead, you may discard 1 card from hand and draw 1."
+      "When the scene is dark, once per check before a trick, you may discard 1 card from hand and draw 1."
     ],
     previewDescription: "Work an Injury out whenever your deck reshuffles, and in the dark trade one card for another."
   },
@@ -87,10 +87,10 @@ const RACE_ENTRIES = [
     flavor: "They eat a person and wear the body, never the memories. The disguise is skin-deep; one tear spills the hungry thing beneath.",
     rules: [
       "When you gain an Injury while another Injury is already in your discard, gain 1 Curse (compulsion: you hunger for another vessel to inhabit).",
-      "While any Curse is outside your reserve, draw 2 extra cards after the deal when your approach is Strength.",
+      "While your compulsion includes that hunger, draw 2 extra cards after the deal when your approach is Strength.",
       "While wearing a borrowed body, you also gain the ability of that person's people; agree what this means before drawing."
     ],
-    previewDescription: "Wounds feed the hunger for a new vessel: a second Injury breeds a Curse, and while cursed you draw two extra cards on Strength checks."
+    previewDescription: "Wounds feed the hunger for a new vessel: a second Injury breeds a Curse, and while you hunger you draw two extra cards on Strength checks."
   },
   {
     id: "rootborn",

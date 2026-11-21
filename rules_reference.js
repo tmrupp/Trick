@@ -7,20 +7,20 @@ globalThis.TrickRulesCard = {
       "id": "rules-1-front",
       "card": "rules-1",
       "side": "1-front",
-      "title": "Trick",
-      "subtitle": "Table reference · 1 of 4",
+      "title": "TRICK",
+      "subtitle": "Tally checks · 1 of 4",
       "sections": [
         {
           "heading": "Set the check",
           "lines": [
-            "Set N from 1–13: usually 2p + 1 for p players, or 1 for a quick check.",
             "Scan every discard for survival before drawing or reshuffling.",
-            "Agree each goal, its cost, and its failure consequence. Each player scores only their own wins.",
-            "An immediate threat can force your goal; you still choose the approach.",
-            "Each player and the world declare a fitting approach; its suit is their personal trump for the check. The GM has final say.",
-            "The world leads first unless the GM says otherwise. Everyone draws N; deal the world face up in a fixed row."
+            "Each player states a goal: what they do and how. The suit it leans on is their trump for the check.",
+            "The GM sets each goal's target (the player may suggest one) and has final say on its suit. Agree stakes.",
+            "An immediate threat can force your goal; you still choose how, and so its suit.",
+            "Standard: 3 tricks per player, +1, target 6–28 (default 12). Quick: 2 per player, +1, target 6–17 (default 10). Solo: 6 tricks, target 6–20 (default 12).",
+            "Deal the world one card per trick, face up in a row. Everyone draws the same number."
           ],
-          "note": "Cost: 1 narrow · 2 modest · 3 substantial · 5 ambitious. On failure, each exposed participant gains a fitting status."
+          "note": "Standard target 6–10 easy · 11–13 moderate · 14–16 hard · 17–19 very hard · 20–22 extreme · 23–25 heroic · 26–28 legendary."
         }
       ]
     },
@@ -28,18 +28,18 @@ globalThis.TrickRulesCard = {
       "id": "rules-1-back",
       "card": "rules-1",
       "side": "1-back",
-      "title": "Trick",
-      "subtitle": "Table reference · 2 of 4",
+      "title": "TRICK",
+      "subtitle": "Tally checks · 2 of 4",
       "sections": [
         {
           "heading": "Every trick",
           "lines": [
-            "Play face up from the leader, clockwise, with the world at the GM’s seat. Follow the led suit if able.",
-            "The world plays its leftmost legal card.",
-            "A card is trump if it matches its owner’s trump suit and its owner could not follow.",
-            "Highest trump wins; with no trump, the highest card of the led suit. Ties go to the earliest played.",
-            "The winner scores 1 trick for their own goal; world wins score nothing for players.",
-            "The winner leads next, unless anyone played Stumble: then the world leads."
+            "The world leads its next card. Everyone chooses a card face down, then all reveal together.",
+            "The single highest card on the table wins if it is a player's, in the world card's suit or its owner's trump. Count Brace.",
+            "The winner scores the world card's value, not their own card's.",
+            "Tied players: world card's suit and own trump beats world card's suit only, which beats trump only. Otherwise the world takes it: the world card is highest, the top card is off-suit, or the tie stays level.",
+            "Everyone else takes their card's consolation, all at once. Winning is not optional.",
+            "A player won? The world's consolation, on its next card: ♥ +taken value to beat, ♠ scores 1 less, ♦ swap from the world deck, ♣ 11 minus."
           ],
           "note": "Once drawing begins: no tactical talk, card advice, or signals. Narration, rules questions, and declarations are welcome."
         },
@@ -47,9 +47,8 @@ globalThis.TrickRulesCard = {
           "heading": "Blessed, your four jokers",
           "lines": [
             "The GM grants a Blessed for play at the table; it goes on top of your deck.",
-            "It wins any trick it is played in. It has no suit, is always legal, and sets no led suit when led. Two in one trick go to the earliest.",
-            "Played, it returns to reserve. Unplayed, it cleans up like any other card.",
-            "Between tricks you may give yours to another player, then draw 1. That handover is the only signal allowed."
+            "It always takes its trick and scores the world card. It has no suit. Two Blessed tie: the world takes it.",
+            "Played, it returns to reserve. Between tricks you may give yours to another player, then draw 1."
           ]
         }
       ]
@@ -58,8 +57,8 @@ globalThis.TrickRulesCard = {
       "id": "rules-2-front",
       "card": "rules-2",
       "side": "2-front",
-      "title": "Trick",
-      "subtitle": "Table reference · 3 of 4",
+      "title": "TRICK",
+      "subtitle": "Tally checks · 3 of 4",
       "sections": [
         {
           "heading": "Consolations, on your trick loss",
@@ -67,25 +66,25 @@ globalThis.TrickRulesCard = {
             {
               "suit": "strength",
               "label": "Hearts — Brace",
-              "text": "On your next play, add or subtract the losing card’s printed value, minimum 0; choose as you play. Braces never stack."
+              "text": "Your next card counts this card’s printed value higher for beating. It never changes what you score."
             },
             {
               "suit": "dexterity",
-              "label": "Spades — Reposition",
-              "text": "Ignore follow-suit on your next play; it counts as unable to follow, so your trump can win."
+              "label": "Spades — Shave",
+              "text": "Your next card, if it wins, scores 1 less, never below 0."
             },
             {
               "suit": "intelligence",
               "label": "Diamonds — Recalculate",
-              "text": "Discard 1 card from hand, then draw 1. If that draw reshuffles your deck, you may evolve."
+              "text": "Draw 1 card."
             },
             {
               "suit": "weird",
-              "label": "Clubs — Revelation",
-              "text": "Ask the GM one question for a brief true answer, or put a status from discard atop your deck; your next play takes its suit for following, leading, and trump."
+              "label": "Clubs — Mirror",
+              "text": "Your next card counts 11 minus its value for beating (a 2 counts 9). Scores don’t change; statuses stay 0."
             }
           ],
-          "note": "Use the losing card’s printed suit, even if an ally won. After the final trick, only Revelation’s question."
+          "note": "Use the losing card’s printed suit, even if an ally won. They happen by themselves. Brace, Shave and Mirror last one play. No consolations after the final trick."
         },
         {
           "heading": "Statuses: J, Q, K, value 0",
@@ -98,12 +97,12 @@ globalThis.TrickRulesCard = {
             {
               "suit": "dexterity",
               "label": "Stumble — Spades",
-              "text": "If anyone plays it, the world leads the next trick, whoever won."
+              "text": "Once played, it goes on top of your deck at cleanup: you draw it first next check."
             },
             {
               "suit": "intelligence",
               "label": "Stress — Diamonds",
-              "text": "Each time you draw Stress, gain another into discard, even on redraws and mid-check draws."
+              "text": "Each time you draw Stress, gain another into discard."
             },
             {
               "suit": "weird",
@@ -111,7 +110,7 @@ globalThis.TrickRulesCard = {
               "text": "Your Curses share one compulsion. Each violation gains 1 Stress per Curse outside reserve. Only evolution removes them."
             }
           ],
-          "note": "Gain statuses into discard; if none remain in reserve, gain none."
+          "note": "Statuses play like cards worth 0 and give their suit’s consolation. Hold one in the world card’s suit? You must play it."
         }
       ]
     },
@@ -119,26 +118,25 @@ globalThis.TrickRulesCard = {
       "id": "rules-2-back",
       "card": "rules-2",
       "side": "2-back",
-      "title": "Trick",
-      "subtitle": "Table reference · 4 of 4",
+      "title": "TRICK",
+      "subtitle": "Tally checks · 4 of 4",
       "sections": [
         {
-          "heading": "Reshuffle, evolution, rest",
+          "heading": "Resolve against the target",
           "lines": [
-            "When you must draw from an empty deck, you may evolve once, then shuffle discard.",
-            "Evolve: return 1 of 2 matching statuses in discard to reserve. Then draw 3 random ordinary reserve cards of that suit and keep 1 in discard, or return 1 ordinary card of that suit to reserve.",
-            "Mid-trick, set both statuses aside before shuffling and finish the evolution after the trick.",
-            "At a GM-granted rest, remove any number of non-Curse statuses from discard."
+            "Exact: critical success, plus a benefit from the fiction. 1–3 short: success, minor complication. 4–6 short: partial, serious complication. 7+ short: failure. Over: bust, a loud consequence from the fiction.",
+            "Incompatible goals: the better result wins, then the tally closer to its target.",
+            "Clean up: return world cards, discard unplayed cards, then your played row (played Stumbles on top of your deck), then consequences with Injuries last."
           ]
         },
         {
-          "heading": "Finish and survive",
+          "heading": "Reshuffle, evolve, survive",
           "lines": [
-            "A goal succeeds when its score meets its cost. Among incompatible goals, the greatest margin over cost wins; a tie gives the agreed stalemate.",
-            "Clean up: shuffle unplayed cards and discard them, discard your played row earliest to latest, then add consequences on top with Injuries last. Never rearrange discard.",
-            "Count M Injuries in your top N discard cards. Two or more force survival as your goal, costing M tricks. Failure means death."
+            "On an empty deck you may evolve once: return 1 of 2 matching statuses in discard to reserve, then gain or return an ordinary card of that suit. Shuffle discard.",
+            "Rest removes any number of non-Curse statuses from discard.",
+            "M Injuries in your top N discard cards, M ≥ 2: survival is your goal, target 3 × M. A bust or 7+ short means death."
           ],
-          "note": "Scan at check start with the coming N, and on any Injury gained with the last check’s N — that check follows at once, with no rest."
+          "note": "N is the check’s number of tricks."
         }
       ]
     }

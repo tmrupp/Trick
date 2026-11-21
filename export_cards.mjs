@@ -10,9 +10,11 @@ const __dirname = path.dirname(__filename);
 
 const CARD_WIDTH = 1050;
 const CARD_HEIGHT = 1470;
+// --dark exports the dark alternate (fronts-dark, back-dark); the print band stays dark paper.
+const DARK = process.argv.includes("--dark");
 const EXPORT_ROOT = path.join(__dirname, "exports", "tts");
-const FRONT_DIR = path.join(EXPORT_ROOT, "fronts");
-const BACK_DIR = path.join(EXPORT_ROOT, "back");
+const FRONT_DIR = path.join(EXPORT_ROOT, DARK ? "fronts-dark" : "fronts");
+const BACK_DIR = path.join(EXPORT_ROOT, DARK ? "back-dark" : "back");
 
 function buildFileUrl(fileName, params = {}) {
   const fileUrl = pathToFileURL(path.join(__dirname, fileName));
@@ -23,7 +25,7 @@ function buildFileUrl(fileName, params = {}) {
 }
 
 async function exportCard(page, fileName, outputPath, params = {}) {
-  await page.goto(buildFileUrl(fileName, { export: 1, ...params }));
+  await page.goto(buildFileUrl(fileName, { export: 1, ...(DARK ? { theme: "dark" } : {}), ...params }));
   await page.setViewportSize({ width: CARD_WIDTH, height: CARD_HEIGHT });
   await page.waitForLoadState("networkidle");
   await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete));

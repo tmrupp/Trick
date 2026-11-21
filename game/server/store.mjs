@@ -3,6 +3,7 @@
 import { mkdirSync, readFileSync, writeFileSync, renameSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
+import { RULES_NOW } from "../engine/index.mjs";
 
 const CODE_LETTERS = "BCDFGHJKLMNPQRSTVWXZ"; // no vowels, so codes never spell words
 
@@ -50,6 +51,7 @@ export class Store {
     const save = {
       id, name: name || id, code: newCode(takenCodes), gmKey: newSecret(),
       seed: String(seed ?? newSecret(9)), gmSeat: 0,
+      rules: { ...RULES_NOW }, // the rules this campaign is played under, so a replay uses them
       actions: [], seats: [], characterNames: [],
       createdAt: now, updatedAt: now,
     };
@@ -65,6 +67,8 @@ export class Store {
     if (!data || typeof data.seed !== "string" || !Array.isArray(data.actions) || !Array.isArray(data.seats)) throw new Error("That isn't a TRICK save.");
     const fresh = this.create({ name: `${String(data.name || "Imported").slice(0, 50)} (imported)`, seed: data.seed, takenCodes });
     Object.assign(fresh, { gmSeat: data.gmSeat || 0, actions: data.actions, seats: data.seats, characterNames: data.characterNames || [] });
+    // It keeps the rules it was played under; a save that names none predates automatic consolations.
+    fresh.rules = data.rules || (data.state && data.state.rules) || { peek: "choose" };
     // Keep the room code when it's free here, so old join links still name the right room.
     if (/^[A-Z]{5}$/.test(data.code || "") && !takenCodes.has(data.code) && !this.list().some((c) => c.code === data.code)) fresh.code = data.code;
     this.write(fresh);

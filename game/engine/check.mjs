@@ -2,7 +2,7 @@
 // Statuses, Blessed, Resolve the check, Survival).
 import { SUITS, SUIT_INFO, worldCards, isOrdinary, isStatus, isBlessed, label, countsAs } from "./cards.mjs";
 import { CHECK_KINDS } from "./rules.mjs";
-import { rule, character, drawOwed, gainStatus, returnToReserve, injuriesInTop, scanAfterInjury, moveCard } from "./campaign.mjs";
+import { rule, character, drawOwed, gainStatus, returnToReserve, injuriesInTop, scanAfterInjury, moveCard, placeCard } from "./campaign.mjs";
 
 export { CHECK_KINDS } from "./rules.mjs";
 
@@ -79,7 +79,7 @@ export function beginCheck(ctx, { kind = "standard", participants, tricks: wante
       survival: ch.survival ? { ...ch.survival } : null,
       approach: null, approved: false,
       hand: [], played: [], tally: [],
-      brace: 0, mirror: false,
+      brace: 0, mirror: false, shave: 0,
       drawOwed: 0, evolveAsked: false, afterShuffle: null,
     };
   }
@@ -197,9 +197,9 @@ export function lockCard(ctx, { charId, cardId, priceCardId }) {
   if (!legalCards(st, charId).includes(cardId)) {
     throw rule(`You must play your ${SUIT_INFO[ck.worldRow[ck.trick].suit].status}: the world card is ${SUIT_INFO[ck.worldRow[ck.trick].suit].standard}.`);
   }
-  // Stumble's Price: discard an ordinary card from hand, your choice.
+  // Older games' Stumble's Price: discard an ordinary card from hand, your choice.
   let price = null;
-  if (isStatus(card) && card.suit === "D") {
+  if (isStatus(card) && card.suit === "D" && stumblePrice(st)) {
     const ordinaries = p.hand.filter((c) => isOrdinary(c));
     if (ordinaries.length) {
       price = ordinaries.find((c) => c.id === priceCardId);
@@ -256,18 +256,21 @@ function resolveTrick(ctx) {
     plays.push({
       id, card, approach: p.approach, mirrored: p.mirror && isOrdinary(card),
       bv: isBlessed(card) ? null : countsAs(card, p.mirror) + p.brace + (p.boost || 0),
-      boost: p.boost || 0, brace: p.brace,
+      boost: p.boost || 0, brace: p.brace, shave: p.shave || 0,
       onSuit: !isBlessed(card) && (card.suit === p.approach || card.suit === w.suit),
     });
     p.brace = 0;
     p.mirror = false;
+    p.shave = 0;
     p.boost = 0;
   }
   const { winner, reason, by } = trickWinner(w, plays);
   let score = 0;
   if (winner) {
-    score = w.v;
-    ck.players[winner.id].tally.push({ card: w, mirrored: false, score });
+    // Shave, the winner's own and the world's: the win scores that much less, never below 0.
+    const shave = (winner.shave || 0) + (w.shave || 0);
+    score = Math.max(0, w.v - shave);
+    ck.players[winner.id].tally.push({ card: w, mirrored: false, score, shave });
   } else ck.worldTaken.push(w);
   for (const x of plays) {
     // A played Blessed returns to its owner's reserve, even if it was given to someone else.
@@ -276,36 +279,34 @@ function resolveTrick(ctx) {
   }
   ck.log.push({
     trick: ck.trick, world: w.id, worldLabel: label(w), worldBeat: w.beat ?? w.v,
-    plays: plays.map((x) => ({ id: x.id, card: x.card.id, label: label(x.card), bv: x.bv, brace: x.brace, boost: x.boost, onSuit: x.onSuit, mirrored: x.mirrored })),
-    winner: winner ? winner.id : null, reason, by: by ? by.id : null, score,
+    plays: plays.map((x) => ({ id: x.id, card: x.card.id, label: label(x.card), bv: x.bv, brace: x.brace, boost: x.boost, onSuit: x.onSuit, mirrored: x.mirrored, shave: x.shave })),
+    winner: winner ? winner.id : null, reason, by: by ? by.id : null, score, worldShave: w.shave || 0,
   });
   ctx.events.push({
     type: "trickResolved", trick: ck.trick, world: label(w),
     plays: plays.map((x) => ({ id: x.id, card: label(x.card) })),
     winner: winner ? winner.id : null, reason, by: by ? by.id : null, score,
   });
-  // Consolations, all at once, for everyone who did not win; none after the final trick.
+  // Consolations, all at once, for everyone who did not win; none after the final trick. Each happens by itself:
+  // Brace and Shave wait on your next card, Mirror turns it, and Recalculate draws a card now.
   if (!last) {
-    // Peek: each player who lost with a Dexterity card chooses, in secret, whether to replace the next world card
-    // with the world deck's unseen top card. It is replaced once if any of them chooses to.
-    // Saves made while Peek was automatic replay with rules.peek "auto".
-    const peekers = plays.filter((x) => x !== winner && !isBlessed(x.card) && x.card.suit === "D").map((x) => x.id);
-    if (peekers.length && ck.worldDeck.length) {
-      if ((st.rules && st.rules.peek) === "auto") replaceNext(ctx, peekers, ck.trick + 1);
-      else {
-        ck.peekVotes = [];
-        for (const id of peekers) ck.pending.push({ type: "peek", charId: id });
-      }
-    }
+    const auto = consolationsV2(st);
+    if (!auto) legacyPeek(ctx, plays, winner); // games begun before consolations became automatic
     for (const x of plays) {
       if (x === winner || isBlessed(x.card)) continue;
       const p = ck.players[x.id];
       const s = x.card.suit;
       if (s === "S") p.brace = x.card.v;
       else if (s === "W") p.mirror = true;
-      else if (s === "I") { if (p.hand.length) ck.pending.push({ type: "recalculate", charId: x.id }); }
+      else if (s === "D") { if (auto) p.shave = SHAVE; }
+      else if (s === "I") {
+        if (auto) { p.drawOwed = (p.drawOwed || 0) + 1; ctx.events.push({ type: "recalculated", id: x.id, drew: true }); drawOwed(ctx, st.characters[x.id], p); }
+        else if (p.hand.length) ck.pending.push({ type: "recalculate", charId: x.id });
+      }
     }
   }
+  // The world's consolation: when a player takes the world card, its suit changes the next one. None after the final trick.
+  if (!last && winner && worldConsoles(st)) worldConsolation(ctx, w);
   ck.locks = {};
   ck.trick++;
   ck.phase = last ? "resolve" : "consolation";
@@ -313,13 +314,60 @@ function resolveTrick(ctx) {
   advance(ctx);
 }
 
+// Shave (Dexterity's consolation): your next win scores this much less.
+export const SHAVE = 1;
+// Games begun since consolations became automatic (Shave and Recalculate's draw) carry rules.consolations 2.
+// Older games keep Peek and the choosing Recalculate: see legacy.mjs.
+export const consolationsV2 = (st) => !!(st.rules && st.rules.consolations === 2);
+// Games begun since Stumble changed carry rules.stumble "deck": a played Stumble goes on top of your deck at cleanup.
+// Older games keep Stumble's Price (discard an ordinary card, your choice): see legacy.mjs.
+export const stumblePrice = (st) => !(st.rules && st.rules.stumble === "deck");
+// Games begun since the world took consolations carry rules.world "lose". Older games have none: see legacy.mjs.
+export const worldConsoles = (st) => !!(st.rules && st.rules.world === "lose");
+
+// The world's consolation (RULES.md, The world's consolation), from the suit of the world card a player just took:
+// Strength Braces the next world card by this card's value, Dexterity Shaves it, Intelligence Peeks (the next world
+// card goes to the bottom of the world deck and its top card takes its place), Weird Mirrors it. Brace and Mirror
+// work from what the next card already counts for beating, a GM adjustment included.
+function worldConsolation(ctx, w) {
+  const ck = ctx.state.check;
+  const i = ck.trick + 1;
+  const next = ck.worldRow[i];
+  if (!next) return;
+  const counts = next.beat ?? next.v;
+  let effect;
+  if (w.suit === "S") { ck.worldRow[i] = { ...next, beat: counts + w.v }; effect = "brace"; }
+  else if (w.suit === "W") { ck.worldRow[i] = { ...next, beat: Math.max(0, 11 - counts) }; effect = "mirror"; }
+  else if (w.suit === "D") { ck.worldRow[i] = { ...next, shave: (next.shave || 0) + SHAVE }; effect = "shave"; }
+  else if (w.suit === "I") { if (!ck.worldDeck.length) return; replaceNext(ctx, [], i, { quiet: true }); effect = "peek"; }
+  else return;
+  const record = { effect, was: label(next), next: label(ck.worldRow[i]), beat: ck.worldRow[i].beat ?? null };
+  ck.log[ck.log.length - 1].world = record; // the trick's record keeps it, so the trick log can say what followed
+  ctx.events.push({ type: "worldConsoled", from: label(w), by: w.v, ...record });
+}
+
+// Older games' Peek: each player who lost with a Dexterity card chooses, in secret, whether to replace the next world
+// card with the world deck's unseen top card. It is replaced once if any of them chooses to. Saves made while Peek was
+// automatic replay with rules.peek "auto".
+function legacyPeek(ctx, plays, winner) {
+  const st = ctx.state, ck = st.check;
+  const peekers = plays.filter((x) => x !== winner && !isBlessed(x.card) && x.card.suit === "D").map((x) => x.id);
+  if (!peekers.length || !ck.worldDeck.length) return;
+  if ((st.rules && st.rules.peek) === "auto") replaceNext(ctx, peekers, ck.trick + 1);
+  else {
+    ck.peekVotes = [];
+    for (const id of peekers) ck.pending.push({ type: "peek", charId: id });
+  }
+}
+
 // Put world row card i on the bottom of the world deck and deal the top card face up in its place.
-function replaceNext(ctx, by, i) {
+// The world's Peek uses it too, with its own event.
+function replaceNext(ctx, by, i, { quiet = false } = {}) {
   const ck = ctx.state.check;
   const old = ck.worldRow[i];
   ck.worldRow[i] = ck.worldDeck.pop();
   ck.worldDeck.unshift(old);
-  ctx.events.push({ type: "peekReplaced", by, out: label(old), in: label(ck.worldRow[i]) });
+  if (!quiet) ctx.events.push({ type: "peekReplaced", by, out: label(old), in: label(ck.worldRow[i]) });
 }
 
 // Answer a Peek: replace the next world card, unseen, or keep it. Nobody sees anyone else's answer;
@@ -441,7 +489,10 @@ export function endCheck(ctx) {
     ctx.rng.shuffle(p.hand);
     ch.discard.push(...p.hand); // unplayed cards, shuffled together
     p.hand = [];
-    ch.discard.push(...p.played); // the played row, earliest to latest
+    // The played row, earliest to latest. A played Stumble goes on top of the deck instead (older games: discard).
+    const back = stumblePrice(st) ? [] : p.played.filter((c) => isStatus(c) && c.suit === "D");
+    for (const c of p.played) if (back.includes(c)) placeCard(ctx, ch, c, "deck-top"); else ch.discard.push(c);
+    if (back.length) ctx.events.push({ type: "stumbleToDeck", id, n: back.length });
     p.played = [];
   }
   const injured = new Set();

@@ -23,7 +23,7 @@ npm run sim:engine   # bots play the default scene through the engine (add a num
 
 ## The screens
 
-- **Phone (`/play`).** Character creation with suits and a people; your goal and its suit for each check; a hand of the printed cards with forced statuses marked and each card's text a tap away; prompts that explain Recalculate, Stumble's Price and evolution; your tally against your target; a **My cards** tab with deck contents, discard, statuses, compulsion, survival warnings and items (with a **Use** button that tells the table); a link to print your cards.
+- **Phone (`/play`).** Character creation with suits and a people; your goal and its suit for each check; a hand of the printed cards with forced statuses marked and each card's text a tap away; prompts that explain evolution (and, in older games, Peek, the choosing Recalculate and Stumble's Price); your tally against your target; a **My cards** tab with deck contents, discard, statuses, compulsion, survival warnings and items (with a **Use** button that tells the table); a link to print your cards.
 - **Table (`/table`, or `/watch` for spectators).** The join QR code, the world row, each player's tally and progress to target, who has locked in (face down), a reveal at every trick with a one-line reason, waiting reminders, and results.
 - **GM (`/gm`).** Tabs for the check (setup with the difficulty beside each target, hands, adjustments, results and consequences), characters (statuses, Curses, rest, Blessed, items) and the room (join link, seats, assigning characters, playing a character).
 - **Notes.** Plain-text notes kept with the campaign, edited in place from any screen's menu (Notes): **Shared** (players and the GM edit; the table reads), **GM** (only the GM) and **Mine** (each player's own, seen by them alone). Typing saves after a pause and other screens update live. **Import a Google Doc** adds the text of a doc shared as "Anyone with the link" to the end.
@@ -57,7 +57,7 @@ import { createGame, apply, viewFor } from "./engine/index.mjs";
 let game = createGame({ seed: "table-1" });
 ({ state: game } = apply(game, { type: "createCharacter", id: "ana", name: "Ana", primary: "S", secondary: "D", others: ["I", "W"] }));
 ({ state: game } = apply(game, { type: "beginCheck", kind: "standard", participants: ["ana", "ben", "cara"] }));
-// … declareApproach (the player's goal and its suit), setGoal (the target, which accepts the goal), deal, lockCard, recalculate, addConsequence, endCheck
+// … declareApproach (the player's goal and its suit), setGoal (the target, which accepts the goal), deal, lockCard, addConsequence, endCheck
 const phone = viewFor(game, { role: "player", charId: "ana" }); // only what Ana may see
 ```
 
@@ -78,12 +78,12 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | `setSituation { situation }` | Any time in a check | GM: describes, rewrites or clears (blank) the check's situation. Everyone sees it, and the check's record keeps it |
 | `declareApproach { charId, goal, suit, suggested }` | Setup | The player states their goal, the suit it leans on (their trump), and optionally a suggested target. A survival goal is fixed and accepted at once; restating a goal sends it back to the GM |
 | `setGoal { charId, suit, goal, target }` | Setup | GM: sets any of a participant's trump, goal and target directly, with or without their input; a player's `declareApproach` is a convenience that fills these in. A participant with a trump and a target is ready. A survival target is fixed at 3 × M. (`approveApproach` remains only so older saves replay) |
-| `peek { charId, replace }` | After a trick | A player who lost with a Spade: replace the next world card unseen, or keep it |
+| `peek { charId, replace }` | After a trick, older games | A player who lost with a Spade, in a game begun before consolations became automatic: replace the next world card unseen, or keep it |
 | `resurrect { charId }` | Between checks | GM: bring a dead character back |
 | `gmMoveCard { charId, cardId, to }`, `gmAddCard { charId, kind, suit, v, to }`, `gmShuffleDeck { charId }` | Any time | GM: free card editing for items and story effects. `to` is `deck-top`, `deck-bottom`, `deck-shuffle`, `discard`, `hand` (in a check) or `reserve` (removes it). Adding takes a matching card from reserve, or makes an extra one. Only the GM and that player are told |
 | `deal` | Setup | GM. Deals the world row and draws every hand |
 | `lockCard { charId, cardId, priceCardId }`, `unlockCard { charId }` | Play | A player. The trick resolves when everyone with cards has locked |
-| `recalculate { charId, cardId }` | Consolation | A player who lost with a Diamond |
+| `recalculate { charId, cardId }` | Consolation, older games | A player who lost with a Diamond, in a game begun before consolations became automatic |
 | `giveBlessed { charId, to, cardId }` | Between tricks | A player holding a Blessed |
 | `evolve { charId, skip \| suit, mode, cardId }`, `evolvePick { charId, cardId }` | When a draw reshuffles and evolution is possible | That player |
 | `addConsequence { charId, suit, compulsion }`, `endCheck` | After the final trick | GM |
@@ -98,12 +98,13 @@ The server checks who may send which action: see *The server* above.
 
 Where RULES.md leaves a detail open, the engine decides as follows. Each is covered by a test, and any of them can change:
 
-- **Peek is a blind choice.** Everyone who lost with a Spade (a Stumble included) answers a `peek` prompt, `replace: true` or `false`, without seeing the world deck or each other's answers. When all have answered, the next world card goes to the bottom of the world deck and the top card takes its place, once, if anyone chose to replace. It is skipped when the world deck is empty. Saves from while Peek was automatic replay with `rules.peek: "auto"`.
+- **Consolations happen by themselves.** Brace, Shave and Mirror wait on your next card; Recalculate draws at once, through the usual draw (a reshuffle can stop to offer evolution). A losing Stumble Shaves like any Spade. A Shaved Blessed scores 1 less too.
+- **The world's consolation changes the next world card in the row** (event `worldConsoled`): Brace and Mirror set its `beat`, on top of any GM adjustment; Shave sets its `shave`, which adds to the winner's own; Peek swaps it with the world deck's top card through the same path as the older games' Peek. Games without `rules.world` "lose" have none.
+- **Older games keep their consolations.** A game records its rules in `state.rules`; new games have `consolations: 2`. Games begun before keep Peek (a blind `peek` prompt per losing Spade, replaced once if anyone chose to; `rules.peek: "auto"` for saves from when it was automatic) and the choosing Recalculate. See `game/engine/legacy.mjs`.
 - **A played Blessed returns to its owner's reserve,** even after being given to another player.
 - **A player's card equal to the world card doesn't beat it:** the world takes the trick.
 - **Evolution in preparation follows the main procedure:** the remaining status, and a gained card, stay in discard and shuffle in. **Mid-check**, they are set aside and land on top of the new discard, as the rules describe for a shuffle during play.
-- **Stumble's Price is chosen when you lock Stumble,** and it is free when you hold no other ordinary card.
-- **Recalculate needs a card in hand after the trick;** without one there is no prompt.
+- **A played Stumble goes on top of your deck at cleanup,** instead of discard (event `stumbleToDeck`). Older games keep Stumble's Price: chosen when you lock Stumble (`priceCardId`), free when you hold no other ordinary card.
 - **Statuses gained during a check wait for cleanup** as consequences. `gainStatus` refuses them during a check.
 
 ## Matching the simulations

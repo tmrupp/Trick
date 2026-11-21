@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resultFor, compareGoals, replay, viewFor, apply, createGame } from "../engine/index.mjs";
+import { resultFor, compareGoals, replay, viewFor, apply, createGame, KINDS } from "../engine/index.mjs";
 import { playCheck } from "../engine/bot.mjs";
 import { game, dealt, rig, run, lock, find, hand, card } from "./helpers.mjs";
 
@@ -27,7 +27,7 @@ test("setup: the GM can deal before anyone submits anything; defaults fill in", 
   // Nobody has said anything: Ana gets her primary suit and the solo default target.
   let events;
   ({ state: s, events } = run(s, { type: "deal" }));
-  assert.deepEqual([s.check.players.ana.approach, s.check.players.ana.target], ["S", 6]);
+  assert.deepEqual([s.check.players.ana.approach, s.check.players.ana.target], ["S", KINDS.solo.defaultTarget]);
   assert.ok(events.some((e) => e.type === "setupDefaulted" && e.id === "ana"));
   assert.equal(hand(s, "ana").length, 6);
   assert.equal(s.check.worldRow.length, 6);
@@ -36,7 +36,7 @@ test("setup: the GM can deal before anyone submits anything; defaults fill in", 
   ({ state: s } = run(s, { type: "cancelCheck" }, { type: "beginCheck", participants: ["ana", "ben"] },
     { type: "declareApproach", charId: "ben", suit: "W", goal: "Bar the door with a hex", suggested: 12 }, { type: "deal" }));
   assert.deepEqual([s.check.players.ben.approach, s.check.players.ben.target], ["W", 12]);
-  assert.deepEqual([s.check.players.ana.approach, s.check.players.ana.target], ["S", 10]);
+  assert.deepEqual([s.check.players.ana.approach, s.check.players.ana.target], ["S", KINDS.standard.defaultTarget]);
 });
 
 test("check sizes: standard 3 per player + 1, quick 2 per player + 1", () => {

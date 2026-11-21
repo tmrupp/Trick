@@ -29,7 +29,7 @@ The GM brings one standard deck and uses its A–10 cards for the world. Shuffle
 
 - Each player has **one goal and one target** per check. You score only your own tally; tallies are never pooled or transferred. Help each other through fiction and card play.
 - **Finish negotiation before drawing.** During play, choose independently: no tactical discussion, card advice, or signals. A card cannot be taken back once played. Narration, rules questions, and effect declarations are welcome, but cannot coordinate tactics.
-- **Printed suit** determines consolation. A card's **value** decides only whether it wins; what you score is the world card you take.
+- **Printed suit** determines consolation. A card's **value** decides only whether it wins; what you score is the world card you take, less any Shave.
 - Gained cards come from reserve; removed cards return there. Gained statuses enter discard immediately; gain no copy if none remain in reserve. **Gain Injuries only at cleanup or between checks**; Injury consequences arising during play wait for cleanup.
 - Keep your played cards in a **row in play order until cleanup**, unless an effect removes them or returns them to hand. Keep the world cards you take face up in a separate **tally pile**. Never rearrange discard; its top card is the most recently discarded.
 
@@ -41,21 +41,25 @@ The GM brings one standard deck and uses its A–10 cards for the world. Shuffle
 
 | Check | Tricks | Targets | Default |
 | --- | --- | --- | --- |
-| Standard | 3 per player, +1 | 6–20 | 10 |
-| Quick | 2 per player, +1 | 6–12 | 6 |
-| Solo | 6 | 6–12 | 6 |
+| Standard | 3 per player, +1 | 6–28 | 12 |
+| Quick | 2 per player, +1 | 6–17 | 10 |
+| Solo | 6 | 6–20 | 12 |
 
 The **target sets the difficulty**. Each player may have their own target if their tasks differ.
 
-| Target | Difficulty | Exact hit | 7 or more short | Bust |
-| --- | --- | --- | --- | --- |
-| 6–8 | Easy | 20–24% | 0–12% | 11–18% |
-| 9–11 | Moderate | 12–21% | 10–21% | 7–14% |
-| 12–14 | Hard | 7–13% | 23–40% | 4–8% |
-| 15–17 | Very hard | 4–9% | 41–62% | 3–5% |
-| 18–20 | Extreme | 2–6% | 59–76% | 1–3% |
+| Target | Difficulty | Success or better | Exact hit | 7 or more short | Rough play: success |
+| --- | --- | --- | --- | --- | --- |
+| 6–10 | Easy | 87–96% | 39–70% | 0–4% | 50–68% |
+| 11–13 | Moderate | 69–92% | 26–55% | 2–12% | 30–54% |
+| 14–16 | Hard | 47–78% | 17–42% | 7–34% | 19–35% |
+| 17–19 | Very hard | 34–62% | 9–28% | 24–49% | 11–25% |
+| 20–22 | Extreme | 21–48% | 5–20% | 40–63% | 4–16% |
+| 23–25 | Heroic | 12–36% | 3–15% | 53–77% | 2–8% |
+| 26–28 | Legendary | 6–26% | 1–11% | 66–86% | 1–5% |
 
-Odds are simulated for standard checks at 2–5 players; larger tables hit more often and bust less. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
+Odds are per player in standard checks at 2–5 players, simulated with players who plan: they watch the whole row and leave world cards they can't use to an ally. Rough play is players who only look at the trick in front of them; most tables land in between. Larger tables succeed more often. Careful players almost never bust; rough play busts up to 12% at the easiest targets. Below 6, busts rise without making success likelier, so 6 is the easiest target worth setting.
+
+Quick checks run **Easy** 6–9, **Moderate** 10–11, **Hard** 12–13, **Very hard** 14–15 and **Extreme** 16–17. Solo checks run **Easy** 6–11, **Moderate** 12–14, **Hard** 15–16, **Very hard** 17–18 and **Extreme** 19–20.
 
 **Forced goals.** An immediate threat can require your goal: if attacked, you must get through the attack safely. The GM sets the outcome, target, and stakes; you choose how, and so its suit. Combine simultaneous threats into one goal. New threats during play resolve through agreed consequences or a forced goal in the next check.
 
@@ -66,7 +70,7 @@ Odds are simulated for standard checks at 2–5 players; larger tables hit more 
 3. **Find the single highest card on the table,** counting the world card and any Brace. If it is a player's card, and in the world card's suit **or** its owner's trump, it **wins**: its owner takes the world card into their tally pile and **scores its value**.
 4. **If players' cards tie for highest** above the world card and all are on-suit, rank them: a card in the world card's suit **and** its owner's trump beats one in the world card's suit only, which beats one in its owner's trump only. The single best-ranked card wins.
 5. Otherwise **the world takes the trick**: the world card is highest, the highest card is off-suit, or the tie stays level. Discard that world card.
-6. **Everyone who did not win** takes their card's consolation, all at once, before the next trick. Then play the next trick, until the row is used up.
+6. **Everyone who did not win** takes their card's consolation, all at once, before the next trick. If a player took the world card, the world takes its own consolation at the same time (see *The world's consolation*). Then play the next trick, until the row is used up.
 
 The winner has to beat everyone. **A high off-suit card cannot win, but it blocks:** nobody beats it, so the world takes the trick. **Winning is not optional:** if your card is highest and on-suit, you take the world card even if it busts you. To stay safe, play low, or let someone play over you.
 
@@ -74,27 +78,40 @@ With the whole row visible, the real decision is **which world cards to go after
 
 ## Consolations
 
-On a **trick loss**, take your losing card's consolation, including when an ally won. Resolve it independently while everyone else resolves theirs; finish before the next trick. There are no consolations after the final trick.
+On a **trick loss**, take your losing card's consolation, including when an ally won. Consolations happen by themselves, all at once, before the next trick: there is nothing to choose. The card you lose with is the decision. There are no consolations after the final trick.
 
 | Suit | Effect |
 | --- | --- |
 | **Strength — Brace** | Your next card counts this card's printed value higher for beating. It never changes what you score. |
-| **Dexterity — Peek** | You may replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost. |
-| **Intelligence — Recalculate** | Discard one card from hand, then draw one. You need a card to discard. |
+| **Dexterity — Shave** | Your next card, if it wins, scores 1 less, never below 0. Shave a win to land exactly on your target. |
+| **Intelligence — Recalculate** | Draw one card. |
 | **Weird — Mirror** | Your next card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change. Statuses stay at 0. |
 
-Brace and Mirror last for your next play only: turn the losing card sideways as a reminder. Peek is blind: you choose whether to replace, but nobody sees the new card before it lands. Everyone who lost with a Spade chooses in secret at the same time; if anyone chooses to replace, the next world card is replaced once.
+Brace, Shave and Mirror last for your next play only: turn the losing card sideways as a reminder. A Recalculate draw follows the usual drawing rules, reshuffle and Stress included.
+
+## The world's consolation
+
+The world loses a trick when a player takes its card, and it takes a consolation for that loss, just as players do: from **the printed suit of the world card that was taken**. It changes **the next world card in the row**, at the same time as the players' consolations. There is none after the final trick, and none when the world takes the trick itself.
+
+| World card taken | The world's consolation |
+| --- | --- |
+| **Strength — Brace** | The next world card counts the taken card's value higher for beating. It still scores its printed value. |
+| **Dexterity — Shave** | The next world card scores 1 less, never below 0. |
+| **Intelligence — Peek** | Put the next world card on the bottom of the world deck and deal the world deck's top card face up in its place. |
+| **Weird — Mirror** | The next world card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. It still scores its printed value. |
+
+Turn the next world card sideways as a reminder until its trick is over. Brace and Mirror change only what it counts for beating, and work from any adjustment the GM has made; Shave changes only what it scores, and adds to the winner's own Shave. A Blessed still takes its trick, and taking the world card with a Blessed gives the world its consolation like any other win.
 
 ## Statuses
 
-Statuses are ordinary cards worth 0. They follow every playing and winning rule, and their printed suit gives its consolation as usual: Injury Braces for 0, Stumble Peeks, Stress recalculates, and Curse Mirrors.
+Statuses are ordinary cards worth 0. They follow every playing and winning rule, and their printed suit gives its consolation as usual: Injury Braces for 0, Stumble Shaves, Stress recalculates, and Curse Mirrors.
 
-**The situation finds your weakness:** whenever the world card's suit matches a status in your hand, you must play that status, your choice if you hold several. A Strength world card calls out your Injury, a Dexterity one your Stumble, and so on. Stumble's Price makes that call cost an ordinary card as well.
+**The situation finds your weakness:** whenever the world card's suit matches a status in your hand, you must play that status, your choice if you hold several. A Strength world card calls out your Injury, a Dexterity one your Stumble, and so on. A played Stumble keeps coming back: it opens your next check.
 
 | Status | Effect |
 | --- | --- |
 | **Injury — Strength** | Two or more Injuries in your top N discard cards make survival your forced goal. Gain Injuries only at cleanup or between checks. |
-| **Stumble — Dexterity** | When you play Stumble, discard an ordinary card from your hand, your choice. |
+| **Stumble — Dexterity** | At cleanup, a played Stumble goes on top of your deck, not to discard: you draw it first next check, and rest can't reach it there. |
 | **Stress — Intelligence** | Whenever you draw Stress, gain one Stress into discard. This includes redraws and cards drawn during play. |
 | **Curse — Weird** | Your Curses share one supernatural compulsion. Each violation gains one Stress for every Curse not in your reserve. Remove Curses through evolution, never rest. |
 
@@ -147,7 +164,7 @@ Resolve goals and deaths, then clean up:
 
 1. Return world cards to the GM's deck.
 2. Shuffle unplayed cards together and discard them.
-3. Discard your played row from earliest to latest, skipping cards already removed.
+3. Discard your played row from earliest to latest, skipping cards already removed. Played Stumbles go on top of your deck instead.
 4. Add consequence statuses on top, with **Injuries last**.
 
 ## Survival

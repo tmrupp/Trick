@@ -85,14 +85,105 @@ const passOrder = (c, spec, w) => {
   return c.s === "W" ? 2 : c.s === "S" ? 3 : 4;
 };
 
+// ---- When the world takes a trick (spec.world) ----
+// Automatic effects on the next trick, by the kept world card's suit or for any world take. Only Peek changes which card
+// comes next. kind may join several with "+", e.g. "world2+harden"; k is the trick the world just took.
+function applyWorldTake(ctx, w, kind, pot, k) {
+  if (kind.includes("+")) { for (const one of kind.split("+")) applyWorldTake(ctx, w, one, ctx.pot || pot, k); return; }
+  // Peek: the next world card is discarded and replaced by the world deck's top card, face up.
+  const peek = () => { if (ctx.reserve.length && k + 1 < ctx.row.length) ctx.row[k + 1] = ctx.reserve.shift(); };
+  const ps = ctx.players;
+  const drawAll = () => ps.forEach((p) => { if (p.deck.length) { const d = p.deck.shift(); p.hand.push(d); if (d.st && d.s === "I") p.stress++; } });
+  const braceAll = () => ps.forEach((p) => { p.brace += 2; });
+  switch (kind) {
+    // The world takes its own consolation: Strength Braces the next world card, Dexterity Shaves it, Intelligence
+    // switches trump off for the next trick, Weird Mirrors the next world card.
+    case "consolations": if (w.s === "S") ctx.nextMod += w.v; else if (w.s === "D") ctx.worldShave = 1; else if (w.s === "I") ctx.noTrump = true; else ctx.worldMirror = true; break;
+    case "wbrace": if (w.s === "S") ctx.nextMod += w.v; break;
+    case "wshave": if (w.s === "D") ctx.worldShave = 1; break;
+    case "wnotrump": if (w.s === "I") ctx.noTrump = true; break;
+    case "wmirror": if (w.s === "W") ctx.worldMirror = true; break;
+    case "wpeek": if (w.s === "I") peek(); break;
+    // The world's consolations as drafted: Strength Braces the next world card by its value (world2) or by 2 (world2b2),
+    // Dexterity Shaves it, Intelligence Peeks, Weird Mirrors it.
+    case "world2": case "world2b2":
+      if (w.s === "S") ctx.nextMod += kind === "world2" ? w.v : 2; else if (w.s === "D") ctx.worldShave = 1; else if (w.s === "I") peek(); else ctx.worldMirror = true; break;
+    case "harden": ctx.nextMod += 2; break; // the next world card counts 2 higher for beating
+    case "relief": ctx.nextMod -= 2; break; // 2 lower
+    case "momentum": ctx.streak = (ctx.streak || 0) + 1; ctx.nextMod += ctx.streak; break; // +1 per world take in a row
+    case "drawall": drawAll(); break; // everyone draws a card
+    case "brace2": braceAll(); break; // everyone's next card counts 2 higher
+    // Everyone takes the kept card's consolation: Strength +2 to everyone's next card, Dexterity Shaves everyone,
+    // Intelligence draws everyone a card, Weird Mirrors everyone.
+    case "shared": if (w.s === "S") braceAll(); else if (w.s === "D") ps.forEach((p) => { p.shave = Math.max(p.shave || 0, 1); }); else if (w.s === "I") drawAll(); else ps.forEach((p) => { p.mirror = true; }); break;
+    case "rollover": ctx.pot = pot + w.v; return; // whoever takes the next trick scores this card too
+  }
+  ctx.pot = 0;
+}
+
+// ---- The look-ahead bot (policy "look") ----
+// For each distinct card in hand, it replays the rest of the check from the start of this trick, many times, and plays
+// the card that does best on average. What it can't see is reshuffled in each replay: its own deck's order, everyone
+// else's hand and deck (pooled and redealt), and the world deck. In the replays everyone, itself included after this
+// trick, plays as the simple bot. It values any rule (a consolation, a status) by what it does, not by a hand-written
+// tactic. spec.looks: replays per card (default 24). spec.lookTeam: how much allies' results count (default 0.5).
+
+const clonePlayer = (p) => ({ ...p, deck: [...p.deck], hand: [...p.hand], discard: [...p.discard], won: [...p.won] });
+function snapshot(ctx) {
+  return { spec: ctx.spec, players: ctx.players.map(clonePlayer), row: [...ctx.row], reserve: [...ctx.reserve], N: ctx.N, worldTakes: ctx.worldTakes, nextMod: ctx.nextMod,
+    worldMirror: ctx.worldMirror, worldShave: ctx.worldShave, pot: ctx.pot, streak: ctx.streak, noTrump: ctx.noTrump };
+}
+// One guess at what this player can't see.
+function determinize(start, me) {
+  const g = snapshot(start);
+  g.players.forEach((q, i) => {
+    if (i === me) { shuffle(q.deck); return; }
+    const pool = shuffle([...q.hand, ...q.deck]);
+    q.hand = pool.splice(0, q.hand.length);
+    q.deck = pool;
+  });
+  shuffle(g.reserve);
+  return g;
+}
+const playAs = (p, c, w, wb) => {
+  const bv = cv(c, p) + p.brace;
+  const on = c.s === p.trump || c.s === w.s || p.feint;
+  return { c, bv, want: on && bv > wb && w.v <= p.target - p.tally };
+};
+function lookChoose(p, w, wb, spec) {
+  const live = spec._ctx, k = spec._k, me = live.players.indexOf(p);
+  const seen = new Set(), cands = [];
+  for (const c of p.hand) { const key = `${c.s}${c.v}${c.st ? "x" : ""}`; if (!seen.has(key)) { seen.add(key); cands.push(c); } }
+  if (cands.length === 1) return playAs(p, cands[0], w, wb);
+  const R = spec.looks || 24, team = spec.lookTeam ?? 0.5;
+  const rspec = { ...spec, _rollout: true, _ctx: null };
+  // The same guesses for every candidate card, so the comparison is fair.
+  const guesses = Array.from({ length: R }, () => determinize(live.trickStart, me));
+  let best = cands[0], bestScore = -Infinity;
+  for (const c of cands) {
+    let score = 0;
+    for (const g of guesses) {
+      const sim = snapshot(g);
+      sim.spec = rspec; sim.rollout = true;
+      sim.players[me].forceCard = c;
+      for (let j = k; j < sim.N; j++) playTrick(sim, j);
+      sim.players.forEach((q, i) => { score += (i === me ? 1 : team) * RANK[result(q.tally, q.target)]; });
+    }
+    if (score > bestScore) { bestScore = score; best = c; }
+  }
+  return playAs(p, best, w, wb);
+}
+
 function choose(p, w, table, hidden, wb = w.v, spec = {}) {
+  if (p.forceCard) { const c = p.forceCard; p.forceCard = null; return playAs(p, c, w, wb); } // a look-ahead replay's card
+  if (p.policy === "look" && !spec._rollout && spec._ctx && !hidden) return lookChoose(p, w, wb, spec);
   const need = p.target - p.tally;
   const wv = hidden ? 5.5 : wb; // the value to beat; with a hidden world value, bots guess the average
-  const pv = hidden ? 5.5 : w.v; // the value it scores
-  const prize = pv;
+  const pv = hidden ? 5.5 : w.v + (spec._prizeAdj || 0); // the value it scores (a pot adds, a world Shave takes off)
+  const prize = Math.max(0, pv - (p.shave || 0)); // what winning would score, after a Shave
   const opts = p.hand.map((c) => {
     const bv = cv(c, p) + p.brace;
-    const on = c.s === p.trump || c.s === w.s || p.feint;
+    const on = (c.s === p.trump && !spec._noTrump) || c.s === w.s || p.feint;
     return { c, bv, beats: on && bv > wv };
   });
   const beaters = opts.filter((o) => o.beats).sort((a, b) => a.bv - b.bv);
@@ -112,6 +203,16 @@ function choose(p, w, table, hidden, wb = w.v, spec = {}) {
   }
   if (want) return { ...beaters[beaters.length > 1 && beaters[0].bv - wv < 2 ? 1 : 0], want: true };
   const losers = opts.filter((o) => !o.beats).sort((a, b) => passOrder(a.c, spec, w) - passOrder(b.c, spec, w) || a.c.v - b.c.v);
+  // Consolation-aware bots (spec.aware): when passing, lose with a Spade on purpose if what it does to the row helps.
+  if (spec.aware && spec._row) {
+    const next = spec._row[spec._k + 1], after = spec._row[spec._k + 2];
+    const dex = spec.dex || "choose";
+    const helps = !next ? false
+      : dex === "slip" || dex === "push" ? !!after && worth(p, after) > worth(p, next)
+      : dex === "choose" || dex === "blind" ? worth(p, next) <= 0 : false;
+    const spade = losers.find((o) => o.c.s === "D" && !o.c.st);
+    if (helps && spade) return { ...spade, want: false };
+  }
   if (losers.length) return { ...losers[0], want: false };
   return { ...beaters[0], want: false, forced: true }; // every card in hand would win
 }
@@ -126,7 +227,7 @@ function chooseSeen(p, w, plays, wb, spec) {
   const allyWinning = top > wb && atTop.length === 1 && (atTop[0].c.s === atTop[0].p.trump || atTop[0].c.s === w.s || atTop[0].feint);
   const opts = p.hand.map((c) => {
     const bv = cv(c, p) + p.brace;
-    const on = c.s === p.trump || c.s === w.s || p.feint;
+    const on = (c.s === p.trump && !spec._noTrump) || c.s === w.s || p.feint;
     return { c, bv, wins: on && bv > top };
   });
   const winners = opts.filter((o) => o.wins).sort((a, b) => a.bv - b.bv);
@@ -139,10 +240,16 @@ function chooseSeen(p, w, plays, wb, spec) {
   return { ...winners[0], want: false, forced: true };
 }
 
-// The adopted rules (RULES.md): suit-then-trump ties, forced statuses, blind Peek. A spec overrides any of them:
-// tieBreak "none" means the world takes every tie; dex "return" is the old Slip, "wait" the replaced Wait;
+// The adopted rules (RULES.md): suit-then-trump ties, forced statuses, Shave (dex "shave1") and Recalculate's draw
+// (recalc "draw"). A spec overrides any of them: tieBreak "none" means the world takes every tie; dex "choose" is the
+// replaced blind Peek, "return" the old Slip, "wait" the replaced Wait; recalc "choose" the replaced discard-and-draw;
 // mustStatus false lets statuses be held.
-const RULES_DEFAULTS = { tieBreak: "suit+trump", mustStatus: true, dex: "choose" };
+// stumble "cleanup" (adopted): a played Stumble goes on top of the deck at cleanup, so within one check it costs nothing.
+// world "lose:world2" (adopted): when a player takes the world card, the world's consolation from its suit (Brace by its
+// value, Shave, Peek, Mirror) changes the next world card. Experiments that compare world effects set world themselves.
+const RULES_DEFAULTS = { tieBreak: "suit+trump", mustStatus: true, dex: "shave1", recalc: "draw", stumble: "cleanup", world: "lose:world2" };
+// The rules before consolations became automatic: Parts 2–3d and the consolation experiments ran against these.
+const OLD = { dex: "choose", recalc: "choose", stumble: "price", world: undefined };
 
 function runCheck(rawSpec) {
   const spec = { ...RULES_DEFAULTS, ...rawSpec };
@@ -151,7 +258,7 @@ function runCheck(rawSpec) {
     const deck = shuffle(ps.deck());
     return { ...ps, deck, hand: deck.splice(0, N + (spec.extraDraw || 0)), discard: [], tally: 0, brace: 0, mirror: false, wins: 0, stress: 0, stumblePrice: 0,
       forcedWins: 0, forcedOver: 0, outbid: 0, tied: 0, blocked: 0,
-      wait: false, pull: false, feint: false, dexUses: 0, dexPays: 0 };
+      wait: false, pull: false, feint: false, dexUses: 0, dexPays: 0, won: [] };
   });
   const reserve = worldDeck();
   const row = reserve.splice(0, N);
@@ -173,11 +280,25 @@ function runCheck(rawSpec) {
       }
     }
   }
-  let worldTakes = 0, nextMod = 0;
-  row.forEach((w, k) => {
+  const ctx = { spec, players, row, reserve, N, worldTakes: 0, nextMod: 0 };
+  for (let k = 0; k < N; k++) playTrick(ctx, k);
+  return { players, worldTakes: ctx.worldTakes };
+}
+
+// One trick, from a check's state (ctx). Look-ahead bots replay the rest of a check from copies of it.
+function playTrick(ctx, k) {
+  const { spec, players, row, reserve, N } = ctx;
+  const w = row[k];
+  {
+    ctx.trickStart = ctx.rollout ? null : snapshot(ctx); // what a look-ahead bot replays this trick from
+    if (!ctx.rollout) { spec._ctx = ctx; spec._k = k; }
     const last = k === N - 1;
-    const wb = Math.max(0, w.v + nextMod); // the world card's value for beating this trick
-    nextMod = 0;
+    // World-take experiments (spec.world) can Mirror the world card, Shave it, put a pot on it or switch trump off.
+    const wbase = ctx.worldMirror ? 11 - w.v : w.v;
+    const wb = Math.max(0, wbase + ctx.nextMod); // the world card's value for beating this trick
+    const wshave = ctx.worldShave || 0, pot = ctx.pot || 0, noTrump = !!ctx.noTrump;
+    ctx.nextMod = 0; ctx.worldMirror = false; ctx.worldShave = 0; ctx.noTrump = false;
+    spec._prizeAdj = pot - wshave; spec._noTrump = noTrump; // what the bots must allow for this trick
     const plays = [];
     let order = [...players.filter((p) => !p.wait), ...players.filter((p) => p.wait)];
     const revealed = []; // what Waiting players see: everyone who did not Wait
@@ -207,6 +328,7 @@ function runCheck(rawSpec) {
     for (const p of order) {
       if (!p.hand.length) { p.wait = false; continue; }
       // Variant: a status in the world card's suit must be played.
+      if (spec.aware) { spec._row = row; spec._k = k; } // what consolation-aware bots can see: the row ahead
       const owed = spec.mustStatus ? p.hand.find((c) => c.st && c.s === w.s) : null;
       const o = owed ? { c: owed, bv: owed.v + p.brace, want: false, forcedStatus: true }
         : p.wait ? chooseSeen(p, w, revealed, wb, spec)
@@ -217,19 +339,23 @@ function runCheck(rawSpec) {
       p.wait = false; p.pull = false; p.feint = false;
       if (owed) p.forcedStatus = (p.forcedStatus || 0) + 1;
       p.hand.splice(p.hand.indexOf(o.c), 1);
-      const mirrored = p.mirror;
-      p.brace = 0; p.mirror = false;
-      if (o.c.st && o.c.s === "D" && spec.stumble === "trip") nextMod += 2; // Stumble variant: the next world card is harder
-      else if (o.c.st && o.c.s === "D" && spec.stumble !== "none") { // Stumble's Price: discard an ordinary card (the bot drops its lowest)
+      const mirrored = p.mirror, shave = p.shave || 0;
+      p.brace = 0; p.mirror = false; p.shave = 0;
+      if (o.c.st && o.c.s === "D" && spec.stumble === "trip") ctx.nextMod += 2; // Stumble variant: the next world card is harder
+      else if (o.c.st && o.c.s === "D" && (spec.stumble === "top" || spec.stumble === "hand")) {} // the Stumble itself comes back after the trick
+      else if (o.c.st && o.c.s === "D" && spec.stumble !== "none" && spec.stumble !== "cleanup") { // Stumble's Price: discard an ordinary card (the bot drops its lowest; "random" drops any)
         const ords = p.hand.filter((c) => !c.st).sort((a, b) => a.v - b.v);
+        if (spec.stumble === "random") shuffle(ords);
+        if (spec.stumble === "highest") ords.reverse(); // automatic Price: your highest ordinary card
+        if (spec.stumble === "deck") { ords.length = 0; if (p.deck.length) { p.discard.push(p.deck.shift()); p.stumblePrice++; } } // the top of your deck instead
         if (ords.length) { p.hand.splice(p.hand.indexOf(ords[0]), 1); p.discard.push(ords[0]); p.stumblePrice++; }
       }
-      const play = { p, c: o.c, bv: o.bv, mirrored, want: o.want, forced: o.forced, waited, pulling, feint: feinting };
+      const play = { p, c: o.c, bv: o.bv, mirrored, shave, want: o.want, forced: o.forced, waited, pulling, feint: feinting };
       plays.push(play);
       if (!waited) revealed.push(play);
       if (p === pointP) pointSeen.push(play);
     }
-    const onSuit = (x) => x.c.s === x.p.trump || x.c.s === w.s || x.feint;
+    const onSuit = (x) => (x.c.s === x.p.trump && !noTrump) || x.c.s === w.s || x.feint;
     // Collision experiment: off-suit cards don't block; only on-suit cards contend.
     const contenders = spec.blocks === false ? plays.filter(onSuit) : plays;
     const top = Math.max(wb, ...contenders.map((x) => x.bv));
@@ -326,9 +452,11 @@ function runCheck(rawSpec) {
     }
     if (win) {
       if (win.waited || win.feint) win.p.dexPays++;
-      win.p.tally += w.v; win.p.wins++;
+      const scored = Math.max(0, w.v + pot - win.shave - wshave); // Shave and Pocket take off what the win scores; a pot adds
+      win.p.tally += scored; win.p.wins++; win.p.won.push(scored);
+      ctx.pot = 0; ctx.streak = 0;
       if (!win.want) { win.p.forcedWins++; if (win.p.tally > win.p.target) win.p.forcedOver++; }
-    } else worldTakes++;
+    } else ctx.worldTakes++;
     // Accidents of hidden, silent play: a player who went for the world card and did not get it.
     for (const x of plays) {
       if (!x.want || x === win) continue;
@@ -337,10 +465,11 @@ function runCheck(rawSpec) {
       else x.p.blocked++;
     }
     const movers = []; // losing Dexterity players who may change the world row
+    let weaken = 0; // Weaken: the highest losing Spade lowers the next world card's value for beating
     for (const x of plays) {
       if (x === win || last) { x.p.discard.push(x.c); continue; }
       const p = x.p;
-      if (x.c.s === "S") { p.brace = x.c.v; p.discard.push(x.c); }
+      if (x.c.s === "S") { if (spec.brace !== "none") p.brace = x.c.v; p.discard.push(x.c); }
       else if (x.c.s === "D") { // Dexterity: Wait (adopted), or a candidate under test
         p.dexUses++;
         const keep = spec.dex === "return" || (spec.dex === "return-noloop" && !x.c.st) || (spec.dex === "duck" && !x.c.st && x.c.v < w.v);
@@ -348,10 +477,29 @@ function runCheck(rawSpec) {
         if (spec.dex === "wait") p.wait = true;
         if (spec.dex === "pull") p.pull = true;
         if (spec.dex === "feint") p.feint = true;
+        if (spec.dex === "lower") p.brace = -x.c.v; // one line, like Brace: your next card counts this card's value lower
+        if (spec.dex === "undo" && p.tally > p.target && p.won.length) { p.tally -= p.won.pop(); p.dexPays++; } // over target: your last win goes back
+        if (spec.dex === "weaken") weaken = Math.max(weaken, x.c.v); // the next world card counts this value lower for beating
+        if (spec.dex === "shave") p.shave = x.c.v; // like Brace, on the score: your next win scores this card's value less
+        if (spec.dex === "shave1") p.shave = 1; // Shave (adopted): your next win scores 1 less; Stumble Shaves too
+        if (spec.dex === "pocket") p.shave = x.c.st ? 0 : 99; // your next win scores nothing
+        if (spec.dex === "draw" && p.deck.length) { const d = p.deck.shift(); p.hand.push(d); if (d.st && d.s === "I") p.stress++; }
         if (WORLD_DEX.has(spec.dex)) movers.push(p);
       }
-      else if (x.c.s === "W") { p.mirror = true; p.discard.push(x.c); }
-      else { // Recalculate: drop a status if held, else the lowest card; draw one
+      else if (x.c.s === "W") { if (spec.mirror !== "none") p.mirror = true; p.discard.push(x.c); }
+      else if (spec.recalc === "draw") { // Recalculate, automatic: draw one card, discarding nothing
+        p.discard.push(x.c);
+        if (p.deck.length) { const drawn = p.deck.shift(); p.hand.push(drawn); if (drawn.st && drawn.s === "I") p.stress++; }
+      } else if (spec.recalc === "random") { // Recalculate, automatic: discard a random card from hand, draw one
+        p.discard.push(x.c);
+        if (p.hand.length && p.deck.length) {
+          p.discard.push(...p.hand.splice(Math.floor(Math.random() * p.hand.length), 1));
+          const drawn = p.deck.shift(); p.hand.push(drawn); if (drawn.st && drawn.s === "I") p.stress++;
+        }
+      } else if (spec.recalc === "onsuit") { // Recalculate, automatic: your next card is on-suit whatever its suit
+        p.discard.push(x.c); p.feint = true;
+      } else if (spec.recalc === "none") p.discard.push(x.c);
+      else { // Recalculate: drop a status if held, else the lowest card; draw one (adopted, and its automatic form)
         p.discard.push(x.c);
         if (p.hand.length && p.deck.length) {
           const i = p.hand.findIndex((c) => c.st);
@@ -362,6 +510,20 @@ function runCheck(rawSpec) {
         }
       }
     }
+    // Stumble variants: a played Stumble goes back on top of your deck ("top"), or back into your hand ("hand"), not to discard.
+    if (spec.stumble === "top" || spec.stumble === "hand") for (const x of plays) {
+      if (!(x.c.st && x.c.s === "D")) continue;
+      const i = x.p.discard.lastIndexOf(x.c);
+      if (i < 0) continue;
+      x.p.discard.splice(i, 1);
+      if (spec.stumble === "top") x.p.deck.unshift(x.c); else x.p.hand.push(x.c);
+      x.p.stumblePrice++;
+    }
+    ctx.nextMod -= weaken;
+    // The world took it: its effect on the next trick. A world of "lose:…" instead fires when a player takes the world card,
+    // a consolation for the world's loss, from that card's suit.
+    if (!last && spec.world && (spec.world.startsWith("lose:") ? !!win : !win)) applyWorldTake(ctx, w, spec.world.replace(/^lose:/, ""), pot, k);
+    else if (!win && !last) ctx.pot = pot; // (no effect) a pot only grows under "rollover"
     // World-row candidates, in seat order. Each acts on the row as the previous one left it.
     const nx = k + 1;
     if (movers.length && nx < N) {
@@ -370,6 +532,10 @@ function runCheck(rawSpec) {
         if (asker && reserve.length) { const t = row[nx]; row[nx] = reserve.shift(); reserve.push(t); asker.dexPays++; }
       } else if (spec.dex === "blind") { // Peek, automatic (replaced): any losing Spade replaces the next world card, unseen, once
         if (reserve.length) { const t = row[nx]; row[nx] = reserve.shift(); reserve.push(t); movers[0].dexPays++; }
+      } else if (spec.dex === "slip") { // automatic: any losing Spade swaps the next two world cards, once a trick
+        if (nx + 1 < N) { [row[nx], row[nx + 1]] = [row[nx + 1], row[nx]]; movers[0].dexPays++; }
+      } else if (spec.dex === "push") { // automatic: any losing Spade sends the next world card to the end of the row, once
+        if (nx < N - 1) { const [t] = row.splice(nx, 1); row.push(t); movers[0].dexPays++; }
       } else if (spec.dex === "reroll") { // Reroll: if anyone asks, the next world card is discarded and replaced, once
         const asker = movers.find((p) => worth(p, row[nx]) <= 0);
         if (asker && reserve.length) { row[nx] = reserve.shift(); asker.dexPays++; }
@@ -388,8 +554,7 @@ function runCheck(rawSpec) {
         }
       }
     }
-  });
-  return { players, worldTakes };
+  }
 }
 
 function situation(name, spec, note) {
@@ -503,11 +668,11 @@ const situations = [
     ];
     const out = [];
     for (const dex of ["return", "return-noloop", "none", "wait", "duck", "pull", "feint"]) for (const [scene, tricks, players] of scenes) {
-      out.push(situation(`Dex ${dex}: ${scene}`, { tricks, dex, players: players() }, "Dexterity consolation experiment."));
+      out.push(situation(`Dex ${dex}: ${scene}`, { tricks, ...OLD, dex, players: players() }, "Dexterity consolation experiment."));
     }
     // Without Slip's return, hands have no slack; test drawing extra cards at the start to restore it.
     for (const dex of ["none", "wait", "duck"]) for (const extraDraw of [1, 2]) for (const [scene, tricks, players] of scenes) {
-      out.push(situation(`Dex ${dex}+${extraDraw}: ${scene}`, { tricks, dex, extraDraw, players: players() }, "Dexterity consolation experiment, extra starting cards."));
+      out.push(situation(`Dex ${dex}+${extraDraw}: ${scene}`, { tricks, ...OLD, dex, extraDraw, players: players() }, "Dexterity consolation experiment, extra starting cards."));
     }
     return out;
   })(),
@@ -525,10 +690,119 @@ const situations = [
     ];
     const out = [];
     for (const dex of ["choose", "blind", "wait", "reroll", "reroll-each", "peek", "sidestep", "shove", "none"]) for (const [scene, tricks, players] of scenes) {
-      out.push(situation(`World ${dex}: ${scene}`, { tricks, dex, players: players() }, "World-row Dexterity experiment."));
+      out.push(situation(`World ${dex}: ${scene}`, { tricks, ...OLD, dex, players: players() }, "World-row Dexterity experiment."));
     }
     return out;
   })(),
+
+  // Part 3e: consolations with no choice left in them: the card you lose with is the whole decision.
+  ...(() => {
+    const scenes = [
+      ["3 players", 10, () => three(10)],
+      ["4 players", 13, () => party()],
+      ["worn party", 13, () => party({ statuses: WORN })],
+      ["mixed stakes", 10, () => mixed()],
+      ["2 players", 7, () => [P("Ana (Strength)", "S", "D", 10), P("Ben (Dexterity)", "D", "I", 10)]],
+      ["quick 3 players", 7, () => three(6)],
+      ["solo", 6, () => [P("Ana alone (Dexterity)", "D", "S", 6)]],
+    ];
+    const rules = [
+      ["current", {}],
+      ["peek blind", { dex: "blind" }], ["peek slip", { dex: "slip" }], ["peek push", { dex: "push" }], ["peek none", { dex: "none" }],
+      ["recalc draw", { recalc: "draw" }], ["recalc random", { recalc: "random" }], ["recalc onsuit", { recalc: "onsuit" }], ["recalc none", { recalc: "none" }],
+      ["stumble random", { stumble: "random" }],
+      // What each consolation is worth: the adopted rules without it.
+      ["no Brace", { brace: "none" }], ["no Mirror", { mirror: "none" }], ["no consolations", { brace: "none", mirror: "none", dex: "none", recalc: "none" }],
+      // One-line consolations in Brace's shape, with Recalculate as "draw a card".
+      ["draw + peek", { recalc: "draw" }], ["draw + no dex", { recalc: "draw", dex: "none" }],
+      ["draw + dex lower", { recalc: "draw", dex: "lower" }], ["draw + dex return", { recalc: "draw", dex: "return" }],
+      ["dex lower", { dex: "lower" }], ["dex return", { dex: "return" }], ["dex draw", { dex: "draw" }],
+      // The same Peeks with bots that lose with a Spade on purpose when it helps them.
+      ["aware current", { aware: true }], ["aware peek blind", { aware: true, dex: "blind" }],
+      ["aware peek slip", { aware: true, dex: "slip" }], ["aware peek push", { aware: true, dex: "push" }],
+    ];
+    const out = [];
+    for (const [rule, extra] of rules) for (const [scene, tricks, players] of scenes) {
+      out.push(situation(`Auto ${rule}: ${scene}`, { tricks, ...OLD, ...extra, players: players() }, "Automatic consolation experiment."));
+    }
+    return out;
+  })(),
+
+  // Part 3f: consolations again, played by look-ahead bots. Slow: run with a few thousand trials.
+  ...(() => {
+    const L = { policy: "look" };
+    const scenes = [
+      ["3 players", 10, () => three(10, L)],
+      ["4 players", 13, () => party(L)],
+      ["2 players", 7, () => [P("Ana (Strength)", "S", "D", 10, L), P("Ben (Dexterity)", "D", "I", 10, L)]],
+      ["quick 3 players", 7, () => three(6, L)],
+      ["solo", 6, () => [P("Ana alone (Dexterity)", "D", "S", 6, L)]],
+    ];
+    const rules = [
+      ["current", {}], ["no consolations", { brace: "none", mirror: "none", dex: "none", recalc: "none" }],
+      ["no Brace", { brace: "none" }], ["no Mirror", { mirror: "none" }], ["peek none", { dex: "none" }], ["recalc none", { recalc: "none" }],
+      ["recalc draw", { recalc: "draw" }], ["draw + no dex", { recalc: "draw", dex: "none" }],
+      ["dex lower", { dex: "lower" }], ["dex draw", { dex: "draw" }], ["peek slip", { dex: "slip" }],
+      ["peek forced", { dex: "blind" }], ["peek forced + draw", { dex: "blind", recalc: "draw" }],
+    ];
+    const out = [];
+    for (const [rule, extra] of rules) for (const [scene, tricks, players] of scenes) {
+      out.push(situation(`Look ${rule}: ${scene}`, { tricks, ...OLD, ...extra, players: players() }, "Consolation experiment with look-ahead bots."));
+    }
+    return out;
+  })(),
+
+  // Part 3g: Dexterity candidates that leave the row alone, with Recalculate as "draw a card", by look-ahead bots.
+  // A hard scene (target 14) leaves room to tell them apart; the others sit near the ceiling for planners.
+  ...(() => {
+    const L = { policy: "look" };
+    const scenes = [
+      ["3 players", 10, () => three(10, L)],
+      ["3 players hard", 10, () => three(14, L)],
+      ["2 players", 7, () => [P("Ana (Strength)", "S", "D", 10, L), P("Ben (Dexterity)", "D", "I", 10, L)]],
+      ["quick 3 players", 7, () => three(6, L)],
+    ];
+    const rules = [
+      ["draw + no dex", { recalc: "draw", dex: "none" }], ["draw + feint", { recalc: "draw", dex: "feint" }],
+      ["draw + undo", { recalc: "draw", dex: "undo" }], ["draw + weaken", { recalc: "draw", dex: "weaken" }],
+      ["current", OLD],
+      ["draw + shave", { recalc: "draw", dex: "shave" }], ["draw + shave1", { recalc: "draw", dex: "shave1" }],
+      ["draw + pocket", { recalc: "draw", dex: "pocket" }],
+      // Yardsticks in the same context: the locked set without Brace, and without Mirror.
+      ["draw, no dex, no Brace", { recalc: "draw", dex: "none", brace: "none" }],
+      ["draw, no dex, no Mirror", { recalc: "draw", dex: "none", mirror: "none" }],
+    ];
+    const out = [];
+    for (const [rule, extra] of rules) for (const [scene, tricks, players] of scenes) {
+      out.push(situation(`Dexlook ${rule}: ${scene}`, { tricks, ...extra, players: players() }, "Dexterity candidates with look-ahead bots."));
+    }
+    return out;
+  })(),
+
+  // Part 3h: automatic effects when the world takes a trick (applyWorldTake), under the adopted rules, by greedy
+  // ("grab") and look-ahead ("look") bots. Part 3i: Stumble's Price made automatic, in worn scenes.
+  ...["grab", "look"].flatMap((policy) => {
+    const L = { policy };
+    const scenes = [
+      ["3 players", 10, () => three(10, L)],
+      ["3 players hard", 10, () => three(14, L)],
+      ["2 players", 7, () => [P("Ana (Strength)", "S", "D", 10, L), P("Ben (Dexterity)", "D", "I", 10, L)]],
+      ["quick 3 players", 7, () => three(6, L)],
+    ];
+    const worlds = ["none", "consolations", "wbrace", "wshave", "wnotrump", "wmirror", "harden", "relief", "momentum", "drawall", "brace2", "shared", "rollover"];
+    const out = [];
+    for (const world of worlds) for (const [scene, tricks, players] of scenes) {
+      out.push(situation(`Worldtake ${policy} ${world}: ${scene}`, { tricks, world: world === "none" ? undefined : world, players: players() }, "When the world takes a trick."));
+    }
+    const worn = [
+      ["worn 3 players", 10, () => three(10, { ...L, statuses: WORN })],
+      ["worn 3 players hard", 10, () => three(14, { ...L, statuses: WORN })],
+    ];
+    for (const stumble of ["price", "highest", "random", "deck", "top", "hand", "none"]) for (const [scene, tricks, players] of worn) {
+      out.push(situation(`Stumbleprice ${policy} ${stumble}: ${scene}`, { tricks, stumble, players: players() }, "Stumble's Price, automatic."));
+    }
+    return out;
+  }),
 
   // Part 3c: rules that might reduce collisions between allies, under Peek.
   ...(() => {
@@ -560,7 +834,7 @@ const situations = [
     ];
     const out = [];
     for (const [rule, extra] of rules) for (const [scene, tricks, players] of scenes) {
-      out.push(situation(`Collide ${rule}: ${scene}`, { tricks, ...extra, players: players() }, "Collision experiment."));
+      out.push(situation(`Collide ${rule}: ${scene}`, { tricks, ...OLD, ...extra, players: players() }, "Collision experiment."));
     }
     return out;
   })(),
@@ -580,13 +854,31 @@ const situations = [
   // Part 4: statuses. Forced play on and off; Stumble's own rule.
   ...[["clean", []], ["worn", WORN], ["heavily worn", HEAVY]].flatMap(([name, statuses]) => [false, true].map((mustStatus) =>
     situation(`Statuses ${name}${mustStatus ? ", forced" : ", not forced"}`, { tricks: 13, mustStatus, players: party({ statuses }) }, "Forced-status experiment."))),
-  ...["price", "trip", "grab", "none"].map((stumble) =>
+  ...["cleanup", "price", "trip", "grab", "none"].map((stumble) =>
     situation(`Stumble ${stumble}: worn party`, { tricks: 13, stumble, players: party({ statuses: WORN }) }, "Stumble experiment.")),
 
   // Part 5: survival targets, with the old Slip for comparison.
   ...[["3M", (m) => 3 * m, "wait"], ["4M", (m) => 4 * m, "wait"], ["4M − 2", (m) => 4 * m - 2, "wait"], ["4M, old Slip", (m) => 4 * m, "return"]].flatMap(([rule, target, dex]) =>
     [2, 3, 4, 5, 6].map((m) => situation(`Survival ${rule}: ${m} Injuries, target ${target(m)}`, { tricks: 10, dex, players: [P(`Survivor (${m} Injuries)`, "S", "D", target(m), { statuses: Array(m).fill("S") }), P("Ally", "D", "I", 10), P("Ally", "I", "W", 10)] },
       `Death on a bust or 7+ short. Rule ${rule}, target ${target(m)}.`))),
+
+  // Part 6: the difficulty table by greedy ("grab") and look-ahead ("look") bots, everyone at the same target.
+  // Standard checks (3n + 1 tricks) at 2–5 players, targets 4–32: "Targets look 3p: target 10". Quick checks (2n + 1)
+  // at 2–5 players and solo checks (1 player, 6 tricks), targets 4–24: "Targets look quick 3p: target 10",
+  // "Targets look solo 1p: target 10". Player i leans on suit i (Strength, Dexterity, Intelligence, Weird, …).
+  ...["grab", "look"].flatMap((policy) => [["", 2, 5, (n) => 3 * n + 1, 32], ["quick ", 2, 5, (n) => 2 * n + 1, 24], ["solo ", 1, 1, () => 6, 24]]
+    .flatMap(([kind, lo, hi, tricks, top]) => Array.from({ length: hi - lo + 1 }, (_, k) => lo + k).flatMap((n) =>
+      Array.from({ length: top - 3 }, (_, k) => 4 + k).map((target) =>
+        situation(`Targets ${policy} ${kind}${n}p: target ${target}`, { tricks: tricks(n),
+          players: Array.from({ length: n }, (_, i) => P(`P${i + 1}`, SUITS[i % 4], SUITS[(i + 1) % 4], target, { policy })) },
+          "Difficulty table sweep."))))),
+
+  // Part 7: the world's consolations (Brace, Shave, Peek, Mirror) at standard checks, 2–5 players, mid-band targets.
+  // Compare with Part 6's "Targets {policy} {n}p" cells, the same checks with no world effect.
+  // "lose:" versions take the world's consolation when a player takes the world card instead.
+  ...["grab", "look"].flatMap((policy) => ["world2", "world2b2", "world2+harden", "world2b2+harden", "lose:world2", "lose:world2b2"].flatMap((world) => [2, 3, 4, 5].flatMap((n) =>
+    [9, 13, 16, 19, 22, 25, 28].map((target) => situation(`Worldcons ${policy} ${world} ${n}p: target ${target}`, { tricks: 3 * n + 1, world,
+      players: Array.from({ length: n }, (_, i) => P(`P${i + 1}`, SUITS[i % 4], SUITS[(i + 1) % 4], target, { policy })) }, "The world's consolations."))))),
 ];
 
 console.log(JSON.stringify({ trials: TRIALS, situations: situations.filter(Boolean) }, null, 2));

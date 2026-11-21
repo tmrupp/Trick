@@ -51,7 +51,10 @@ export class Room {
     // A save keeps the game's state, so later rule changes never rewrite past checks. Older saves without it replay.
     if (save.state && save.state.actions && save.state.actions.length === save.actions.length) this.state = save.state;
     else try {
-      this.state = replay({ seed: save.seed, gmSeat: save.gmSeat, rules: save.rules }, save.actions);
+      // The rules a save was played under: recorded on it, else in its state; a save with neither predates automatic
+      // consolations, so it replays under the older rules (legacy.mjs).
+      const rules = save.rules || (save.state && save.state.rules) || { peek: "choose" };
+      this.state = replay({ seed: save.seed, gmSeat: save.gmSeat, rules }, save.actions);
     } catch (e) {
       // Saves from while Peek happened automatically won't replay with the Peek choice: keep them on that rule.
       if (save.rules) throw e;

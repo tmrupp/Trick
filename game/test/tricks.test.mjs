@@ -115,8 +115,28 @@ test("a status in the world card's suit must be played", () => {
   assert.deepEqual(legalCards(s, "ben").length, 1);
 });
 
-test("Stumble's Price: playing Stumble discards an ordinary card of your choice", () => {
+test("a played Stumble costs nothing now and goes back on top of your deck at cleanup", () => {
   let s = dealt(game());
+  s.check.trick = s.check.tricks - 2;
+  rig(s, { row: ["D5", "S1"], hands: { ana: ["S1", "S2"], ben: ["Dx", "D7", "I4"], cara: ["I1", "I2"] } });
+  const discardBefore = s.characters.ben.discard.length, deckBefore = s.characters.ben.deck.length;
+  let events;
+  ({ state: s } = run(s, lock(s, "ben", "Dx"), lock(s, "ana", "S1"), lock(s, "cara", "I1")));
+  assert.equal(hand(s, "ben").length, 2, "no Price: both ordinary cards stay in hand");
+  assert.equal(s.characters.ben.discard.length, discardBefore);
+  ({ state: s } = run(s, lock(s, "ben", "D7"), lock(s, "ana", "S2"), lock(s, "cara", "I2")));
+  ({ state: s, events } = run(s, { type: "endCheck" }));
+  const ben = s.characters.ben;
+  assert.equal(ben.deck.length, deckBefore + 1);
+  assert.ok(ben.deck.at(-1).status && ben.deck.at(-1).suit === "D", "the Stumble is the deck's top card");
+  assert.ok(!ben.discard.some((c) => c.status && c.suit === "D"), "not in discard, so rest can't reach it");
+  assert.equal(ben.discard.length, discardBefore + 2, "the unplayed 4 and the played 7");
+  assert.ok(events.some((e) => e.type === "stumbleToDeck" && e.id === "ben" && e.n === 1));
+});
+
+test("Older games' Stumble's Price: playing Stumble discards an ordinary card of your choice", () => {
+  let s = dealt(game());
+  s.rules = { consolations: 2 };
   rig(s, { row: ["D5", "S1"], hands: { ana: ["S1", "S2"], ben: ["Dx", "D7", "I4"], cara: ["I1", "I2"] } });
   assert.throws(() => run(s, lock(s, "ben", "Dx")), /Price/);
   const discardBefore = s.characters.ben.discard.length;
@@ -126,8 +146,49 @@ test("Stumble's Price: playing Stumble discards an ordinary card of your choice"
   assert.equal(hand(s, "ben").length, 1);
 });
 
-test("Peek: each losing Spade chooses blind; the next world card is replaced once if anyone chooses to", () => {
+test("Shave: a losing Spade makes your next win score 1 less, never below 0, for one play", () => {
   let s = dealt(game());
+  rig(s, { row: ["S9", "S5", "S1", "S8"], hands: { ana: ["D1", "S7", "D2", "S9"], ben: ["S2", "S3", "S4", "S6"], cara: ["I1", "I2", "I3", "I4"] } });
+  ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "S2"), lock(s, "cara", "I1")));
+  assert.equal(s.check.players.ana.shave, 1, "a losing Spade Shaves");
+  assert.equal(s.check.pending.length, 0, "nothing to answer");
+  assert.equal(s.check.phase, "play");
+  // Ana's 7 takes the 5 and scores 4.
+  ({ state: s } = run(s, lock(s, "ana", "S7"), lock(s, "ben", "S3"), lock(s, "cara", "I2")));
+  assert.equal(s.check.players.ana.tally[0].score, 4);
+  assert.equal(s.check.players.ana.tally[0].shave, 1);
+  assert.equal(s.check.players.ana.shave, 0, "Shave lasts one play");
+});
+
+test("Shave never takes a win below 0", () => {
+  let s = dealt(game(["ana", "ben"]));
+  rig(s, { row: ["S9", "S1", "S5"], hands: { ana: ["D1", "S2", "S3"], ben: ["I3", "S1", "S4"] } });
+  ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "I3")));
+  ({ state: s } = run(s, lock(s, "ana", "S2"), lock(s, "ben", "S1")));
+  assert.equal(s.check.players.ana.tally[0].score, 0, "the Ace scores 0 after a Shave");
+  assert.equal(s.check.players.ana.tally[0].card.v, 1);
+});
+
+test("Recalculate: a losing Diamond draws a card at once", () => {
+  let s = dealt(game());
+  rig(s, { row: ["S9", "S5"], hands: { ana: ["S1", "S2"], ben: ["S2", "S3"], cara: ["I1", "I2"] } });
+  const deck = s.characters.cara.deck.length;
+  let events;
+  ({ state: s, events } = run(s, lock(s, "ana", "S1"), lock(s, "ben", "S2"), lock(s, "cara", "I1")));
+  assert.equal(hand(s, "cara").length, 2, "one played, one drawn");
+  assert.equal(s.characters.cara.deck.length, deck - 1);
+  assert.ok(events.some((e) => e.type === "recalculated" && e.id === "cara"));
+  assert.equal(s.check.pending.length, 0, "nothing to answer");
+  assert.equal(s.check.phase, "play");
+});
+
+test("new games use the automatic consolations; older games keep Peek and the choosing Recalculate", () => {
+  assert.deepEqual(game().rules, { consolations: 2, stumble: "deck", world: "lose" });
+});
+
+test("Older games' Peek: each losing Spade chooses blind; the next world card is replaced once if anyone chooses to", () => {
+  let s = dealt(game());
+  s.rules = { peek: "choose" };
   rig(s, { row: ["S9", "I8"], hands: { ana: ["D1", "S2"], ben: ["D2", "D3"], cara: ["I1", "I2"] }, worldDeck: ["W1", "S6", "S4"] });
   ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "D2"), lock(s, "cara", "I1")));
   let ck = s.check;
@@ -154,8 +215,9 @@ test("Peek: each losing Spade chooses blind; the next world card is replaced onc
   assert.equal(hand(s, "cara").length, 1, "Recalculate discards one and draws one");
 });
 
-test("Peek: if every losing Spade keeps, the row stays; saves from the automatic Peek still replay", () => {
+test("Older games' Peek: if every losing Spade keeps, the row stays; saves from the automatic Peek still replay", () => {
   let s = dealt(game(["ana", "ben"]));
+  s.rules = { peek: "choose" };
   rig(s, { row: ["S9", "I8"], hands: { ana: ["D1", "S2"], ben: ["S3", "S4"] }, worldDeck: ["W1", "S4"] });
   let events;
   ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "S3")));
@@ -220,4 +282,62 @@ test("Blessed: granted to the top of the deck, given between tricks, and returne
   assert.equal(s.check.log[0].reason, "blessed");
   assert.equal(s.characters.ana.reserve.length, reserveBefore + 1, "Ana's Blessed went back to her reserve");
   assert.ok(s.characters.ana.reserve.some((c) => c.id === ben.id));
+});
+
+test("the world's consolation: a player takes a Strength world card, and the next world card is Braced by its value", () => {
+  let s = dealt(game(["ana", "ben"]));
+  rig(s, { row: ["S5", "D6", "I3"], hands: { ana: ["S9", "S1", "S2"], ben: ["I1", "I2", "I4"] } });
+  let events;
+  ({ state: s, events } = run(s, lock(s, "ana", "S9"), lock(s, "ben", "I1")));
+  assert.equal(s.check.players.ana.tally[0].score, 5);
+  assert.equal(s.check.worldRow[1].beat, 11, "6 + 5");
+  assert.ok(events.some((e) => e.type === "worldConsoled" && e.effect === "brace" && e.beat === 11));
+  // Nothing short of 12 takes it now; it still scores its printed 6.
+  ({ state: s } = run(s, lock(s, "ana", "S1"), lock(s, "ben", "I2")));
+  assert.equal(s.check.players.ana.tally.length, 1);
+  assert.equal(s.check.worldTaken.at(-1).v, 6);
+});
+
+test("the world's consolation: Dexterity Shaves the next world card, on top of a player's own Shave", () => {
+  let s = dealt(game(["ana", "ben"]));
+  rig(s, { row: ["D3", "S5", "S8"], hands: { ana: ["D1", "S7", "S9"], ben: ["D4", "D2", "I1"] } });
+  ({ state: s } = run(s, lock(s, "ana", "D1"), lock(s, "ben", "D4")));
+  assert.equal(s.check.worldRow[1].shave, 1, "Ben took a Dexterity card: the next world card scores 1 less");
+  assert.equal(s.check.players.ana.shave, 1, "Ana lost with a Spade: her own Shave");
+  ({ state: s } = run(s, lock(s, "ana", "S7"), lock(s, "ben", "D2")));
+  assert.equal(s.check.players.ana.tally[0].score, 3, "5 less her Shave and the world's");
+  assert.equal(s.check.players.ana.tally[0].shave, 2);
+});
+
+test("the world's consolation: Intelligence Peeks, Weird Mirrors; none when the world takes it or after the last trick", () => {
+  let s = dealt(game(["ana", "ben"]));
+  rig(s, { row: ["I2", "S4", "W3", "S9", "W5"], hands: { ana: ["I1", "S2", "S3", "S6", "S7"], ben: ["D9", "D1", "D2", "D3", "D4"] }, worldDeck: ["D6", "S2"] });
+  let events;
+  // Ben's 9 of Dexterity, his trump, takes the Intelligence 2: the next world card goes under the world deck, its top card comes up.
+  ({ state: s, events } = run(s, lock(s, "ana", "I1"), lock(s, "ben", "D9")));
+  assert.equal(s.check.worldRow[1].suit + s.check.worldRow[1].v, "S2");
+  assert.equal(s.check.worldDeck[0].suit + s.check.worldDeck[0].v, "S4");
+  assert.ok(events.some((e) => e.type === "worldConsoled" && e.effect === "peek"));
+  // The world takes the new 2 (Ana's 2 only ties it): no world consolation.
+  ({ state: s, events } = run(s, lock(s, "ana", "S2"), lock(s, "ben", "D1")));
+  assert.ok(!events.some((e) => e.type === "worldConsoled"));
+  assert.equal(s.check.worldRow[2].beat ?? null, null);
+  // Ana takes the Weird 3 with her trump: the next world card, a 9, is Mirrored.
+  ({ state: s, events } = run(s, lock(s, "ana", "S6"), lock(s, "ben", "D2")));
+  assert.equal(s.check.worldRow[3].beat, 2, "Mirrored 9 counts 2");
+  ({ state: s } = run(s, lock(s, "ana", "S3"), lock(s, "ben", "D3")));
+  assert.equal(s.check.players.ana.tally.at(-1).score, 9, "a Mirrored card scores its printed value");
+  // The last trick: a win there gives no world consolation.
+  ({ state: s, events } = run(s, lock(s, "ana", "S7"), lock(s, "ben", "D4")));
+  assert.ok(!events.some((e) => e.type === "worldConsoled"));
+});
+
+test("older games give the world no consolation", () => {
+  let s = dealt(game(["ana", "ben"]));
+  s.rules = { consolations: 2, stumble: "deck" };
+  rig(s, { row: ["S5", "D6"], hands: { ana: ["S9", "S1"], ben: ["I1", "I2"] } });
+  let events;
+  ({ state: s, events } = run(s, lock(s, "ana", "S9"), lock(s, "ben", "I1")));
+  assert.equal(s.check.worldRow[1].beat ?? null, null);
+  assert.ok(!events.some((e) => e.type === "worldConsoled"));
 });

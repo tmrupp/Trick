@@ -42,10 +42,10 @@ function checkPublic(ck, state) {
       goal: p.goal, target: p.target, suggested: p.suggested ?? null, survival: p.survival,
       approach: p.approach, approachText: p.approachText || null, approved: p.approved,
       handCount: p.hand.length, played: p.played.map(pub),
-      tally: p.tally.map((t) => ({ card: pub(t.card), mirrored: t.mirrored, score: t.score, adjustment: !!t.adjustment, reason: t.reason || null })),
+      tally: p.tally.map((t) => ({ card: pub(t.card), mirrored: t.mirrored, score: t.score, shave: t.shave || 0, adjustment: !!t.adjustment, reason: t.reason || null })),
       boost: p.boost || 0,
       total: p.tally.reduce((a, t) => a + t.score, 0),
-      brace: p.brace, mirror: p.mirror,
+      brace: p.brace, mirror: p.mirror, shave: p.shave || 0,
       locked: !!ck.locks[id],
       // A left-to-right bot plays with its hand face up, in order: the leftmost card plays next.
       openHand: state.characters[id] && state.characters[id].bot === "ltr" ? p.hand.map(pub) : null,
@@ -55,7 +55,7 @@ function checkPublic(ck, state) {
     id: ck.id, kind: ck.kind, tricks: ck.tricks, participants: ck.participants.slice(),
     situation: ck.situation || null,
     phase: ck.phase, trick: ck.trick,
-    worldRow: ck.worldRow.map((c) => ({ ...pub(c), beat: c.beat ?? null })),
+    worldRow: ck.worldRow.map((c) => ({ ...pub(c), beat: c.beat ?? null, shave: c.shave || 0 })),
     worldDeckCount: ck.worldDeck.length,
     worldTaken: ck.worldTaken.map(pub),
     players,
@@ -77,6 +77,7 @@ function journalFor(state, who) {
 export function viewFor(state, who) {
   const view = {
     seats: state.seats.slice(), gmSeat: state.gmSeat,
+    rules: { ...(state.rules || {}) }, // which consolations this game uses (older games keep Peek)
     characters: {},
     check: checkPublic(state.check, state),
     history: state.history.map((h) => ({ id: h.id, kind: h.kind, tricks: h.tricks, results: h.results, log: h.log || [], players: h.players || null, consequences: h.consequences || [] })),

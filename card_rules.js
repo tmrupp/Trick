@@ -12,20 +12,20 @@ globalThis.TrickCoreCards = {
   "dexterity": {
     "suitLabel": "Spades — Dexterity",
     "domain": "Spades / Consolation",
-    "title": "PEEK",
+    "title": "SHAVE",
     "lines": [
-      "You may replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost."
+      "Your next card, if it wins, scores 1 less, never below 0. Shave a win to land exactly on your target."
     ],
-    "description": "You may replace the next world card, unseen: put it on the bottom of the world deck and deal the top card face up in its place. Once a trick, however many Spades lost."
+    "description": "Your next card, if it wins, scores 1 less, never below 0. Shave a win to land exactly on your target."
   },
   "intelligence": {
     "suitLabel": "Diamonds — Intelligence",
     "domain": "Diamonds / Consolation",
     "title": "RECALCULATE",
     "lines": [
-      "Discard one card from hand, then draw one. You need a card to discard."
+      "Draw one card."
     ],
-    "description": "Discard one card from hand, then draw one. You need a card to discard."
+    "description": "Draw one card."
   },
   "weird": {
     "suitLabel": "Clubs — Weird",
@@ -50,9 +50,9 @@ globalThis.TrickCoreCards = {
     "domain": "Spades / Status",
     "title": "STUMBLE",
     "lines": [
-      "When you play Stumble, discard an ordinary card from your hand, your choice."
+      "At cleanup, a played Stumble goes on top of your deck, not to discard: you draw it first next check, and rest can't reach it there."
     ],
-    "description": "When you play Stumble, discard an ordinary card from your hand, your choice."
+    "description": "At cleanup, a played Stumble goes on top of your deck, not to discard: you draw it first next check, and rest can't reach it there."
   },
   "stress": {
     "suitLabel": "Diamonds — Stress",

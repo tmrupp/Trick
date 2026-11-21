@@ -16,11 +16,15 @@ export { viewFor } from "./views.mjs";
 
 export const ENGINE_VERSION = 1;
 
-// rules.peek: "choose" (each losing Dexterity card chooses, blind) or "auto" (saves from when Peek always replaced).
-export function createGame({ seed = Date.now(), gmSeat = 0, rules = {} } = {}) {
+// Every new game's rules (RULES.md): consolations 2 is Shave and Recalculate's draw; stumble "deck" sends a played
+// Stumble to the top of your deck at cleanup; world "lose" gives the world a consolation when a player takes its card. Games begun before keep what they began with: no consolations field
+// means Peek and the choosing Recalculate (rules.peek "choose" or "auto"), no stumble field means Stumble's Price
+// (see legacy.mjs), and no world field means the world takes no consolation.
+export const RULES_NOW = { consolations: 2, stumble: "deck", world: "lose" };
+export function createGame({ seed = Date.now(), gmSeat = 0, rules = RULES_NOW } = {}) {
   return {
     version: ENGINE_VERSION,
-    rules: { peek: "choose", ...rules },
+    rules: { ...rules },
     seed: String(seed),
     rng: seedFrom(seed),
     characters: {},

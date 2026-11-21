@@ -2,11 +2,13 @@
 
 Thirteen table situations and seven experiments, run under the current [RULES.md](../../RULES.md):
 - the 20-card starter has two of each value;
-- Peek is Dexterity's consolation: each losing Spade chooses, blind, whether to replace the next world card, once a trick;
+- consolations happen by themselves: Brace, Shave (Dexterity: your next win scores 1 less), Recalculate draws a card, Mirror;
 - ties go by suit, then trump;
 - a status in the world card's suit must be played;
 - survival targets 3 × Injuries;
 - Mirror makes your next card count 11 minus its value for beating.
+
+**Consolations became automatic after most of these runs.** Peek gave way to Shave, and Recalculate stopped discarding. Since then the world has taken a consolation too, when a player takes its card. Only the default scene (situation 1), the parity test and the difficulty table in RULES.md have been re-run under these rules; the tables below otherwise use Peek and the choosing Recalculate. The reasons, with look-ahead bots, are in TALLY.md (*Automatic consolations*).
 
 **Mirror changed after most of these runs.** It used to make the next world card you won score 11 minus its value. Only the default scene (situation 1) and the difficulty table in RULES.md have been re-run with the new Mirror; the other tables below still use the old one. With the new Mirror, busts fall 2–4 points in every difficulty band and success or better rises 1–4, because a Mirrored high card is a safe way to lose and a Mirrored low card can win.
 
@@ -44,11 +46,11 @@ Unless stated, players use fresh 20-card starter decks whose primary suit is the
 
 | Player | Critical | Success | Partial | Failure | Bust |
 | --- | --- | --- | --- | --- | --- |
-| Ana (Strength) | 21% | 45% | 17% | 7% | 9% |
-| Ben (Dexterity) | 14% | 41% | 21% | 16% | 8% |
-| Cara (Intelligence) | 15% | 38% | 18% | 11% | 18% |
+| Ana (Strength) | 20% | 47% | 20% | 8% | 5% |
+| Ben (Dexterity) | 12% | 39% | 24% | 21% | 5% |
+| Cara (Intelligence) | 16% | 44% | 21% | 10% | 9% |
 
-The world takes 45% of tricks. More than half of all results are success or better, and about 1 in 9 busts. (Re-run with the new Mirror and the Peek choice.)
+The world takes 48% of tricks. About 60% of results are success or better, and about 1 in 15 busts. (Re-run with the automatic consolations and the world's consolation. Without the world's consolation, critical was 23%, 14% and 17%; under Peek and the choosing Recalculate busts were 9%, 8% and 18%.)
 
 ### 2. The same scene, with allies yielding
 
@@ -283,12 +285,14 @@ A **runoff** settles a collision by revealing cards from hand: each contender re
 
 | Stumble's rule | Critical | Failure | Bust |
 | --- | --- | --- | --- |
-| **Price:** discard an ordinary card when played *(adopted)* | 16% | 12% | 12% |
+| **Price:** discard an ordinary card when played *(adopted then)* | 16% | 12% | 12% |
 | Trip: the next world card counts 2 higher for beating | 17% | 13% | 11% |
 | Grab: if nobody wins the trick, a played Stumble takes the world card | 16% | 12% | **16%** |
 | No rule | 17% | 11% | 11% |
 
 Without the loop, Stumble is forced out about once per Dexterity world card and then it's spent. So Price is paid only 0.4 times a check, and the four rules land within a point or two of each other. Grab is the only one with a clear effect: it adds busts.
+
+**Since then, Stumble comes back** instead of costing a Price: at cleanup a played Stumble goes on top of your deck, so your next check opens with it and rest can't clear it. Within one check that costs nothing beyond the forced play. Under today's automatic consolations, 20,000 greedy-bot checks of the worn party give comes back 19% / 10% / 5% (critical / failure / bust), the same as no rule, against Price's 17% / 12% / 6%. Its cost is in the next check, which these one-check runs don't see.
 
 ## Survival
 
@@ -378,7 +382,7 @@ Below 6, busts climb (34% at target 1 with 2 players), while success or better d
 
 - **Adopted** (RULES.md):
   - the suit-then-trump tie-break, with simultaneous play kept;
-  - forced statuses, with Stumble keeping Price;
+  - forced statuses, with Stumble keeping Price (since replaced: a played Stumble goes on top of your deck at cleanup);
   - Peek as a blind replace, once a trick, with no extra cards;
   - targets from 6;
   - survival at 3 × M;

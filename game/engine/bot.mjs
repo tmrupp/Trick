@@ -1,24 +1,30 @@
 // Simple bot players, matching the bots in scripts/simulate_tally.mjs, so engine-driven games can be compared
 // with the published simulations. A bot reads only its own hand and the public table.
 import { apply } from "./index.mjs";
-import { legalCards } from "./check.mjs";
+import { legalCards, stumblePrice } from "./check.mjs";
 import { isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
 
 const total = (p) => p.tally.reduce((a, t) => a + t.score, 0);
 const onSuit = (c, p, w) => !isBlessed(c) && (c.suit === p.approach || c.suit === w.suit);
 
-// Which losing card to spend: statuses first, Dexterity and Weird next, then Strength, Intelligence, and Stumble last.
+// Which losing card to spend: statuses first, Dexterity and Weird next, then Strength, Intelligence, and Stumble last
+// (a played Stumble goes on top of the deck for next check; in older games it costs Stumble's Price).
 function passOrder(c) {
   if (isBlessed(c)) return 9;
   if (isStatus(c)) return c.suit === "D" ? 6 : 1;
   return { D: 2, W: 2, S: 3, I: 4 }[c.suit];
 }
 
+// What a world card counts for beating (a GM adjustment or the world's Brace or Mirror), and what taking it would
+// score after the player's and the world's Shave.
+const beatOf = (wc) => wc.beat ?? wc.v;
+const prizeOf = (wc, p) => Math.max(0, wc.v - (p.shave || 0) - (wc.shave || 0));
+
 // How much a player wants this world card next: 3 exact, 2 fits, 0 no use, -2 forces a busting win.
 export function worth(p, wc) {
   const need = p.target - total(p);
-  const prize = wc.v;
-  const beats = p.hand.filter((c) => !isBlessed(c) && onSuit(c, p, wc) && countsAs(c, p.mirror) + p.brace > wc.v);
+  const prize = prizeOf(wc, p);
+  const beats = p.hand.filter((c) => !isBlessed(c) && onSuit(c, p, wc) && countsAs(c, p.mirror) + p.brace > beatOf(wc));
   if (p.hand.length && beats.length === p.hand.length && prize > need) return -2;
   if (!beats.length || need <= 0 || prize > need) return 0;
   return prize === need ? 3 : 2;
@@ -35,13 +41,13 @@ export function chooseLock(state, charId) {
     card = hand[0]; // a forced status
   } else {
     const need = p.target - total(p);
-    const prize = w.v;
+    const prize = prizeOf(w, p);
     const blessed = hand.find(isBlessed);
     if (blessed && prize === need) card = blessed;
     else {
-      const opts = hand.filter((c) => !isBlessed(c)).map((c) => ({ c, bv: countsAs(c, p.mirror) + p.brace, beats: onSuit(c, p, w) && countsAs(c, p.mirror) + p.brace > w.v }));
+      const opts = hand.filter((c) => !isBlessed(c)).map((c) => ({ c, bv: countsAs(c, p.mirror) + p.brace, beats: onSuit(c, p, w) && countsAs(c, p.mirror) + p.brace > beatOf(w) }));
       const beaters = opts.filter((o) => o.beats).sort((a, b) => a.bv - b.bv);
-      if (beaters.length && prize <= need) card = beaters[beaters.length > 1 && beaters[0].bv - w.v < 2 ? 1 : 0].c;
+      if (beaters.length && prize <= need) card = beaters[beaters.length > 1 && beaters[0].bv - beatOf(w) < 2 ? 1 : 0].c;
       else {
         const losers = opts.filter((o) => !o.beats).sort((a, b) => passOrder(a.c) - passOrder(b.c) || a.c.v - b.c.v);
         card = losers.length ? losers[0].c : beaters.length ? beaters[0].c : hand[0];
@@ -49,7 +55,7 @@ export function chooseLock(state, charId) {
     }
   }
   let priceCardId;
-  if (isStatus(card) && card.suit === "D") {
+  if (isStatus(card) && card.suit === "D" && stumblePrice(state)) {
     const ords = p.hand.filter((c) => c !== card && isOrdinary(c)).sort((a, b) => a.v - b.v);
     if (ords.length) priceCardId = ords[0].id;
   }
@@ -77,13 +83,13 @@ export function answerPrompt(state, prompt) {
 
 // ---- Bots at the table ----
 
-// Left to right: the leftmost card it may legally play; for Stumble's Price, its leftmost ordinary card.
+// Left to right: the leftmost card it may legally play; for older games' Stumble's Price, its leftmost ordinary card.
 export function chooseLockLeftToRight(state, charId) {
   const p = state.check.players[charId];
   const legal = new Set(legalCards(state, charId));
   const card = p.hand.find((c) => legal.has(c.id));
   let priceCardId;
-  if (card && isStatus(card) && card.suit === "D") priceCardId = p.hand.find((c) => c !== card && isOrdinary(c))?.id;
+  if (card && isStatus(card) && card.suit === "D" && stumblePrice(state)) priceCardId = p.hand.find((c) => c !== card && isOrdinary(c))?.id;
   return { type: "lockCard", charId, cardId: card.id, priceCardId };
 }
 
@@ -122,10 +128,10 @@ function nextPrompt(ck) {
 }
 
 // Play one whole check with bots. goals: { charId: { target, approach } }. Returns the final state.
-export function playCheck(state, { kind = "standard", goals, consequences = [] }, opts = { inPlace: true }) {
+export function playCheck(state, { kind = "standard", goals, consequences = [], tricks }, opts = { inPlace: true }) {
   const step = (a) => { state = apply(state, a, opts).state; };
   const ids = Object.keys(goals);
-  step({ type: "beginCheck", kind, participants: ids });
+  step({ type: "beginCheck", kind, participants: ids, tricks });
   for (const id of ids) {
     const p = state.check.players[id];
     step({ type: "declareApproach", charId: id, suit: goals[id].approach, goal: p.survival ? undefined : "Bot goal" });

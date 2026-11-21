@@ -83,6 +83,8 @@ button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: poin
 .cf.sm { --cw: 46px; } .cf.md { --cw: 72px; } .cf.lg { --cw: 104px; } .cf.xl { --cw: 150px; }
 .cf.empty { border: 1.5px dashed var(--rule-soft); }
 .cf .beat { position: absolute; top: -10px; right: -8px; line-height: 1; background: var(--ink); color: var(--card); font: 700 12px var(--label); padding: 4px 6px; border-radius: 0; }
+/* The current world card shows the same note in words under it (worldNote), so its corner badge would only be clipped. */
+.cf.stage.current .beat, .cf.xl.current .beat { display: none; }
 .cf.current { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink); }
 .cf.past { opacity: .35; filter: saturate(.4); }
 .cf.chosen { transform: translateY(-10px); box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--ink); }
@@ -402,6 +404,8 @@ button.toned-btn:hover { background: color-mix(in srgb, var(--tone) 14%, var(--c
 .pill.diff-hard { color: #fff; border-color: var(--hard-fill); background: var(--hard-fill); }
 .pill.diff-very-hard { color: #fff; border-color: var(--bad-fill); background: var(--bad-fill); }
 .pill.diff-extreme { color: #fff; border: 2px solid var(--bad-fill); background: #111; }
+.pill.diff-heroic { color: var(--warn-fill); border: 2px solid var(--warn-fill); background: #111; }
+.pill.diff-legendary { color: var(--warn-fill); border: 3px double var(--warn-fill); background: #111; }
 .pill.diff-too-low, .pill.diff-beyond, .pill.diff-none { color: var(--muted); border-style: dashed; }
 
 /* Results. */

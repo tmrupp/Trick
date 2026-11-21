@@ -13,7 +13,7 @@
 <header class="phone-head"><h1 id="title">GM</h1><span id="status" class="dot" data-tip="Connecting…"></span><span id="tools"></span></header>
 <main id="main"></main>
 <script type="module">
-import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, eventText, toast, chime, itemsById, racesById, stripTags, menu, openMenuAt, presetTricks, CHECK_KINDS, num, segmented, picked, confirmButton, mountHeader, setRedraw, trickLog, consolationText, choosingChip, layoutSwitch, notesPanel, suitChoice, tone, difficultyPill, resultPill, tallyClass, historyPanel, inPlayPills, closedNotice, STATUSES_PER_SUIT } from "/shared/client.js";
+import { connect, params, h, render, forget, draft, cardFace, cardText, SUITS, eventText, toast, chime, itemsById, racesById, stripTags, menu, openMenuAt, presetTricks, CHECK_KINDS, num, segmented, picked, confirmButton, mountHeader, setRedraw, trickLog, consolationText, choosingChip, layoutSwitch, notesPanel, suitChoice, tone, difficultyPill, difficultyBands, resultPill, tallyClass, historyPanel, inPlayPills, closedNotice, STATUSES_PER_SUIT, consolationPills } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -79,7 +79,7 @@ function adjustItems(ck, view, id, late = false) {
   return [
     late ? null : { label: "Next card counts higher", tip: "Their next card counts this much more for beating (not for scoring). Once.", items: [{ label: "Counts higher by", fields: [{ type: "number", value: 2, min: -10, max: 10 }, why], submit: "Apply", onsubmit: ([n, w]) => act({ type: "gmBoost", charId: id, amount: n, reason: w || undefined }) }] },
     { label: "Change their tally", tip: "Add to or take from what they've scored.", items: [{ label: "Change by", fields: [{ type: "number", value: 1, min: -20, max: 20 }, why], submit: "Change", onsubmit: ([n, w]) => act({ type: "gmAdjustTally", charId: id, delta: n, reason: w || undefined }) }] },
-    { label: "Change their target", hint: p.target != null ? `now ${p.target}` : "", items: [{ label: "New target", fields: [{ type: "number", value: p.target ?? 10, min: 1, max: 40 }, why], submit: "Set", onsubmit: ([n, w]) => act({ type: "gmAdjustTarget", charId: id, target: n, reason: w || undefined }) }] },
+    { label: "Change their target", hint: p.target != null ? `now ${p.target}` : "", items: [{ label: "New target", fields: [{ type: "number", value: p.target ?? CHECK_KINDS.standard.defaultTarget, min: 1, max: 40 }, why], submit: "Set", onsubmit: ([n, w]) => act({ type: "gmAdjustTarget", charId: id, target: n, reason: w || undefined }) }] },
     late ? null : "-",
     late ? null : { label: "They draw a card", tip: "From their deck, reshuffling if it's empty.", onclick: () => act({ type: "gmDraw", charId: id, n: 1 }) },
     late || !hand.length ? null : { label: "Discard from their hand", items: hand.map((c) => ({ label: c.label, tip: cardText(c), disabled: view.locks && view.locks[id] && view.locks[id].cardId === c.id, onclick: () => act({ type: "gmDiscard", charId: id, cardId: c.id }) })) },
@@ -225,7 +225,7 @@ function checkTab(info, view, names) {
   if (ck.phase === "setup") {
     out.push(h("div", { class: "panel stack" }, h("h2", {}, "Trumps, goals and targets"),
       h("p", { class: "small muted" }, "You set each one. Players can fill in theirs from their phones to save you the typing; bots pick their primary suit. ",
-        ck.kind === "standard" ? "Targets: 6–8 easy · 9–11 moderate · 12–14 hard · 15–17 very hard · 18–20 extreme. Default 10." : "Targets 6–12. Default 6."),
+        `Targets: ${difficultyBands(ck.kind).map(([name, lo, hi]) => `${lo}–${hi} ${name.toLowerCase()}`).join(" · ")}. Default ${CHECK_KINDS[ck.kind].defaultTarget}.`),
       // One target for everyone (survival goals keep theirs).
       ck.participants.filter((id) => !ck.players[id].survival).length > 1 ? h("div", { class: "row" }, h("span", { class: "small muted field-label" }, "Everyone"),
         num("t-all", CHECK_KINDS[ck.kind].defaultTarget, { min: 1, max: 40, "aria-label": "One target for everyone", oninput: () => draw() }),
@@ -239,7 +239,7 @@ function checkTab(info, view, names) {
         const ch = view.characters[id];
         // The box resets when the player's suggestion or the set target changes.
         const tk = `t-${id}-${p.suggested ?? ""}-${p.target ?? ""}`;
-        const t = Number(val(tk, p.target ?? p.suggested ?? (ck.kind === "standard" ? 10 : 6)));
+        const t = Number(val(tk, p.target ?? p.suggested ?? CHECK_KINDS[ck.kind].defaultTarget));
         const set = (fields) => act({ type: "setGoal", charId: id, ...fields });
         const who = ch.bot ? (ch.bot === "ltr" ? "left-to-right bot" : "greedy bot") : null;
         return h("div", { class: `panel stack toned ${tone(p.approach || ch.primary)}` },
@@ -264,7 +264,7 @@ function checkTab(info, view, names) {
             p.approach || ch.bot ? null : h("span", { class: "small muted" }, "Waiting for their phone, or pick one.")),
           // Target
           p.survival ? null : h("div", { class: "row" }, h("span", { class: "small muted field-label" }, "Target"),
-            num(tk, p.target ?? p.suggested ?? (ck.kind === "standard" ? 10 : 6), { min: 1, max: 40, oninput: () => draw() }), difficultyPill(ck.kind, t),
+            num(tk, p.target ?? p.suggested ?? CHECK_KINDS[ck.kind].defaultTarget, { min: 1, max: 40, oninput: () => draw() }), difficultyPill(ck.kind, t),
             p.suggested != null ? h("span", { class: "small muted", "data-tip": "What the player suggested from their phone." }, `they suggest ${p.suggested}`) : null,
             h("button", { class: !p.approved ? "primary" : "", onclick: () => set({ target: Number(val(tk, t)) }) }, p.approved ? "Change target" : p.target != null ? "Confirm target" : "Set target")));
       })),
@@ -281,8 +281,7 @@ function checkTab(info, view, names) {
         h("div", { class: "headrow" }, h("strong", {}, names[id]),
           h("div", { class: "facts small" },
             h("span", { class: `pill ${tallyClass(p.total, p.target)}`, "data-tip": `${p.approach ? `Trump ${SUITS[p.approach].name}. ` : ""}What they've scored, against their target.` }, p.approach ? `${SUITS[p.approach].sym} ` : "", `${p.total} / ${p.target}`),
-            p.brace ? h("span", { class: `pill tinted ${tone("S")}`, "data-tip": consolationText("S") }, `Brace +${p.brace}`) : null,
-            p.mirror ? h("span", { class: `pill tinted ${tone("W")}`, "data-tip": consolationText("W") }, "Mirror") : null,
+            ...consolationPills(p),
             p.boost ? h("span", { class: "pill good", "data-tip": "Your adjustment to their next card, for beating." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null,
             choosingChip(ck, id)),
           menu("Adjust", () => adjustItems(ck, view, id), { class: "small", tip: "Items, peoples and story effects for this player." })),
@@ -410,7 +409,7 @@ function roomTab(info, view, names) {
   out.push(h("div", { class: "panel stack" }, h("h2", {}, "Join"), h("p", {}, "Players join at ", h("a", { href: info.joinUrl, target: "_blank" }, info.joinUrl), " or with code ", h("strong", {}, info.code), "."),
     h("p", {}, h("a", { href: `/table?room=${info.code}`, target: "_blank" }, "Open the table screen")),
     h("p", { class: "small muted" }, "To play a character yourself, open the join link in another tab: each tab is its own seat.")));
-  const botTip = (id) => (view.characters[id] && view.characters[id].bot === "ltr" ? "Left to right (Lantern): plays its leftmost legal card every trick, with its hand face up for everyone, like the Wake Lantern's dead hand. It never Peeks and Recalculates its leftmost card." : 'Greedy: goes for any world card it can take without busting, using its lowest winning card; otherwise it plays its least useful card. Its hand is hidden.');
+  const botTip = (id) => (view.characters[id] && view.characters[id].bot === "ltr" ? "Left to right (Lantern): plays its leftmost legal card every trick, with its hand face up for everyone, like the Wake Lantern's dead hand." : 'Greedy: goes for any world card it can take without busting, using its lowest winning card; otherwise it plays its least useful card. Its hand is hidden.');
   const others = (s) => Object.entries(names).filter(([id]) => id !== s.charId);
   out.push(h("div", { class: "panel stack" }, h("h2", {}, "Seats"),
     h("table", { class: "seats" }, h("tbody", {}, info.seats.map((s) => h("tr", {},
@@ -430,7 +429,7 @@ function roomTab(info, view, names) {
     // Add a bot, right under the seats.
     h("div", { class: "add-bot row" }, h("strong", { class: "small" }, "Add a bot"),
       h("input", { class: "input-short", "data-key": "bot-name", placeholder: "Name (optional)", maxlength: 24 }),
-      segmented("bot-kind", [["greedy", "Greedy", 'Greedy: goes for any world card it can take without busting, using its lowest winning card; otherwise it plays its least useful card. Its hand is hidden.'], ["ltr", "Left to right", "Left to right (Lantern): plays its leftmost legal card every trick, with its hand face up for everyone, like the Wake Lantern's dead hand. It never Peeks and Recalculates its leftmost card."]], "greedy", null, "Kind of bot"),
+      segmented("bot-kind", [["greedy", "Greedy", 'Greedy: goes for any world card it can take without busting, using its lowest winning card; otherwise it plays its least useful card. Its hand is hidden.'], ["ltr", "Left to right", "Left to right (Lantern): plays its leftmost legal card every trick, with its hand face up for everyone, like the Wake Lantern's dead hand."]], "greedy", null, "Kind of bot"),
       suitChoice("bot-suit", "S", null, "Primary suit"),
       h("button", { class: "small primary", onclick: () => { conn.manage({ op: "addBot", kind: picked("bot-kind", "greedy"), primary: picked("bot-suit", "S"), name: (draft("bot-name") || "").trim() || undefined }); const box = document.querySelector('[data-key="bot-name"]'); if (box) box.value = ""; forget("bot-name"); } }, "Add bot"))));
   return out;

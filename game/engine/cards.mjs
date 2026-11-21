@@ -6,7 +6,7 @@ export const SUITS = ["S", "D", "I", "W"];
 
 export const SUIT_INFO = {
   S: { name: "Strength", standard: "Hearts", symbol: "♥", status: "Injury", consolation: "Brace" },
-  D: { name: "Dexterity", standard: "Spades", symbol: "♠", status: "Stumble", consolation: "Peek" },
+  D: { name: "Dexterity", standard: "Spades", symbol: "♠", status: "Stumble", consolation: "Shave" },
   I: { name: "Intelligence", standard: "Diamonds", symbol: "♦", status: "Stress", consolation: "Recalculate" },
   W: { name: "Weird", standard: "Clubs", symbol: "♣", status: "Curse", consolation: "Mirror" },
 };

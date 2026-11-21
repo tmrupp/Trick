@@ -3,7 +3,13 @@
 // in use has been opened once (which stores its state), this module and the branches it lists can go.
 //
 // Also legacy, outside this file:
-// - check.mjs, resolveTrick: rules.peek === "auto" (Peek replaced the next world card with no choice).
+// - check.mjs: games without rules.consolations 2 (consolationsV2) keep Peek (legacyPeek, peek()) and the choosing
+//   Recalculate (recalculate(), the "recalculate" prompt); bot.mjs answers those prompts; the pages show them.
+// - check.mjs: games without rules.stumble "deck" (stumblePrice) keep Stumble's Price: lockCard's priceCardId, the
+//   "pricePaid" event, and played Stumbles going to discard at cleanup; bot.mjs picks a price; the hand dock asks for one.
+// - check.mjs: games without rules.world "lose" (worldConsoles) give the world no consolation.
+// - server/room.mjs and store.mjs: a save naming no rules replays under { peek: "choose" }.
+// - check.mjs, legacyPeek: rules.peek === "auto" (Peek replaced the next world card with no choice).
 // - check.mjs, peek(): the `swap` field (the old name for `replace`).
 // - check.mjs, declareApproach(): `approach` text (approachText) from before goals and approaches merged.
 // - server/room.mjs, Room constructor: the replay fallback to rules.peek "auto".

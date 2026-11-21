@@ -14,9 +14,9 @@ Change a thing in its home, then update what derives from it. Never fix a copy.
 | Suits: names, statuses, consolations, symbols | `SUIT_INFO` in `game/engine/cards.mjs` | `SUITS` in `game/public/shared/client.js` is built from it. Add page-only fields there, not new copies. |
 | Who plays which character | `game/server/seats.mjs` | `room.mjs` calls it; nothing else edits seats. |
 | Card text on screen (consolations, statuses, Blessed) | `card_rules.js`, built from RULES.md | `cardText()` and `consolationText()` in the client. Tooltips that state a rule read from these. |
-| The difficulty table | `npm run sim:targets` (runs the engine) | Paste its rows into RULES.md and `DIFFICULTY_ODDS` together. |
+| The difficulty table | `npm run sim:targets`: rough play from the engine's greedy bots, careful play from the lab's look-ahead bots (about an hour; it caches cells in `scripts/.targets-cells`, so clear that after a rule change) | Paste its rows into RULES.md and `DIFFICULTY_ODDS` together. |
 
-`scripts/simulate_tally.mjs` is the variant lab: it keeps its own copy of the rules so it can try alternatives the engine doesn't implement. Don't use it for numbers that describe the current rules; use the engine.
+`scripts/simulate_tally.mjs` is the variant lab: it keeps its own copy of the rules so it can try alternatives the engine doesn't implement. Don't use it for numbers that describe the current rules; use the engine. The one exception is the difficulty table's careful-play odds: only the lab has look-ahead bots, and its greedy bots match the engine's within a point or two.
 
 ## Engine
 

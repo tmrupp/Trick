@@ -58,7 +58,7 @@
 <main id="main"></main>
 <div id="reveal"></div>
 <script type="module">
-import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, itemsById, reducedMotion, markSuits, difficulty, cardFromLabel, mountHeader, setRedraw, announce, trickLog, resultsList, choosingChip, layoutSwitch, notesPanel, presence, tone, difficultyPill, resultPill, tallyClass, historyPanel, closedNotice } from "/shared/client.js";
+import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, itemsById, reducedMotion, markSuits, difficulty, cardFromLabel, mountHeader, setRedraw, announce, trickLog, resultsList, choosingChip, layoutSwitch, notesPanel, presence, tone, difficultyPill, resultPill, worldNote, WORLD_NOTE_TIP, tallyClass, historyPanel, closedNotice, consolationPills } from "/shared/client.js";
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEM_NAMES = Object.fromEntries(Object.entries(itemsById()).map(([k, v]) => [k, v.label]));
@@ -143,7 +143,7 @@ function draw(info, view, names) {
     const live = ck.phase !== "resolve";
     parts.push(h("div", { class: "panel table-stage" },
       live ? h("div", { class: "stack-center" }, h("span", { class: "label" }, `Trick ${ck.trick + 1} of ${ck.tricks}`), cardFace(ck.worldRow[ck.trick], "xl", { class: "current" }),
-        ck.worldRow[ck.trick].beat != null ? h("span", { class: "label" }, `counts ${ck.worldRow[ck.trick].beat} to beat`) : null) : h("span", { class: "label" }, "All tricks played"),
+        worldNote(ck.worldRow[ck.trick]) ? h("span", { class: "label", "data-tip": WORLD_NOTE_TIP }, worldNote(ck.worldRow[ck.trick])) : null) : h("span", { class: "label" }, "All tricks played"),
       h("div", {}, h("div", { class: "label" }, live ? "Still to come" : "The world row"),
         // While a check runs, only the cards still to come; afterwards, the whole row.
         live && ck.trick >= ck.worldRow.length - 1 ? h("div", { class: "label" }, "This is the last trick.")
@@ -189,7 +189,7 @@ function draw(info, view, names) {
       h("div", {}, h("div", { class: "tally" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm")), h("strong", { class: `big ${tallyClass(p.total, p.target)}` }, ` ${p.total}`), h("span", { class: "muted" }, ` / ${p.target ?? "?"}`)),
         p.target ? h("div", { class: `bar${over ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / p.target)}%` })) : null,
         p.openHand && p.openHand.length && ck.phase !== "resolve" ? h("div", { class: "open-hand mt" }, h("div", { class: "label" }, "Open hand · plays from the left"), h("div", { class: "row" }, p.openHand.map((c, i) => cardFace(c, "md", { class: i === 0 ? "next-up" : "" })))) : null,
-        h("div", { class: "row small mt" }, p.brace ? h("span", { class: `pill tinted ${tone("S")}` }, `Brace +${p.brace}`) : null, p.mirror ? h("span", { class: `pill tinted ${tone("W")}` }, "Mirror") : null, p.boost ? h("span", { class: "pill good" }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null)),
+        h("div", { class: "row small mt" }, ...consolationPills(p), p.boost ? h("span", { class: "pill good" }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null)),
       h("div", { class: "row" }, r ? h("div", { class: "align-right" }, h("div", { class: `reason res-text res-${r.result}` }, RESULT[r.result]), r.dies ? h("div", { class: "pill bad" }, "does not survive") : null)
         : ck.phase === "play" && p.locked ? cardBack("md", { class: "locked-back", title: "Locked in, face down until the reveal." }) : null));
   })));

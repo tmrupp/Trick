@@ -341,6 +341,13 @@ export function cardText(c) {
 // A consolation's rule, as RULES.md words it (via card_rules.js): consolationText("S") is Brace's.
 export const consolationText = (suit) => `${SUITS[suit].consolation}: ${cardText({ suit, v: 1 })}`;
 
+// What waits on a participant's next card from the last trick they lost: Brace, Shave and Mirror, as suit-toned pills.
+export const consolationPills = (p) => [
+  p.brace ? h("span", { class: `pill tinted ${tone("S")}`, "data-tip": consolationText("S") }, `Brace +${p.brace}`) : null,
+  p.shave ? h("span", { class: `pill tinted ${tone("D")}`, "data-tip": consolationText("D") }, `Shave −${p.shave}`) : null,
+  p.mirror ? h("span", { class: `pill tinted ${tone("W")}`, "data-tip": consolationText("W") }, "Mirror") : null,
+];
+
 // The card's art file in exports/web (served at /cards/light and /cards/dark).
 const STATUS_ART = { S: "injury", D: "dazed", I: "stress", W: "curse" };
 export function artName(c) {
@@ -371,6 +378,14 @@ function simpleFace(c) {
   ];
 }
 
+// What a world card's world consolation or a GM adjustment has changed: "counts 14 to beat", "scores 1 less", or both.
+// The stage on every screen shows it under the current world card; cardFace puts the short form in the card's corner.
+export function worldNote(c) {
+  if (!c) return "";
+  return [c.beat != null ? `counts ${c.beat} to beat` : null, c.shave ? `scores ${c.shave} less` : null].filter(Boolean).join(", ");
+}
+export const WORLD_NOTE_TIP = "Changed by the world's consolation or the GM. Taking it still scores its printed value, less any Shave.";
+
 // A card. size: "sm" | "md" | "lg" | "xl" | "stage". The screens draw simple faces; extra.art draws the printed card.
 // extra: { class, onclick, title, disabled, badge, art }. Press and hold any card to see the printed card full size.
 export function cardFace(c, size = "md", extra = {}) {
@@ -384,7 +399,8 @@ export function cardFace(c, size = "md", extra = {}) {
     "aria-label": extra.onclick ? label : undefined,
   },
   extra.art ? art(artName(c), label) : simpleFace(c),
-  c.beat != null ? h("span", { class: "beat" }, `counts ${c.beat}`) : extra.badge ? h("span", { class: "beat badge" }, extra.badge) : null);
+  c.beat != null || c.shave ? h("span", { class: "beat" }, [c.beat != null ? `counts ${c.beat}` : null, c.shave ? `−${c.shave}` : null].filter(Boolean).join(" · "))
+    : extra.badge ? h("span", { class: "beat badge" }, extra.badge) : null);
   if (!extra.onclick) el.setAttribute("aria-label", label), el.setAttribute("role", "img");
   el._card = c;
   if (extra.disabled && extra.onclick) el.addEventListener("click", (e) => e.stopImmediatePropagation(), { capture: true });
@@ -398,7 +414,7 @@ export function zoomCard(c) {
   const close = () => box.remove();
   const box = h("div", { class: "zoom", role: "dialog", "aria-label": cardLabel(c), onclick: close },
     h("div", { class: "zoom-inner" }, h("div", { class: "cf zoomed" }, art(artName(c), cardLabel(c))),
-      h("div", { class: "zoom-text" }, h("h2", {}, cardLabel(c)), h("p", {}, cardText(c)), c.beat != null ? h("p", { class: "pill" }, `Counts ${c.beat} for beating`) : null,
+      h("div", { class: "zoom-text" }, h("h2", {}, cardLabel(c)), h("p", {}, cardText(c)), worldNote(c) ? h("p", { class: "pill" }, worldNote(c)) : null,
         h("p", { class: "small muted" }, "Tap anywhere to close."))));
   document.querySelectorAll(".zoom").forEach((z) => z.remove());
   document.body.append(box);
@@ -444,7 +460,7 @@ export const RESULT_NOTE = {
 // A suit's colour for anything that belongs to it: a character's trump or primary, a status, a consolation.
 // The class sets --tone (a fill) and --tone-ink (text); style.css decides what each element does with them.
 export const tone = (suit) => (suit && SUITS[suit] ? `tone-${suit}` : "");
-// A difficulty word in its band's colour, from easy (green) to extreme (black).
+// A difficulty word in its band's colour, from easy (green) through extreme (black) to legendary (black and gold).
 export function difficultyPill(kind, target, attrs = {}) {
   const word = difficultyWord(kind, target);
   const band = /^beyond/.test(word) ? "beyond" : word.replace(/\s+/g, "-");
@@ -477,6 +493,17 @@ export { difficulty, difficultyHint, presetTricks, CHECK_KINDS } from "/engine/r
 export { STATUSES_PER_SUIT };
 
 // A sentence for a resolved trick, from the engine's log entry.
+// What the world's consolation did to the next world card, from a worldConsoled event or a trick record's world.
+export function worldConsolationText(w) {
+  if (!w) return null;
+  return {
+    brace: `The world Braces: the next world card, the ${w.next}, counts ${w.beat} to beat.`,
+    shave: `The world Shaves: the next world card, the ${w.next}, scores 1 less.`,
+    peek: `The world Peeks: the next world card, the ${w.was}, is replaced by the ${w.next}.`,
+    mirror: `The world Mirrors: the next world card, the ${w.next}, counts ${w.beat} to beat.`,
+  }[w.effect] || null;
+}
+
 export function trickSentence(e, names) {
   const n = (id) => names[id] || id;
   const play = (id) => e.plays.find((p) => p.id === id);
@@ -484,7 +511,8 @@ export function trickSentence(e, names) {
   if (e.winner) {
     const p = play(e.winner);
     const how = { blessed: "Blessed always takes it", highest: `the highest on-suit card${bits(p) ? ` (${bits(p)})` : ""}`, tieBreak: "a tie, settled by suit, then trump" }[e.reason];
-    return `${n(e.winner)}'s ${p.label} takes the ${e.worldLabel}: ${how}. +${e.score}.`;
+    const shaved = (p.shave || 0) + (e.worldShave || 0);
+    return `${n(e.winner)}'s ${p.label} takes the ${e.worldLabel}: ${how}. +${e.score}${shaved ? ` (Shaved ${shaved})` : ""}.${e.world ? ` ${worldConsolationText(e.world)}` : ""}`;
   }
   const why = {
     worldHighest: `no card beat it${e.worldBeat !== undefined ? ` (it counts ${e.worldBeat})` : ""}`,
@@ -519,7 +547,10 @@ export function eventText(e, names, items = {}) {
     case "characterCreated": return `${e.name} joins the campaign.`;
     case "blessedGranted": return `${n(e.id)} is granted a Blessed.`;
     case "blessedGiven": return `${n(e.from)} gives a Blessed to ${n(e.to)}.`;
+    case "recalculated": return e.drew ? `${n(e.id)} Recalculates and draws a card.` : null;
     case "pricePaid": return `${n(e.id)} pays Stumble's Price.`;
+    case "worldConsoled": return worldConsolationText(e);
+    case "stumbleToDeck": return `${e.n > 1 ? `${e.n} Stumbles go` : "Stumble goes"} back on top of ${n(e.id)}'s deck.`;
     case "peekReplaced": return `Peek: the next world card, ${e.out}, is replaced by the ${e.in}.`;
     case "peekKept": return `Peek: the ${e.world} stays.`;
     case "itemUsed": return `${n(e.id)} uses ${items[e.itemId] || e.itemId}${e.note ? `: ${e.note}` : ""}.`;
@@ -953,14 +984,15 @@ export const countsNow = (c, p) => (c.blessed ? null : countsAs(c, p.mirror) + (
 
 // A hand to choose from: tap to choose, tap again to see the card full size; a white bar across each card that
 // can beat the world card, and the value it counts now when an effect changes it. The phone and the GM's own
-// character both use it. ui is { chosen, price } and is updated in place.
-export function handDock({ hand, legal, p, w, ui, onLock, size = "md" }) {
+// character both use it. ui is { chosen, price } and is updated in place. Stumble's Price is asked for only in older
+// games (rules without stumble "deck"); in new ones a played Stumble goes on top of the deck at cleanup by itself.
+export function handDock({ hand, legal, p, w, ui, rules, onLock, size = "md" }) {
   const chosen = hand.find((c) => c.id === ui.chosen);
-  const needsPrice = chosen && chosen.status && chosen.suit === "D" && hand.some((c) => c.id !== chosen.id && !c.status && !c.blessed);
+  const needsPrice = !(rules && rules.stumble === "deck") && chosen && chosen.status && chosen.suit === "D" && hand.some((c) => c.id !== chosen.id && !c.status && !c.blessed);
   const forced = legal.length < hand.length;
   const toBeat = w.beat ?? w.v;
-  const hint = forced ? `The situation finds your weakness: you must play your ${SUITS[w.suit].status}.`
-    : needsPrice ? (ui.price ? "Price chosen. Lock in when ready." : "Stumble's Price: tap an ordinary card to discard.")
+  const hint = needsPrice ? (ui.price ? "Price chosen. Lock in when ready." : "Stumble's Price: tap an ordinary card to discard.")
+    : forced ? `The situation finds your weakness: you must play your ${SUITS[w.suit].status}.`
     : chosen ? `${cardLabel(chosen)}: ${cardText(chosen)}`
     : `Pick a card. A white bar means it can beat the ${w.label}${w.beat != null ? ` (counts ${w.beat})` : ""}. Hold a card to see it full size.`;
   return [

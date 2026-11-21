@@ -28,21 +28,23 @@ Among incompatible goals, the better step wins. Within the same step, the tally 
 
 | Check | Tricks | Targets | Default |
 | --- | --- | --- | --- |
-| **Standard** | 3 per player, +1 | 6–20 | **10** |
-| **Quick** | 2 per player, +1 | 6–12 | **6** |
-| **Solo** | 6 | 6–12 | **6** |
+| **Standard** | 3 per player, +1 | 6–28 | **12** |
+| **Quick** | 2 per player, +1 | 6–17 | **10** |
+| **Solo** | 6 | 6–20 | **12** |
 
-**The target sets the difficulty.** These odds come from simulated standard checks with random 21-card decks, at 2–5 players:
+**The target sets the difficulty.** These odds are RULES.md's, from `npm run sim:targets`: standard checks with starter decks at 2–5 players. The first three columns are look-ahead bots, which replay the rest of the check before each card (the lab's Part 6); rough play is the rules engine's greedy bots:
 
-| Target | Difficulty | Exact hit | Failure: 7+ short | Bust |
-| --- | --- | --- | --- | --- |
-| 6–8 | Easy | 17–24% | 0–11% | 13–19% |
-| 9–11 | Moderate | 10–22% | 11–22% | 10–16% |
-| 12–14 | Hard | 7–15% | 22–41% | 7–11% |
-| 15–17 | Very hard | 4–11% | 38–60% | 4–7% |
-| 18–20 | Extreme | 2–7% | 54–75% | 2–5% |
+| Target | Difficulty | Success or better | Exact hit | Failure: 7+ short | Rough play: success |
+| --- | --- | --- | --- | --- | --- |
+| 6–10 | Easy | 87–96% | 39–70% | 0–4% | 50–68% |
+| 11–13 | Moderate | 69–92% | 26–55% | 2–12% | 30–54% |
+| 14–16 | Hard | 47–78% | 17–42% | 7–34% | 19–35% |
+| 17–19 | Very hard | 34–62% | 9–28% | 24–49% | 11–25% |
+| 20–22 | Extreme | 21–48% | 5–20% | 40–63% | 4–16% |
+| 23–25 | Heroic | 12–36% | 3–15% | 53–77% | 2–8% |
+| 26–28 | Legendary | 6–26% | 1–11% | 66–86% | 1–5% |
 
-These use the blind Peek as Dexterity's consolation. **6 is the lowest useful target:** below it, busts keep rising (to 23–34% at target 1) while success or better barely moves.
+The bands used to be named from the greedy bots, which made 15–20 very hard to extreme. Players who plan find the same odds about 8 targets higher, so the names moved up and the range ran to 29; the world's consolation then took back two or three targets, and it now runs to 28. A real table lands somewhere between the two columns. **6 is the lowest useful target:** below it, rough play's busts keep rising (to 23–34% at target 1) while success or better barely moves. Careful players almost never bust at any target; for them, a hard target means falling short.
 
 - **Busts are a low-target, small-table risk.** At target 6, 19% of results bust at 2 players and 14% at 5. At target 20, 2–3% do. Under the old Slip, busts stayed at 0–13%, because every returned Spade was a spare card that couldn't win.
 - **Larger tables hit more often.** At any given target, 5 players hit exactly about 10 points more often than 2.
@@ -69,27 +71,28 @@ Your own card's value only decides whether you win. **What you score is chosen b
 
 ## Consolations
 
-Your losing card's printed suit gives its consolation, statuses included. There are no consolations after the final trick.
+Your losing card's printed suit gives its consolation, statuses included. Every consolation happens by itself, with nothing to choose: **the card you lose with is the decision.** There are no consolations after the final trick.
 
 | Suit | Consolation |
 | --- | --- |
 | **Strength: Brace** | Your next card counts this card's value higher **for beating**. |
-| **Dexterity: Peek** | **You may replace the next world card, unseen,** with the top card of the world deck; the replaced card goes to the bottom. Everyone who lost with a Spade chooses in secret; if anyone chooses to, it's replaced once. Nobody looks first. |
-| **Intelligence: Recalculate** | Discard one card from hand, then draw one. |
+| **Dexterity: Shave** | **Your next card, if it wins, scores 1 less,** never below 0. |
+| **Intelligence: Recalculate** | **Draw one card.** |
 | **Weird: Mirror** | **Your next card counts 11 minus its value** for beating: a 2 counts 9, a 9 counts 2. What you score doesn't change, and statuses stay at 0. |
 
-Brace and Mirror last for your next play only; Peek is decided at once, blind. Turn the losing card sideways as a reminder, and straighten it when you play.
+Brace, Shave and Mirror last for your next play only. Turn the losing card sideways as a reminder, and straighten it when you play.
 
 Each suit does one job:
 
 - **Strength:** *reach.* A small card can take a big world card.
-- **Dexterity:** *timing.* See the table, then take the world card cleanly or stay out of an ally's way.
-- **Intelligence:** *fix the hand.* Swap out a card you can't use.
+- **Dexterity:** *precision.* Shave a win to land exactly on target.
+- **Intelligence:** *options.* One more card to choose from.
 - **Weird:** *invert the prize.* An easy world 2 scores 9; a hard world 10 scores 1.
 
 **Losing on purpose** sets you up:
 - **A losing Strength card is a Brace:** next trick, reach for a bigger world card than your hand could otherwise take.
-- **A losing Dexterity card is a Peek:** the next world card is redrawn, for better or worse. Lose with a Spade when the next prize is one nobody wants.
+- **A losing Dexterity card is a Shave:** next trick, a world card one higher than you need lands you exactly.
+- **A losing Intelligence card is a Recalculate:** a card now, for a hand that needs more choices.
 - **A losing Weird card is a Mirror:** your low cards become strong for one play, and your high cards become safe ways to lose.
 
 **Changes from the old consolations:**
@@ -97,6 +100,7 @@ Each suit does one job:
 - **Reposition became Slip, then Wait, then Peek.** Without follow-suit, Reposition overlapped Brace. Slip (return the card to hand) made losing free and kept spare cards in every hand, so it was replaced: see *Replacing Slip* in [TALLY_SIMULATIONS.md](TALLY_SIMULATIONS.md). Wait (choose after everyone else reveals) cut collisions but did nothing solo; Peek works at any table size and puts the world deck in play.
 - **Revelation becomes Mirror.** The question and the status-suit option are gone, and with them the whole *Suit changes* section.
 - **Recalculate** loses its reshuffle note, because evolution happens on any shuffle.
+- **Peek became Shave, and Recalculate only draws** (consolations made automatic). See *Automatic consolations* below.
 
 ### Other candidates for Weird and Dexterity
 
@@ -106,13 +110,16 @@ Each suit does one job:
 | | **Mirror the prize** *(replaced)* | The next world card you win scores 11 minus its value. | Changed what you score, which made tallies hard to read at the table. |
 | | **Shift** | If any losing card this trick is Weird, discard the next world card and flip a replacement. | Changes the whole table's next trick, at random. |
 | | **Echo** | If your next card wins, the world card scores double. | Big swings, real bust risk. |
-| **Dexterity** | **Peek** *(adopted)* | Choose, blind, whether to replace the next world card; once a trick if anyone does. | One secret yes-or-no per loser; works at any table size. |
-| | **Peek, automatic** *(replaced)* | Any losing Spade replaces the next world card, unseen. | No choices, but scored like no consolation and took the decision away from the player. |
+| **Dexterity** | **Shave** *(adopted)* | Your next win scores 1 less. | Automatic and one line; helps exact hits in every scene (see below). |
+| | **Shave by value** | Your next win scores this card's value less. | Strong in quick checks, a loss at high targets. |
+| | **Peek** *(replaced)* | Choose, blind, whether to replace the next world card; once a trick if anyone does. | A secret choice, and it costs a table that plans: −5 to −11 points of success. |
+| | **Peek, automatic** *(replaced)* | Any losing Spade replaces the next world card, unseen. | No choices, but rerolls the row under everyone's plans: worse than the choosing Peek. |
 | | **Peek with a look** *(replaced)* | Look at the world deck's top card; you may swap it in. | Slightly better results, but a private choice per loser and an order to resolve them. |
 | | **Wait** *(replaced)* | Choose your next card after everyone else reveals. | Cuts collisions between allies by about 30%, but useless solo. |
 | | **Slip** *(replaced)* | Return this card to your hand. | Losing costs nothing; the spare cards hide most busts. |
 | | **Reposition** | Next card can win whatever its suit. | Familiar, but overlaps Brace. |
-| | **Feint** | Next card wins if it *equals* the world card, not only if it beats it. | Small; possibly too weak. |
+| | **Feint** | Next card is on-suit, whatever its suit. | Worth nothing to players who plan: they rarely lack a way to win. |
+| | **Undo, Weaken, Pocket, Dodge** | Give back a busting win; lower the next world card; score nothing next win; refuse a busting win. | Undo, Weaken and Pocket measured at nothing or less; Dodge was too fiddly to adopt. |
 
 ## Example
 
@@ -126,9 +133,9 @@ Target 10, a standard check.
 - **The trick before it:** she loses with her 3♣, so her next card is Mirrored.
 - **On the 7♦:** her 2♣ counts 11 − 2 = 9 and beats the 7. She scores the world card's 7: **exactly 10**.
 
-**Ben** (Dexterity trump) is on 6 and needs 4. The next world card is a 9♦, which nobody can use without busting.
-- **This trick:** he loses on purpose with his 2♠ and chooses to replace the 9♦, unseen: the world deck's top card is dealt in its place. It's a 4♠.
-- **Next trick:** his 7♠ takes the 4♠: **exactly 10**. It could as easily have been an 8; Ben chooses whether to redraw, not what comes.
+**Ben** (Dexterity trump) is on 6 and needs 4. The next world card is a 5♠: one too many.
+- **This trick:** he loses on purpose with his 2♠, so his next win is Shaved.
+- **Next trick:** his 7♠ takes the 5♠, which scores 5 − 1 = 4: **exactly 10**.
 
 ## Statuses
 
@@ -137,8 +144,8 @@ Target 10, a standard check.
 | Status | When it loses | Its own rule |
 | --- | --- | --- |
 | **Injury, Strength** | Brace for 0, which does nothing. | Two or more Injuries in your recent discard make survival a forced goal. |
-| **Stumble, Dexterity** | Peek: the next world card is replaced. | **Price:** when you play Stumble, discard an ordinary card from hand, your choice. |
-| **Stress, Intelligence** | Recalculate. You may discard another status. | Whenever you draw Stress, gain another Stress into discard. |
+| **Stumble, Dexterity** | Shave: your next win scores 1 less. | **Comes back:** at cleanup a played Stumble goes on top of your deck, so you draw it first next check. |
+| **Stress, Intelligence** | Recalculate: draw a card. | Whenever you draw Stress, gain another Stress into discard. |
 | **Curse, Weird** | Mirrors your next card. | Breaking the compulsion gains one Stress per Curse outside your reserve. |
 
 - **A Braced status can win.** A 0 Braced by 6 beats a world 5, and you score the 5.
@@ -146,11 +153,17 @@ Target 10, a standard check.
 
 ### Stumble
 
-Stumble does nothing while it sits in your hand; its rule triggers **only when you play it**. A Dexterity world card forces it out, and **Price** makes each of those plays cost an ordinary card. Under Slip, a losing Stumble went back to hand and could be forced out again and again; now it is spent, so Price is paid about 0.4 times a check in a worn party, down from about once.
+Stumble does nothing while it sits in your hand; its rule triggers **only when you play it**. A Dexterity world card forces it out, and then it **comes back**: at cleanup it goes on top of your deck instead of discard. Your next check opens with it in hand, and rest, which clears only discard, can't reach it. Like Stress's extra copies, its cost lands in later checks. A Stumble you hold but never play cleans up into discard as usual, so the way to be rid of one is a check with no Dexterity world card for it, then rest or evolution.
+
+Stumble's Price (discard an ordinary card from hand, your choice) came before. It asked for a choice, and the overnight runs showed the choice barely mattered: discarding your lowest, a random or even your highest card all landed within 2 points. Older games keep it.
+
+Within one check, comes back costs nothing beyond the forced play: in a worn party of look-ahead bots it matches having no Stumble rule (95 / 63 success / exact, against Price's 92 / 58). Sending it to the deck at once instead, where a Recalculate could draw it again mid-check, cost about half the Price (93 / 62); sending it back to hand cost as much as the Price (91 / 59).
 
 | Variant | When you play Stumble | Cost |
 | --- | --- | --- |
-| **Price** *(recommended)* | Discard an ordinary card from hand, your choice. | Each pass costs a card. With no ordinary cards left, as on the final trick, it costs nothing. |
+| **Comes back** *(adopted)* | At cleanup, it goes on top of your deck. | Your next check opens with it, and rest can't clear it. |
+| **Price** *(before)* | Discard an ordinary card from hand, your choice. | Each pass costs a card. With no ordinary cards left, as on the final trick, it costs nothing. |
+| **Back to hand** | It returns to your hand after the trick. | Forced out again by every Dexterity world card. |
 | **Fumble** | Gain another Stumble into discard. | Cost lands in later checks, and compounds. |
 | **Shaky** | Landing exactly counts as 1–3 short for the rest of the check. | Costs your critical, once. |
 | **Snag** | The GM adds one complication to your result. | Narrative; work for the GM. |
@@ -201,6 +214,46 @@ The current numbers, under every adopted rule, are in [TALLY_SIMULATIONS.md](TAL
 - **Quick checks** at 1 trick per player + 1 almost never landed exactly (≤10%). At 2 per player + 1 they hit 15–23% at targets 3–8.
 - **Solo checks** at 4 tricks hit about 20% and busted about 20%. At 6 tricks they hit 28–34% at targets 3–7.
 
+## Automatic consolations
+
+Consolations used to ask questions mid-trick: whether to Peek, which card to Recalculate. They now happen by themselves, so the only decision in play is the card you lose with. The choice of replacements came from `scripts/simulate_tally.mjs` (Parts 3e to 3g), played by **look-ahead bots** as well as the greedy ones: for each card in hand, a look-ahead bot replays the rest of the check many times, with what it can't see reshuffled, and plays the card that does best. They value a consolation by what it achieves, not by a hand-written tactic, so they stand in for players who use it well.
+
+Points of success or better each consolation is worth to look-ahead bots, against the same rules without it (3 players, a hard target of 14, 2 players, a quick check):
+
+| Consolation | 3 players | Hard | 2 players | Quick |
+| --- | --- | --- | --- | --- |
+| Brace | +5 | +12 | +6 | +1 |
+| Mirror | +2 | +3 | +4 | 0 |
+| Recalculate, discard one and draw one (replaced) | −1 | — | −1 | −2 |
+| Recalculate, draw one (adopted) | +6 | — | +6 | +5 |
+| Peek, choosing (replaced) | −9 | — | −5 | −1 |
+| Shave, 1 (adopted) | 0 (+6 exact) | −1 (+3 exact) | 0 (+4 exact) | +6 (+12 exact) |
+
+- **Anything that changes the shared row costs a table that plans.** Peek, an automatic Peek and swapping the next two world cards all scored at or below no consolation: one player's reroll undoes everyone else's plan.
+- **The choice inside Recalculate was worth nothing:** discarding at random scored the same as choosing well. Drawing without discarding is worth about as much as Brace.
+- **Dexterity effects that help you win (Feint, Weaken) added nothing;** players who plan rarely lack a way to win. Shave helps you score the right amount instead, and turns successes into exact hits.
+- **Greedy bots misjudge consolations.** With them, removing Brace raised success, because a Brace pushed them into wins that bust; look-ahead bots gain from it everywhere.
+- **Look-ahead bots reach 80–97% success and bust 0–5%,** far above the greedy bots. The difficulty table now takes its names from them.
+
+## The world's consolation
+
+When a player takes the world card, the world takes a consolation from that card's suit, on the next world card: **Brace** (it counts the taken card's value higher for beating), **Shave** (it scores 1 less), **Peek** (it goes under the world deck and the deck's top card takes its place) and **Mirror** (it counts 11 minus its value for beating). It is the players' rule turned around, and it fires on the tricks players win, so it pushes back hardest when a table is doing well.
+
+It came from `scripts/simulate_tally.mjs` Part 7, which tried the world's consolations two ways: when the world takes a trick, and when it loses one. The table shows how many targets each is worth: how much higher a check without it must be set for the same success, over targets 13–28.
+
+| Version | Look-ahead: 2p | 3p | 4p | 5p | Greedy: 2p | 3p | 4p | 5p |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| When the world takes, Brace by value | +1.0 | +1.4 | +1.0 | +1.0 | +0.2 | +0.5 | +0.4 | +0.5 |
+| When the world takes, Brace 2 | +1.0 | +1.2 | +0.7 | +0.7 | 0 | +0.3 | +0.1 | +0.2 |
+| When the world takes, Brace by value, plus Harden | +1.9 | +2.1 | +1.6 | +1.9 | +1.0 | +1.1 | +1.2 | +1.4 |
+| **When the world loses, Brace by value** *(adopted)* | **+1.7** | **+2.2** | **+2.8** | **+2.9** | +0.8 | +1.2 | +1.4 | +1.1 |
+| When the world loses, Brace 2 | +1.0 | +1.9 | +1.7 | +2.0 | +0.4 | +0.4 | +0.4 | +0.5 |
+
+- **It costs careful play two to three times what it costs rough play,** because Peek and a big Brace break plans. That narrows the gap between the two columns of the difficulty table.
+- **It grows with the table,** the opposite of the old bias: larger tables succeed more often, and this pushes back hardest on them.
+- **Exact hits fall most** (up to 14 points at moderate targets), and busts don't move.
+- The world's Intelligence consolation was first "no trump next trick", and Weird a symmetric Mirror; both tested at about 0 when the world takes. Peek replaced the first; Mirror stayed for symmetry.
+
 ## Dials to test
 
 - **Visible row versus suspense.** Flipping each world card as its trick starts makes play quicker and riskier. A middle ground is showing only the next two.
@@ -210,9 +263,9 @@ The current numbers, under every adopted rule, are in [TALLY_SIMULATIONS.md](TAL
 ## Open questions
 
 - Does scoring only the world card make players feel their own cards matter enough?
-- Is Peek worth enough? The Dexterity-trump player still lags the others by a few points of success or better in simulation.
+- The difficulty bands are now named from look-ahead bots, with greedy bots' success beside them. Where do real tables land between the two?
 - Solo checks still bust about a quarter of the time at targets 6–8. Do they need larger targets?
-- Peek redraws the next world card for everyone. Does a replacement that takes away a card an ally wanted feel like a collision of its own?
-- Is Price steep enough to stop Stumble being a free pass?
+- Is Shave noticed at the table? Its value is in exact hits, which players only see at the end of a check.
+- Is a Stumble that opens your next check enough to stop it being a free pass? Checks that follow one another closely feel it most; a long gap with rest doesn't clear it.
 - Are fiction-based criticals and busts consistent enough between GMs? Groups may want a short table of examples per approach.
 - Visible row or suspense: which feels better at the table?

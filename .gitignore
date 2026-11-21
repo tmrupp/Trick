@@ -3,3 +3,4 @@ node_modules/
 exports/qa/
 game/saves/
 dist/
+scripts/.targets-cells/

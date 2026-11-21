@@ -17,10 +17,10 @@ globalThis.TrickRulesCard = {
             "Each player states a goal: what they do and how. The suit it leans on is their trump for the check.",
             "The GM sets each goal's target (the player may suggest one) and has final say on its suit. Agree stakes.",
             "An immediate threat can force your goal; you still choose how, and so its suit.",
-            "Standard: 3 tricks per player, +1, target 6–20 (default 10). Quick: 2 per player, +1, target 6–12 (default 6). Solo: 6 tricks.",
+            "Standard: 3 tricks per player, +1, target 6–28 (default 12). Quick: 2 per player, +1, target 6–17 (default 10). Solo: 6 tricks, target 6–20 (default 12).",
             "Deal the world one card per trick, face up in a row. Everyone draws the same number."
           ],
-          "note": "Target 6–8 easy · 9–11 moderate · 12–14 hard · 15–17 very hard · 18–20 extreme."
+          "note": "Standard target 6–10 easy · 11–13 moderate · 14–16 hard · 17–19 very hard · 20–22 extreme · 23–25 heroic · 26–28 legendary."
         }
       ]
     },
@@ -38,7 +38,8 @@ globalThis.TrickRulesCard = {
             "The single highest card on the table wins if it is a player's, in the world card's suit or its owner's trump. Count Brace.",
             "The winner scores the world card's value, not their own card's.",
             "Tied players: world card's suit and own trump beats world card's suit only, which beats trump only. Otherwise the world takes it: the world card is highest, the top card is off-suit, or the tie stays level.",
-            "Everyone else takes their card's consolation, all at once. Winning is not optional."
+            "Everyone else takes their card's consolation, all at once. Winning is not optional.",
+            "A player won? The world's consolation, on its next card: ♥ +taken value to beat, ♠ scores 1 less, ♦ swap from the world deck, ♣ 11 minus."
           ],
           "note": "Once drawing begins: no tactical talk, card advice, or signals. Narration, rules questions, and declarations are welcome."
         },
@@ -69,13 +70,13 @@ globalThis.TrickRulesCard = {
             },
             {
               "suit": "dexterity",
-              "label": "Spades — Peek",
-              "text": "You may replace the next world card, unseen, from the world deck’s top; the old one goes to the bottom. Choose in secret; once a trick."
+              "label": "Spades — Shave",
+              "text": "Your next card, if it wins, scores 1 less, never below 0."
             },
             {
               "suit": "intelligence",
               "label": "Diamonds — Recalculate",
-              "text": "Discard 1 card from hand, then draw 1."
+              "text": "Draw 1 card."
             },
             {
               "suit": "weird",
@@ -83,7 +84,7 @@ globalThis.TrickRulesCard = {
               "text": "Your next card counts 11 minus its value for beating (a 2 counts 9). Scores don’t change; statuses stay 0."
             }
           ],
-          "note": "Use the losing card’s printed suit, even if an ally won. No consolations after the final trick."
+          "note": "Use the losing card’s printed suit, even if an ally won. They happen by themselves. Brace, Shave and Mirror last one play. No consolations after the final trick."
         },
         {
           "heading": "Statuses: J, Q, K, value 0",
@@ -96,7 +97,7 @@ globalThis.TrickRulesCard = {
             {
               "suit": "dexterity",
               "label": "Stumble — Spades",
-              "text": "When you play it, discard an ordinary card from hand."
+              "text": "Once played, it goes on top of your deck at cleanup: you draw it first next check."
             },
             {
               "suit": "intelligence",
@@ -125,7 +126,7 @@ globalThis.TrickRulesCard = {
           "lines": [
             "Exact: critical success, plus a benefit from the fiction. 1–3 short: success, minor complication. 4–6 short: partial, serious complication. 7+ short: failure. Over: bust, a loud consequence from the fiction.",
             "Incompatible goals: the better result wins, then the tally closer to its target.",
-            "Clean up: return world cards, discard unplayed cards, then your played row, then consequences with Injuries last."
+            "Clean up: return world cards, discard unplayed cards, then your played row (played Stumbles on top of your deck), then consequences with Injuries last."
           ]
         },
         {

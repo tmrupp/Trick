@@ -18,7 +18,7 @@
 </header>
 <main id="main" aria-live="polite"></main>
 <script type="module">
-import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, racesById, stripTags, difficultyHint, draft, menu, zoomCard, cardFromLabel, markSuits, mountHeader, setRedraw, announce, trickLog, handDock, consolationText, choosingList, layoutSwitch, notesPanel, suitChoice, picked, setPicked, tone, resultPill, historyPanel, inPlayPills, segmented, closedNotice } from "/shared/client.js";
+import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, racesById, stripTags, difficultyHint, CHECK_KINDS, worldNote, WORLD_NOTE_TIP, draft, menu, zoomCard, cardFromLabel, markSuits, mountHeader, setRedraw, announce, trickLog, handDock, consolationText, choosingList, layoutSwitch, notesPanel, suitChoice, picked, setPicked, tone, resultPill, historyPanel, inPlayPills, segmented, closedNotice, consolationPills } from "/shared/client.js";
 
 const main = document.getElementById("main");
 const ITEMS = itemsById();
@@ -84,7 +84,8 @@ function showReveal(e, view, me, names) {
   let after = "";
   if (won) after = `+${e.score}: you're on ${p.total} of ${p.target}.`;
   else if (mine && !last && card && !card.blessed) {
-    after = { S: `Brace +${card.v} on your next card.`, D: "Peek: choose below whether to replace the next world card.", I: "Recalculate: choose a card to swap below.", W: "Mirror: your next card counts 11 minus its value." }[card.suit] || "";
+    const auto = view.rules && view.rules.consolations === 2; // older games keep Peek and the choosing Recalculate
+    after = { S: `Brace +${card.v} on your next card.`, D: auto ? "Shave: your next win scores 1 less." : "Peek: choose below whether to replace the next world card.", I: auto ? "Recalculate: you drew a card." : "Recalculate: choose a card to swap below.", W: "Mirror: your next card counts 11 minus its value." }[card.suit] || "";
   }
   const box = h("div", { class: `phone-reveal${won ? " won" : ""}`, role: "status", onclick: () => box.remove() },
     h("div", { class: "small muted" }, `Trick ${e.trick + 1}`),
@@ -277,8 +278,7 @@ function hud(p, ck) {
     h("div", { class: "chips" },
       need != null ? h("span", { class: `pill ${need < 0 ? "bad" : need === 0 ? "good" : ""}`, "data-tip": need < 0 ? "Over your target: a bust, unless an adjustment brings you back." : need === 0 ? "Exactly on target: a critical. Winning more would bust you." : "Points still needed. Exactly is a critical; 1–3 short a success; 4–6 a partial." }, need < 0 ? `Over by ${-need}` : need === 0 ? "On target" : `Need ${need}`) : null,
       p.approach ? h("span", { class: `pill solid ${tone(p.approach)}`, "data-tip": "Your goal's suit. Cards in it can win any trick, not only ones in the world card's suit." }, `Trump ${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
-      p.brace ? h("span", { class: "pill good", "data-tip": consolationText("S") }, `Brace +${p.brace}`) : null,
-      p.mirror ? h("span", { class: "pill good", "data-tip": consolationText("W") }, "Mirror") : null,
+      ...consolationPills(p),
       p.boost ? h("span", { class: "pill good", "data-tip": "The GM's adjustment to your next card, for beating." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null,
       ck.phase === "setup" ? h("span", { class: "pill" }, `${ck.kind} check · ${ck.tricks} tricks`) : null));
 }
@@ -297,7 +297,7 @@ function stage(ck) {
   const cur = live ? ck.worldRow[ck.trick] : null;
   return h("div", { class: "stage" },
     cur ? h("div", { class: "stage-card" }, h("span", { class: "stage-label" }, `Trick ${ck.trick + 1} of ${ck.tricks}`), cardFace(cur, "stage", { class: "current" }),
-      cur.beat != null ? h("span", { class: "small", "data-tip": "The GM changed what it takes to beat this card. It still scores its printed value." }, `counts ${cur.beat} to beat`) : null)
+      worldNote(cur) ? h("span", { class: "small", "data-tip": WORLD_NOTE_TIP }, worldNote(cur)) : null)
       : h("div", { class: "stage-card" }, h("span", { class: "stage-label" }, "All tricks played")),
     h("div", {}, h("div", { class: "stage-label" }, live ? "Still to come" : "The world row"),
       // While a check runs, only the cards still to come; afterwards, the whole row.
@@ -322,7 +322,7 @@ function checkView(view, info, me) {
     const goal = p.survival ? null : h("textarea", { class: "textarea-full", "data-key": "goal-text", rows: 3, placeholder: "Optional, e.g. Shoulder the gate shut before the bell", maxlength: 100, "aria-label": "What you're doing, and how" }, p.goal || "");
     const suitDefault = p.approach || view.characters[me].primary;
     const suit = suitChoice("appr-suit", suitDefault, null, "Trump", { tip: (k) => (k === view.characters[me].primary ? "Your primary suit." : undefined) });
-    const start = p.suggested ?? (ck.kind === "standard" ? 10 : 6);
+    const start = p.suggested ?? CHECK_KINDS[ck.kind].defaultTarget;
     const hint = h("div", { class: "small", "aria-live": "polite" }, difficultyHint(ck.kind, Number(draft("suggest") ?? start)));
     const hard = p.survival ? null : h("input", { type: "number", "data-key": "suggest", min: 1, max: 40, step: 1, inputmode: "numeric", value: start, "aria-label": "Your suggested target",
       oninput: (e) => { hint.textContent = difficultyHint(ck.kind, Number(e.target.value)); } });
@@ -330,7 +330,7 @@ function checkView(view, info, me) {
       p.survival ? h("p", { class: "pill bad" }, `Your goal is forced: survive. Target ${p.target}.`)
         : h("label", {}, h("h3", {}, "What are you doing, and how?"), h("div", { class: "small muted" }, "Optional: leave it blank if you've said it at the table or it's obvious. The GM sets the difficulty from it."), goal),
       h("div", {}, h("h3", {}, "Which suit does it use?"), h("div", { class: "small muted mb" }, "Whichever the goal leans on. It's your trump for this check."), suit),
-      hard ? h("label", {}, h("h3", {}, "What target do you suggest?"), h("div", { class: "small muted" }, `The total you'll aim to hit. ${ck.kind === "standard" ? "Standard checks run 6–20." : "This check runs 6–12."} The GM has the final say.`), h("div", { class: "row" }, hard), hint) : null,
+      hard ? h("label", {}, h("h3", {}, "What target do you suggest?"), h("div", { class: "small muted" }, `The total you'll aim to hit. This check runs ${CHECK_KINDS[ck.kind].targets.join("–")}. The GM has the final say.`), h("div", { class: "row" }, hard), hint) : null,
       h("button", { class: "primary big", onclick: () => {
         const g = goal ? goal.value.trim() : undefined;
         const n = hard ? Number(hard.value) : undefined;
@@ -372,7 +372,7 @@ function checkView(view, info, me) {
         h("strong", {}, `Locked in: ${c ? c.label : ""}`), h("div", { class: "small muted" }, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
         h("button", { class: "small", onclick: () => act({ type: "unlockCard", charId: me }) }, "Change my card")))));
     } else {
-      out.push(h("div", { class: "dock" }, handDock({ hand: view.hand, legal: view.legal, p, w, ui,
+      out.push(h("div", { class: "dock" }, handDock({ hand: view.hand, legal: view.legal, p, w, ui, rules: view.rules,
         onLock: (cardId, priceCardId) => act({ type: "lockCard", charId: me, cardId, priceCardId }) })));
     }
   } else if (ck.phase !== "setup" && view.hand && view.hand.length && ck.phase !== "resolve" && !(view.prompts || []).some((x) => x.type === "recalculate")) {

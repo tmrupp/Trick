@@ -472,3 +472,21 @@ test("pages and the join link are served", async () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("a campaign keeps the rules it began under: new ones use the automatic consolations, older imports keep Peek", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  const { host, api } = await startHost(dir);
+  try {
+    const { id } = (await api("/api/campaigns", { name: "Rules", seed: "rules" })).body.rooms[0];
+    assert.deepEqual(host.store.read(id).rules, { consolations: 2, stumble: "deck", world: "lose" });
+    assert.deepEqual([...host.rooms.values()].find((r) => r.save.id === id).state.rules, { consolations: 2, stumble: "deck", world: "lose" });
+    // A save from before has no rules of its own: it replays under Peek and the choosing Recalculate.
+    const old = (await api("/api/import", { name: "Old", seed: "old", gmSeat: 0, actions: [], seats: [] })).body;
+    const imported = old.campaigns.find((c) => /Old/.test(c.name));
+    assert.deepEqual(host.store.read(imported.id).rules, { peek: "choose" });
+    assert.deepEqual([...host.rooms.values()].find((r) => r.save.id === imported.id).state.rules, { peek: "choose" });
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

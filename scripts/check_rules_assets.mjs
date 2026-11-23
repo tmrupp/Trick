@@ -19,7 +19,8 @@ for(const suit of suitCards){
   if(cards.filter(c=>c.file===suit.file).length!==10 || cards.filter(c=>c.file===suit.statusFile).length!==3) throw Error(`Wrong standard-deck composition: ${suit.suit}`);
 }
 // Card text is generated from RULES.md; a stale card_rules.js means someone skipped npm run build:guides.
-if((await readFile(path.join(root,"card_rules.js"),"utf8"))!==cardRulesModule(cardsFromRules(await readRules())))throw Error("card_rules.js is out of date with RULES.md; run npm run build:guides");
+const normLF = (s) => s.replace(/\r\n/g, "\n");
+if(normLF(await readFile(path.join(root,"card_rules.js"),"utf8"))!==normLF(cardRulesModule(cardsFromRules(await readRules()))))throw Error("card_rules.js is out of date with RULES.md; run npm run build:guides");
 const browser=await chromium.launch();
 const page=await browser.newPage({viewport:{width:1050,height:1470}});
 const errors=[],overflows=[],screens=[];

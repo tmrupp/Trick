@@ -38,7 +38,7 @@ globalThis.TrickRulesCard = {
             "The single highest card on the table wins if it is a player's, in the world card's suit or its owner's trump. Count Brace.",
             "The winner scores the world card's value, not their own card's.",
             "Tied players: world card's suit and own trump beats world card's suit only, which beats trump only. Otherwise the world takes it: the world card is highest, the top card is off-suit, or the tie stays level.",
-            "Everyone else takes their card's consolation, all at once. Winning is not optional.",
+            "Losers take consolations at once. Winning isn't optional; if you bust, sit out.",
             "A player won? The world's consolation, on its next card: ♥ +taken value to beat, ♠ scores 1 less, ♦ swap from the world deck, ♣ 11 minus."
           ],
           "note": "Once drawing begins: no tactical talk, card advice, or signals. Narration, rules questions, and declarations are welcome."
@@ -134,7 +134,7 @@ globalThis.TrickRulesCard = {
           "lines": [
             "On an empty deck you may evolve once: return 1 of 2 matching statuses in discard to reserve, then gain or return an ordinary card of that suit. Shuffle discard.",
             "Rest removes any number of non-Curse statuses from discard.",
-            "M Injuries in your top N discard cards, M ≥ 2: survival is your goal, target 3 × M. A bust or 7+ short means death."
+            "M Injuries in your top N discard cards, M ≥ 2: survival is your goal, target 3 × M + 3. A bust or 7+ short means death."
           ],
           "note": "N is the check’s number of tricks."
         }

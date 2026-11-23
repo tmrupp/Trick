@@ -131,11 +131,11 @@ test("a room plays a whole check over WebSockets, keeps hands private, survives 
         const a = prompt.type === "recalculate" ? { type: "recalculate", charId: prompt.charId, cardId: hand[0].id }
           : prompt.type === "peek" ? { type: "peek", charId: prompt.charId, replace: prompt.charId === "p2" }
           : prompt.type === "evolve" ? { type: "evolve", charId: prompt.charId, skip: true }
-          : { type: "evolvePick", charId: prompt.charId, cardId: prompt.options[0] };
+          : { type: "evolvePick", charId: prompt.charId, cardId: prompt.options[0].id || prompt.options[0] };
         assert.equal((await c.act(a)).type, "ok");
         continue;
       }
-      const id = ids.find((x) => !g.locks[x] && g.hands[x].length);
+      const id = ids.find((x) => !g.locks[x] && g.legal[x] && g.legal[x].length);
       const legal = g.legal[id];
       assert.equal((await players[ids.indexOf(id)].act({ type: "lockCard", charId: id, cardId: legal[0] })).type, "ok");
     }
@@ -447,7 +447,7 @@ test("notes: shared text everyone edits, the GM's only for the GM, a player's ow
     ({ host, port, api } = await startHost(dir));
     const room = host.openRoom(id);
     assert.equal(room.notesFor(room.seatById("gm")).gm.text, "The sheriff is lying.");
-    assert.equal(room.notesFor(room.seatById("p1")).mine.text, "I owe Ben a favour.");
+    assert.equal(room.notesFor(room.seatById(ana.welcome.seatId)).mine.text, "I owe Ben a favour.");
   } finally {
     await host.close();
     rmSync(dir, { recursive: true, force: true });
@@ -478,13 +478,40 @@ test("a campaign keeps the rules it began under: new ones use the automatic cons
   const { host, api } = await startHost(dir);
   try {
     const { id } = (await api("/api/campaigns", { name: "Rules", seed: "rules" })).body.rooms[0];
-    assert.deepEqual(host.store.read(id).rules, { consolations: 2, stumble: "deck", world: "lose" });
-    assert.deepEqual([...host.rooms.values()].find((r) => r.save.id === id).state.rules, { consolations: 2, stumble: "deck", world: "lose" });
+    assert.deepEqual(host.store.read(id).rules, { consolations: 2, stumble: "deck", world: "lose", bustSitOut: true, survival: "3m+3" });
+    assert.deepEqual([...host.rooms.values()].find((r) => r.save.id === id).state.rules, { consolations: 2, stumble: "deck", world: "lose", bustSitOut: true, survival: "3m+3" });
     // A save from before has no rules of its own: it replays under Peek and the choosing Recalculate.
     const old = (await api("/api/import", { name: "Old", seed: "old", gmSeat: 0, actions: [], seats: [] })).body;
     const imported = old.campaigns.find((c) => /Old/.test(c.name));
     assert.deepEqual(host.store.read(imported.id).rules, { peek: "choose" });
     assert.deepEqual([...host.rooms.values()].find((r) => r.save.id === imported.id).state.rules, { peek: "choose" });
+  } finally {
+    await host.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("large notes (>16KB) save over WebSockets, and large campaign imports (>100KB) preserve notes and state", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "trick-saves-"));
+  const { host, port, api } = await startHost(dir);
+  try {
+    const { code, gmKey, id } = (await api("/api/campaigns", { name: "BigSave", seed: "big" })).body.rooms[0];
+    const gm = client(port, { room: code, as: "gm", gmKey });
+    await gm.ready;
+    const bigNote = "A".repeat(19500);
+    assert.equal((await gm.manage({ op: "editNotes", scope: "shared", text: bigNote })).type, "ok");
+    const exported = (await api(`/api/export?id=${id}`)).body;
+    // Pad with a realistic large history/state (>150KB) to test the body size limit and notes/state preservation.
+    exported.notes.gm = { text: "B".repeat(18000), by: "GM", at: Date.now() };
+    exported.state.history.push({ id: 99, kind: "standard", tricks: 10, situation: "S".repeat(120000), results: {}, log: [] });
+    const imported = await api("/api/import", exported);
+    assert.equal(imported.status, 200);
+    const imp = imported.body.rooms.find((r) => r.name.startsWith("BigSave (imported)"));
+    const room = host.rooms.get(imp.code);
+    assert.equal(room.notesFor(null).shared.text.length, 19500, "shared notes preserved on import");
+    assert.equal(room.notesFor({ role: "gm" }).gm.text.length, 18000, "GM notes preserved on import");
+    assert.equal(room.state.history.length, 1, "saved state preserved without clobbering");
+    await gm.close();
   } finally {
     await host.close();
     rmSync(dir, { recursive: true, force: true });

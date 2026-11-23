@@ -68,6 +68,7 @@ test("the situation: set at the start, rewritten or cleared while the check runs
   rig(s, { row: ["S5"], hands: { ana: ["S7"], ben: ["D1"], cara: ["I1"] } });
   ({ state: s } = run(s, lock(s, "ana", "S7"), lock(s, "ben", "D1"), lock(s, "cara", "I1"), { type: "endCheck" }));
   assert.equal(s.history[0].situation, "The wagon is halfway across");
+  assert.equal(viewFor(s, { role: "table" }).history[0].situation, "The wagon is halfway across", "viewFor exposes updated situation in history");
   assert.throws(() => run(s, { type: "setSituation", situation: "Too late" }), /No check is running/);
 });
 
@@ -89,28 +90,35 @@ test("cleanup: unplayed cards, then the played row, then consequences with Injur
   assert.equal(s.lastCheckTricks, 10);
 });
 
-test("survival: two Injuries on top of discard force survival at target 3 × M; failing it is death", () => {
+test("survival: two Injuries on top of discard force survival at target 3 × M + 3; failing it is death", () => {
   let s = game();
   ({ state: s } = run(s, { type: "gainStatus", charId: "ana", suit: "S" }));
   assert.equal(s.characters.ana.survival, null);
   ({ state: s } = run(s, { type: "gainStatus", charId: "ana", suit: "S" }));
   assert.deepEqual(s.characters.ana.survival, { M: 2, N: 2 });
   ({ state: s } = run(s, { type: "beginCheck", participants: ["ana", "ben", "cara"] }));
-  assert.equal(s.check.players.ana.target, 6);
-  assert.throws(() => run(s, { type: "setGoal", charId: "ana", target: 10 }), /forced goal at target 6/);
-  // A survival check that busts kills.
+  assert.equal(s.check.players.ana.target, 9);
+  assert.throws(() => run(s, { type: "setGoal", charId: "ana", target: 10 }), /forced goal at target 9/);
+  // A survival check that busts kills (and once busted, Ana sits out the remaining trick).
   let t = game();
   ({ state: t } = run(t, { type: "gainStatus", charId: "ana", suit: "S" }, { type: "gainStatus", charId: "ana", suit: "S" }));
+  assert.throws(() => run(t, { type: "rest", charId: "ana", cardIds: [t.characters.ana.discard[0].id] }), /survival check first/);
   t = dealt(t);
-  t.check.players.ana.tally = [{ card: card("S9", "world"), mirrored: false, score: 9 }];
+  t.check.players.ana.tally = [{ card: card("S10", "world"), mirrored: false, score: 10 }];
   t.check.trick = t.check.tricks - 1;
   rig(t, { row: ["S1"], hands: { ana: ["D1"], ben: ["D2"], cara: ["I1"] } });
-  ({ state: t } = run(t, lock(t, "ana", "D1"), lock(t, "ben", "D2"), lock(t, "cara", "I1")));
+  assert.throws(() => run(t, lock(t, "ana", "D1")), /busted/);
+  ({ state: t } = run(t, lock(t, "ben", "D2"), lock(t, "cara", "I1")));
   assert.equal(t.check.results.ana.result, "bust");
   assert.equal(t.check.results.ana.dies, true);
   ({ state: t } = run(t, { type: "endCheck" }));
   assert.equal(t.characters.ana.alive, false);
   assert.throws(() => run(t, { type: "beginCheck", participants: ["ana"] , kind: "solo"}), /dead/);
+  // Older games without rules.survival "3m+3" keep 3 × M.
+  let old = game();
+  old.rules = { consolations: 2, stumble: "deck", world: "lose" };
+  ({ state: old } = run(old, { type: "gainStatus", charId: "ana", suit: "S" }, { type: "gainStatus", charId: "ana", suit: "S" }, { type: "beginCheck", participants: ["ana", "ben", "cara"] }));
+  assert.equal(old.check.players.ana.target, 6);
 });
 
 test("the check-start scan counts Injuries in the top N discard cards", () => {
@@ -119,7 +127,7 @@ test("the check-start scan counts Injuries in the top N discard cards", () => {
   ana.discard.push(card("Sx", "ana"), card("S3", "ana"), card("Sx", "ana"));
   ({ state: s } = run(s, { type: "beginCheck", participants: ["ana", "ben", "cara"] }));
   assert.equal(s.check.players.ana.survival.M, 2);
-  assert.equal(s.check.players.ana.target, 6);
+  assert.equal(s.check.players.ana.target, 9);
 });
 
 test("Curses: a first Curse needs a compulsion; violations gain Stress per Curse out; rest leaves Curses", () => {
@@ -179,6 +187,15 @@ test("evolution on a reshuffle: return a status and an ordinary card, or skip", 
   assert.equal(s.check.phase, "play");
   assert.equal(hand(s, "ana").length, 6);
   assert.equal(s.characters.ana.reserve.length, reserveBefore + 2, "one Stumble and one ordinary Spade returned");
+  // Evolution removal enforces the minimum of 13 ordinary cards.
+  let minDeck = game(["ana"]);
+  const ch = minDeck.characters.ana;
+  const removed = ch.deck.splice(0, 7); // leave 13 ordinary cards total
+  ch.reserve.push(...removed);
+  ch.discard.push(...ch.deck.splice(0), card("Dx", "ana"), card("Dx", "ana"));
+  ({ state: minDeck } = run(minDeck, { type: "beginCheck", kind: "solo", participants: ["ana"] }, { type: "deal" }));
+  const ord = minDeck.characters.ana.discard.find((c) => !c.status && !c.blessed && c.suit === "D");
+  assert.throws(() => run(minDeck, { type: "evolve", charId: "ana", suit: "D", mode: "return", cardId: ord.id }), /at least 13 ordinary cards/);
 });
 
 test("replay: a seed and its actions rebuild the same game", () => {
@@ -237,6 +254,13 @@ test("the GM cancels a check: everyone goes back to how they were before it, and
   assert.equal(s.history.length, 0, "a cancelled check leaves no record");
   assert.ok(events.some((e) => e.type === "checkCancelled"));
   assert.throws(() => run(s, { type: "cancelCheck" }), /No check/);
+  // Cancelling a check also undoes a check-start survival scan triggered by beginCheck.
+  let sv = game(["ana", "ben"]);
+  sv.characters.ana.discard.push(card("Sx", "ana"), card("Sx", "ana"));
+  ({ state: sv } = run(sv, { type: "beginCheck", participants: ["ana", "ben"] }));
+  assert.deepEqual(sv.characters.ana.survival, { M: 2, N: 7 });
+  ({ state: sv } = run(sv, { type: "cancelCheck" }));
+  assert.equal(sv.characters.ana.survival, null, "check-start survival scan is undone when cancelled");
 });
 
 test("a retired character can't take part until brought back, and can't be retired mid-check", () => {

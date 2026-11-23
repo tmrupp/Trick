@@ -82,7 +82,14 @@ code { font: 13px ui-monospace, Consolas, monospace; }
 button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: pointer; transition: transform .15s ease; }
 .cf.sm { --cw: 46px; } .cf.md { --cw: 72px; } .cf.lg { --cw: 104px; } .cf.xl { --cw: 150px; }
 .cf.empty { border: 1.5px dashed var(--rule-soft); }
-.cf .beat { position: absolute; top: -10px; right: -8px; line-height: 1; background: var(--ink); color: var(--card); font: 700 12px var(--label); padding: 4px 6px; border-radius: 0; }
+/* Count / Shave adjustment band: a flush Swiss strip integrated into the card's grid, never poking out or covering text. */
+.cf .beat { position: absolute; left: 0; right: 0; top: 47%; display: flex; align-items: center; justify-content: center;
+  background: #111111; color: #ffffff; font: 900 max(11px, calc(var(--cw) * .19)) / 1 var(--num); letter-spacing: -.03em;
+  padding: max(2px, calc(var(--cw) * .045)) 2px; border-radius: 0; white-space: nowrap; z-index: 2; }
+.cf.sm .beat, .stage .strip .cf .beat { top: auto; bottom: 0; font-size: max(10px, calc(var(--cw) * .25)); padding: 3px 2px; }
+/* When a small card carries an adjustment bar at its foot, keep the suit mark in the top-right corner so nothing collides. */
+.cf.simple.sm.has-beat .si, .stage .strip .cf.simple.has-beat .si { top: 8%; bottom: auto; width: calc(var(--cw) * .26); height: calc(var(--cw) * .26); }
+.cf.simple.sm.has-beat .sv, .stage .strip .cf.simple.has-beat .sv { font-size: calc(var(--cw) * .5); }
 /* The current world card shows the same note in words under it (worldNote), so its corner badge would only be clipped. */
 .cf.stage.current .beat, .cf.xl.current .beat { display: none; }
 .cf.current { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink); }
@@ -162,7 +169,8 @@ label.pill { display: inline-flex; }
 
 /* Card zoom: the card full size with its rule in large type */
 .cf img { -webkit-touch-callout: none; user-select: none; }
-.cf .beat.badge { background: var(--ink); color: var(--card); top: 56%; right: auto; bottom: auto; left: 50%; transform: translate(-50%, -50%); min-width: 24px; text-align: center; font: 900 14px var(--num); padding: 4px 5px; border-radius: 0; }
+.cf.simple.has-beat .sv { opacity: .68; }
+.fan .cf.can-beat.has-beat .beat { top: 43%; }
 .zoom { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(2px); }
 .zoom-inner { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; justify-content: center; max-width: 760px; }
 .cf.zoomed { --cw: min(76vw, 330px); }
@@ -196,7 +204,7 @@ label.pill { display: inline-flex; }
 .stage-card { display: grid; justify-items: center; gap: 4px; }
 .stage-label { font: 700 12px var(--label); letter-spacing: .04em; color: var(--muted); text-transform: uppercase; }
 .cf.stage { --cw: clamp(116px, 34vw, 170px); }
-.strip { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 2px; }
+.strip { display: flex; flex-wrap: wrap; gap: 10px 6px; padding: 10px 4px 6px; }
 .strip .cf { --cw: 40px; }
 .dock { position: sticky; bottom: 0; z-index: 6; margin: 12px -16px 0; padding: 10px 16px max(12px, env(safe-area-inset-bottom)); background: var(--card);
   border-top: 2px solid var(--rule); }
@@ -205,8 +213,9 @@ label.pill { display: inline-flex; }
 .fan { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 8px; padding: 14px 0 8px; }
 .fan .cf { --cw: clamp(50px, calc((100vw - 32px - 40px) / 6), 84px); transition: transform .15s ease, box-shadow .15s ease; }
 .fan .cf.chosen { transform: translateY(-8px); z-index: 1; }
-/* A card that can beat the world card: a white bar across its foot. */
+/* A card that can beat the world card: a white bar across its foot (dark on yellow Blessed). */
 .fan .cf.can-beat::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: 6%; height: max(3px, calc(var(--cw) * .05)); background: #fff; }
+.fan .cf.k-blessed.can-beat::after { background: var(--b-ink); }
 .fan .cf.can-beat .sn { bottom: 16%; }
 .dock button.big { margin-top: 8px; }
 .locked-row { display: flex; gap: 14px; align-items: center; }
@@ -235,7 +244,7 @@ label.pill { display: inline-flex; }
 
 /* Simple card faces, Swiss style: a flat block of the suit's colour, a huge white numeral, the suit mark and the
    consolation's name. The printed card is a hold away. */
-.cf.simple { --sc: var(--ink); --sf: var(--ink); background: var(--sf); color: #fff; border: 0; border-radius: 0; overflow: hidden; line-height: 1; }
+.cf.simple { --sc: var(--ink); --sf: var(--ink); background: var(--sf); color: #fff; border: 0; border-radius: 0; line-height: 1; }
 .cf.k-strength { --sc: var(--s); --sf: var(--s-fill); } .cf.k-dexterity { --sc: var(--d); --sf: var(--d-fill); } .cf.k-intelligence { --sc: var(--i); --sf: var(--i-fill); }
 .cf.k-weird { --sc: var(--w); --sf: var(--w-fill); } .cf.k-blessed { --sc: var(--b); --sf: var(--b-fill); color: var(--b-ink); }
 .cf.simple .sv { position: absolute; top: 5%; left: 8%; font: 900 calc(var(--cw) * .5) / .9 var(--num); letter-spacing: -.06em; }
@@ -256,7 +265,7 @@ label.pill { display: inline-flex; }
 .cf.simple.sm .si, .strip .cf.simple .si { top: auto; bottom: 8%; right: 8%; width: calc(var(--cw) * .32); height: calc(var(--cw) * .32); }
 .cf.back { background: repeating-linear-gradient(45deg, var(--ink) 0 3px, color-mix(in srgb, var(--ink) 75%, var(--card)) 3px 8px); border: max(2px, calc(var(--cw) * .04)) solid var(--card);
   border-radius: 0; box-shadow: 0 0 0 2px var(--ink); }
-.cf.simple.k-intelligence:not(.is-status) .sn { letter-spacing: -.04em; font-size: max(8px, calc(var(--cw) * .12)); }
+.cf.simple.k-intelligence:not(.is-status) .sn { letter-spacing: -.05em; font-size: max(7.5px, calc(var(--cw) * .115)); }
 .cf.empty { border: 2px dashed var(--rule-soft); border-radius: 0; }
 
 /* Suit marks inside text */
@@ -310,11 +319,12 @@ table.seats td { padding: 6px 8px; } table.seats td:first-child { width: 1%; whi
 .card-actions { padding: 6px 8px; background: color-mix(in srgb, var(--ink) 6%, var(--card)); border-left: 4px solid var(--ink); }
 .cf.locked-card { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--ink); }
 
-/* Inline: still choosing, or locked in */
-/* Choosing: a red outline. Locked in: solid ink. Both in capitals. */
-.chip-choosing, .chip-locked { text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: .03em; }
+/* Inline: still choosing, locked in, or busted */
+/* Choosing: a red outline. Locked in: solid ink. Busted: solid red. All in capitals. */
+.chip-choosing, .chip-locked, .chip-busted { text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: .03em; }
 .chip-choosing { color: var(--accent); border: 2px solid currentColor; background: transparent; }
 .chip-locked { color: var(--card); background: var(--ink); border: 2px solid var(--ink); }
+.chip-busted { color: #fff; background: var(--bad-fill); border: 2px solid var(--bad-fill); }
 .pulse-dot { width: 7px; height: 7px; border-radius: 0; background: currentColor; display: inline-block; }
 @media (prefers-reduced-motion: no-preference) { .pulse-dot { animation: blink 1.2s ease-in-out infinite; } }
 @keyframes blink { 50% { opacity: .25; } }
@@ -329,10 +339,19 @@ table.saved td:last-child .row { flex-wrap: nowrap; justify-content: flex-end; }
 .people { display: grid; gap: 8px; }
 .person-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 0; }
 .person-row.me strong { color: var(--ink); font-weight: 800; }
+/* Ally status strip on the phone: compact, scannable cards with suit tone, tally/target, trump and consolations. */
+.choosing-list .ally-row { display: flex; flex-direction: column; align-items: stretch; gap: 5px; padding: 7px 9px; border: 1.5px solid var(--rule-soft); border-left: 5px solid var(--tone, var(--rule)); background: var(--card); }
+.choosing-list .ally-row.me { border-color: var(--ink); border-left-color: var(--tone, var(--ink)); }
+.choosing-list .ally-row.is-busted { opacity: .68; }
+.ally-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ally-name { font-size: 15px; line-height: 1.15; }
+.ally-score { margin-left: auto; font-family: var(--num); font-weight: 800; }
+.ally-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.ally-meta .pill { font-size: 12px; padding: 1px 7px; }
 body.layout-grid .people { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); align-items: stretch; }
 body.layout-grid .people > .divided { border: 2px solid var(--rule); border-radius: 0; padding: 10px 12px; }
-body.layout-grid .choosing-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
-body.layout-grid .choosing-list .person-row { border: 2px solid var(--rule); border-radius: 0; padding: 6px 8px; flex-direction: column; align-items: flex-start; }
+body.layout-grid .choosing-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
+body.layout-grid .choosing-list .person-row { border: 2px solid var(--rule); border-left: 5px solid var(--tone, var(--rule)); border-radius: 0; padding: 8px 10px; }
 body.layout-grid .lanes { grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); align-items: stretch; }
 body.layout-grid .lane { grid-template-columns: 1fr auto; grid-template-areas: "who back" "mid mid"; }
 body.layout-grid .lane > :nth-child(1) { grid-area: who; } body.layout-grid .lane > :nth-child(2) { grid-area: mid; } body.layout-grid .lane > :nth-child(3) { grid-area: back; }
@@ -460,7 +479,17 @@ button.toned-btn:hover { background: color-mix(in srgb, var(--tone) 14%, var(--c
   .history-results tr { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--rule-soft); }
   .history-results td { border: 0; padding: 2px 0; } .history-results td:empty { display: none; }
   .history-goal { grid-column: 1 / -1; }
+  .gm-results tr { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--rule-soft); }
+  .gm-results td { border: 0; padding: 2px 0; }
+  .gm-results td:empty { display: none; }
+  .gm-results td.gm-res-actions { grid-column: 1 / -1; margin-top: 4px; }
 }
+.cons-pill { gap: 4px; }
+.cons-remove { min-height: 0; padding: 0 4px; border: 0; background: transparent; color: inherit; font-weight: 900; line-height: 1; font-size: 15px; }
+.cons-remove:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
+.gm-world-row { padding-top: 10px; }
+.busted-dock { border-top-color: var(--bad); }
+.busted-dock .fan .cf { opacity: .45; }
 /* Who plays a character: a person's name, or "bot" in a filled tag. */
 .who-tag { display: inline-block; font: 700 11px/1.5 var(--label); text-transform: uppercase; letter-spacing: .04em; padding: 0 5px; border: 1.5px solid var(--rule-soft); color: var(--muted); vertical-align: 2px; }
 .who-tag.is-bot { background: var(--ink); color: var(--card); border-color: var(--ink); }

@@ -21,7 +21,7 @@ const browserStore = { get: (k) => { try { return localStorage.getItem(k); } cat
 // Connect to a room and stay connected: rejoins with this tab's seat token after any drop.
 // fresh: join as someone new (or reclaim), ignoring the seat this browser last used.
 // onClosed: the host closed the campaign; the connection stops trying (see closedNotice).
-export function connect({ room, as, gmKey, getName, reclaim, fresh = false, onView, onWelcome, onRejected, onStatus, onError, onNotes, onClosed }) {
+export function connect({ room, as, gmKey, getName, reclaim, fresh = false, allowShared = false, onView, onWelcome, onRejected, onStatus, onError, onNotes, onClosed }) {
   const key = `trick:${room}:${as}`;
   let ws = null;
   let seq = 0;
@@ -37,7 +37,7 @@ export function connect({ room, as, gmKey, getName, reclaim, fresh = false, onVi
       const tab = mine || tabStore.get(key);
       const shared = !tab && !fresh ? browserStore.get(key) : null;
       const token = tab || shared;
-      ws.send(JSON.stringify({ type: "hello", room, as, token, claimIfFree: !!shared, gmKey, name: token ? undefined : getName && getName(), reclaim: token ? undefined : reclaim }));
+      ws.send(JSON.stringify({ type: "hello", room, as, token, claimIfFree: !!shared && !allowShared, gmKey, name: token ? undefined : getName && getName(), reclaim: token ? undefined : reclaim }));
     };
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
@@ -338,6 +338,18 @@ export function cardText(c) {
   return entry ? entry.description : "";
 }
 
+// The world's consolation when a player takes a world card of each suit (RULES.md, The world's consolation).
+const WORLD_CONSOLATION = {
+  S: { name: "Brace", text: "World card. If taken, the world Braces: the next world card counts this card's value higher for beating (scores its printed value)." },
+  D: { name: "Shave", text: "World card. If taken, the world Shaves: the next world card scores 1 less, never below 0." },
+  I: { name: "Peek", text: "World card. If taken, the world Peeks: puts the next world card on the bottom of the world deck and deals the top card in its place." },
+  W: { name: "Mirror", text: "World card. If taken, the world Mirrors: the next world card counts 11 minus its value for beating (scores its printed value)." },
+};
+export function worldCardText(c) {
+  if (!c || !c.suit || !WORLD_CONSOLATION[c.suit]) return cardText(c);
+  return WORLD_CONSOLATION[c.suit].text;
+}
+
 // A consolation's rule, as RULES.md words it (via card_rules.js): consolationText("S") is Brace's.
 export const consolationText = (suit) => `${SUITS[suit].consolation}: ${cardText({ suit, v: 1 })}`;
 
@@ -367,14 +379,16 @@ export function cardLabel(c) {
 }
 
 // A simple face, easy to read at any size: the value, the suit mark, and what the card does when it loses.
-function simpleFace(c) {
+// World cards show the world's consolation name (e.g. Peek on Intelligence instead of Recalculate).
+function simpleFace(c, world = false) {
   const key = c.blessed ? "blessed" : SUITS[c.suit].key;
   const icons = globalThis.TrickSuitIcons;
+  const foot = c.blessed ? "Blessed" : c.status ? SUITS[c.suit].status : world && WORLD_CONSOLATION[c.suit] ? WORLD_CONSOLATION[c.suit].name : SUITS[c.suit].consolation;
   return [
     h("span", { class: "sv" }, c.blessed ? "" : c.status ? "0" : valueLabel(c.v)),
     h("span", { class: "si", html: icons ? icons.svg(key) : "" }),
     h("span", { class: "sbig", html: icons ? icons.svg(key) : "" }),
-    h("span", { class: "sn" }, c.blessed ? "Blessed" : c.status ? SUITS[c.suit].status : SUITS[c.suit].consolation),
+    h("span", { class: "sn" }, foot),
   ];
 }
 
@@ -387,34 +401,40 @@ export function worldNote(c) {
 export const WORLD_NOTE_TIP = "Changed by the world's consolation or the GM. Taking it still scores its printed value, less any Shave.";
 
 // A card. size: "sm" | "md" | "lg" | "xl" | "stage". The screens draw simple faces; extra.art draws the printed card.
-// extra: { class, onclick, title, disabled, badge, art }. Press and hold any card to see the printed card full size.
+// extra: { class, onclick, title, disabled, badge, art, world }. Press and hold any card to see the printed card full size.
 export function cardFace(c, size = "md", extra = {}) {
   if (!c) return h("div", { class: `cf ${size} empty`, "aria-label": "no card" });
   const label = cardLabel(c);
   const kind = c.blessed ? "blessed" : SUITS[c.suit].key;
+  const beatBadge = c.beat != null || c.shave
+    ? [c.beat != null ? `→${c.beat}` : null, c.shave ? `−${c.shave}` : null].filter(Boolean).join(" ")
+    : null;
+  const tag = beatBadge || extra.badge || null;
+  const tipBody = extra.world ? worldCardText(c) : cardText(c);
+  const note = worldNote(c);
   const el = h(extra.onclick ? "button" : "div", {
-    class: `cf ${size} ${extra.art ? "" : `simple k-${kind}${c.status ? " is-status" : ""}${c.blessed ? " is-blessed" : ""}`} ${extra.class || ""}`,
-    "data-tip": extra.title || `${label}. ${cardText(c)}`,
+    class: `cf ${size} ${extra.art ? "" : `simple k-${kind}${c.status ? " is-status" : ""}${c.blessed ? " is-blessed" : ""}`}${tag ? " has-beat" : ""} ${extra.class || ""}`,
+    "data-tip": extra.title || `${label}${note ? ` (${note})` : ""}. ${tipBody}`,
     onclick: extra.onclick, "aria-disabled": extra.disabled ? "true" : undefined, type: extra.onclick ? "button" : undefined,
     "aria-label": extra.onclick ? label : undefined,
   },
-  extra.art ? art(artName(c), label) : simpleFace(c),
-  c.beat != null || c.shave ? h("span", { class: "beat" }, [c.beat != null ? `counts ${c.beat}` : null, c.shave ? `−${c.shave}` : null].filter(Boolean).join(" · "))
-    : extra.badge ? h("span", { class: "beat badge" }, extra.badge) : null);
+  extra.art ? art(artName(c), label) : simpleFace(c, !!extra.world),
+  tag ? h("span", { class: `beat${beatBadge ? "" : " badge"}` }, tag) : null);
   if (!extra.onclick) el.setAttribute("aria-label", label), el.setAttribute("role", "img");
   el._card = c;
+  el._world = !!extra.world;
   if (extra.disabled && extra.onclick) el.addEventListener("click", (e) => e.stopImmediatePropagation(), { capture: true });
   return el;
 }
 
 // The card, full size, with its rule in large type. Tap anywhere to close.
-export function zoomCard(c) {
+export function zoomCard(c, world = false) {
   if (!c) return;
   hideTip();
   const close = () => box.remove();
   const box = h("div", { class: "zoom", role: "dialog", "aria-label": cardLabel(c), onclick: close },
     h("div", { class: "zoom-inner" }, h("div", { class: "cf zoomed" }, art(artName(c), cardLabel(c))),
-      h("div", { class: "zoom-text" }, h("h2", {}, cardLabel(c)), h("p", {}, cardText(c)), worldNote(c) ? h("p", { class: "pill" }, worldNote(c)) : null,
+      h("div", { class: "zoom-text" }, h("h2", {}, cardLabel(c)), h("p", {}, world ? worldCardText(c) : cardText(c)), worldNote(c) ? h("p", { class: "pill" }, worldNote(c)) : null,
         h("p", { class: "small muted" }, "Tap anywhere to close."))));
   document.querySelectorAll(".zoom").forEach((z) => z.remove());
   document.body.append(box);
@@ -428,11 +448,11 @@ if (typeof document !== "undefined") {
     const el = e.target.closest && e.target.closest(".cf");
     if (!el || !el._card) return;
     held = false;
-    hold = setTimeout(() => { held = true; zoomCard(el._card); }, 480);
+    hold = setTimeout(() => { held = true; zoomCard(el._card, !!el._world); }, 480);
   }, true);
   for (const t of ["pointerup", "pointercancel", "pointerleave"]) document.addEventListener(t, () => clearTimeout(hold), true);
   document.addEventListener("click", (e) => { if (held) { held = false; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
-  document.addEventListener("dblclick", (e) => { const el = e.target.closest && e.target.closest(".cf"); if (el && el._card) zoomCard(el._card); });
+  document.addEventListener("dblclick", (e) => { const el = e.target.closest && e.target.closest(".cf"); if (el && el._card) zoomCard(el._card, !!el._world); });
   document.addEventListener("contextmenu", (e) => { if (e.target.closest && e.target.closest(".cf")) e.preventDefault(); });
 }
 
@@ -512,7 +532,9 @@ export function trickSentence(e, names) {
     const p = play(e.winner);
     const how = { blessed: "Blessed always takes it", highest: `the highest on-suit card${bits(p) ? ` (${bits(p)})` : ""}`, tieBreak: "a tie, settled by suit, then trump" }[e.reason];
     const shaved = (p.shave || 0) + (e.worldShave || 0);
-    return `${n(e.winner)}'s ${p.label} takes the ${e.worldLabel}: ${how}. +${e.score}${shaved ? ` (Shaved ${shaved})` : ""}.${e.world ? ` ${worldConsolationText(e.world)}` : ""}`;
+    const wc = e.worldConsolation || (e.world && typeof e.world === "object" ? e.world : null);
+    const wcText = worldConsolationText(wc);
+    return `${n(e.winner)}'s ${p.label} takes the ${e.worldLabel}: ${how}. +${e.score}${shaved ? ` (Shaved ${shaved})` : ""}.${wcText ? ` ${wcText}` : ""}`;
   }
   const why = {
     worldHighest: `no card beat it${e.worldBeat !== undefined ? ` (it counts ${e.worldBeat})` : ""}`,
@@ -570,6 +592,7 @@ export function eventText(e, names, items = {}) {
     case "tallyAdjusted": return `${n(e.id)}'s tally ${e.delta > 0 ? "+" : ""}${e.delta}${e.reason ? ` (${e.reason})` : ""}.`;
     case "targetAdjusted": return `${n(e.id)}'s target is now ${e.target}${e.reason ? ` (${e.reason})` : ""}.`;
     case "worldValueSet": return `A world card now counts ${e.value} for beating${e.reason ? ` (${e.reason})` : ""}.`;
+    case "consequenceRemoved": return `Removed ${e.status} consequence from ${n(e.id)}.`;
     default: return null;
   }
 }
@@ -942,7 +965,8 @@ const chipSeen = { choosing: new Set(), lockedAt: new Map() };
 export function choosingChip(ck, id) {
   if (!ck || ck.phase !== "play") return null;
   const p = ck.players[id];
-  const key = `${ck.trick}:${id}`;
+  if (p.busted) return h("span", { class: "pill chip-busted", "data-tip": "Over target: busted and sitting out the rest of this check." }, "busted");
+  const key = `${ck.id}:${ck.trick}:${id}`;
   if (p.locked) {
     if (chipSeen.choosing.has(key) && !chipSeen.lockedAt.has(key)) chipSeen.lockedAt.set(key, Date.now());
     const fresh = Date.now() - (chipSeen.lockedAt.get(key) ?? 0) < 1500;
@@ -953,9 +977,27 @@ export function choosingChip(ck, id) {
   return h("span", { class: "pill chip-choosing", "data-tip": "Still choosing a card for this trick." }, h("span", { class: "pulse-dot", "aria-hidden": "true" }), "choosing…");
 }
 
-// Each participant's name with their choosing / locked-in chip: the same indication on every screen.
-export const choosingList = (ck, names, me) => h("div", { class: "people choosing-list" }, ck.participants.map((id) =>
-  h("div", { class: `person-row${id === me ? " me" : ""}` }, h("strong", {}, id === me ? `${names[id]} (you)` : names[id]), choosingChip(ck, id))));
+// Compact ally status strip: each participant's lock state, tally/target, trump, and active consolations.
+export function choosingList(ck, names, me) {
+  return h("div", { class: "people choosing-list" }, ck.participants.map((id) => {
+    const p = ck.players[id];
+    const need = p.target != null ? p.target - p.total : null;
+    const tallyTip = need == null ? "Tally so far."
+      : need < 0 ? `Busted (over by ${-need}).`
+      : need === 0 ? "Exactly on target (critical)."
+      : `Needs ${need} more for exact hit.`;
+    return h("div", { class: `person-row ally-row ${tone(p.approach)}${id === me ? " me" : ""}${p.busted ? " is-busted" : ""}` },
+      h("div", { class: "ally-top" },
+        h("strong", { class: "ally-name" }, id === me ? `${names[id]} (you)` : names[id]),
+        choosingChip(ck, id),
+        h("span", { class: `pill ally-score ${tallyClass(p.total, p.target)}`, "data-tip": tallyTip }, `${p.total} / ${p.target ?? "?"}`)),
+      h("div", { class: "ally-meta" },
+        p.approach ? h("span", { class: `pill tinted ${tone(p.approach)}`, "data-tip": `Trump: ${SUITS[p.approach].name}.` }, `${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
+        p.survival ? h("span", { class: "pill bad", "data-tip": "Forced survival goal." }, "Survival") : null,
+        ...consolationPills(p),
+        p.boost ? h("span", { class: "pill good", "data-tip": "GM adjustment to their next card." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null));
+  }));
+}
 
 // List or grid: each screen can show its people as a list or as a grid of cards. "auto" (the default) follows the
 // window: a grid when it's wide, a list when it's narrow, switching live as the window is resized or a tablet turns.
@@ -1005,7 +1047,7 @@ export function handDock({ hand, legal, p, w, ui, rules, onLock, size = "md" }) 
       return cardFace(c, size, {
         class: [ui.chosen === c.id ? "chosen" : "", ui.price === c.id ? "price" : "", forced && isLegal ? "forced" : "", canBeat && !needsPrice ? "can-beat" : ""].join(" "),
         disabled: !(isLegal || pickPrice),
-        badge: n != null && n !== c.v ? String(n) : null,
+        badge: n != null && n !== c.v ? `→${n}` : null,
         title: `${c.label}${n != null && n !== c.v ? ` (counts ${n} now)` : ""}. ${cardText(c)}`,
         onclick: () => {
           if (pickPrice) ui.price = c.id;

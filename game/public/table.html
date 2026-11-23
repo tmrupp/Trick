@@ -59,7 +59,7 @@
 <div id="reveal"></div>
 <script type="module">
 import { connect, params, h, render, cardFace, cardBack, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, itemsById, reducedMotion, markSuits, difficulty, cardFromLabel, mountHeader, setRedraw, announce, trickLog, resultsList, choosingChip, layoutSwitch, notesPanel, presence, tone, difficultyPill, resultPill, worldNote, WORLD_NOTE_TIP, tallyClass, historyPanel, closedNotice, consolationPills } from "/shared/client.js";
-const room = (params.get("room") || "").toUpperCase();
+let room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 const ITEM_NAMES = Object.fromEntries(Object.entries(itemsById()).map(([k, v]) => [k, v.label]));
 document.getElementById("code").textContent = room;
@@ -79,10 +79,10 @@ function showReveal(e, view, names) {
     h("div", { class: "inner" },
       h("div", { class: "small muted" }, `Trick ${e.trick + 1}`),
       h("div", { class: "row row-center-wide" },
-        h("div", { class: "play" }, h("div", { class: "small muted" }, "World"), cardFace(view.check.worldRow[e.trick] || null, "xl"))),
+        h("div", { class: "play" }, h("div", { class: "small muted" }, "World"), cardFace(view.check.worldRow[e.trick] || null, "xl", { world: true }))),
       h("div", { class: "plays" }, e.plays.map((p) => {
         const card = { id: p.card, ...cardFromLabel(p.label) };
-        return h("div", { class: `play${p.id === winner ? " won" : ""}` }, cardFace(card, "lg"), h("div", {}, names[p.id]), p.bv != null && (p.brace || p.boost) ? h("div", { class: "small muted" }, `counts ${p.bv}`) : null);
+        return h("div", { class: `play${p.id === winner ? " won" : ""}` }, cardFace(card, "lg"), h("div", {}, names[p.id]), p.bv != null && (p.brace || p.boost || p.mirrored) ? h("div", { class: "small muted" }, `counts ${p.bv}`) : null);
       })),
       h("div", { class: "line" }, trickSentence(e, names)), h("div", { class: "peek-slot small muted" }))));
   markSuits(box);
@@ -91,29 +91,38 @@ function showReveal(e, view, names) {
   revealTimer = setTimeout(() => box.replaceChildren(), reducedMotion() ? 2500 : 3800);
 }
 
-
-connect({
-  room, as: "table", onStatus: (st) => header.setStatus(st), onNotes: (n) => notes.receive(n),
-  onClosed: (r) => { lastView = null; closedNotice(main, r); },
-  onError: (e) => render(main, h("div", { class: "panel banner bad" }, h("h2", {}, "Can't show this room"), h("p", {}, e))),
-  onView: ({ room: info, view, events }) => {
-    header.setTitle(info.name);
-    const join = info.joinUrl || `${location.origin}/j/${room}`;
-    document.getElementById("joinlink").textContent = join.replace(/^https?:\/\//, "");
-    if (qrFor !== join) { qrFor = join; fetch(`/qr.svg?text=${encodeURIComponent(join)}`).then((r) => r.text()).then((svg) => { document.getElementById("qr").innerHTML = svg; }); }
-    const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
-    announce(events, names, ITEM_NAMES, 5000);
-    const ck = view.check;
-    if (ck && ck.phase !== "closed") {
-      if (seenTricks !== null && ck.log.length > seenTricks) showReveal(ck.log[ck.log.length - 1], view, names);
-      seenTricks = ck.log.length;
-    } else seenTricks = 0;
-    lastView = [info, view, names];
-    draw(info, view, names);
-  },
-});
 let lastView = null;
 function redrawLast() { if (lastView) draw(...lastView); }
+setRedraw(redrawLast);
+
+function startTable() {
+  if (!room) {
+    const input = h("input", { placeholder: "Room code", maxlength: 8, autocapitalize: "characters", autocomplete: "off", "aria-label": "Room code" });
+    return render(main, h("form", { class: "panel stack", onsubmit: (e) => { e.preventDefault(); room = input.value.trim().toUpperCase(); if (!room) return; document.getElementById("code").textContent = room; history.replaceState(null, "", `?room=${room}`); startTable(); } },
+      h("h2", {}, "Open a table screen"), h("p", { class: "muted" }, "Enter the room code from the host page."), input, h("button", { class: "primary big" }, "Open table")));
+  }
+  connect({
+    room, as: "table", onStatus: (st) => header.setStatus(st), onNotes: (n) => notes.receive(n),
+    onClosed: (r) => { lastView = null; closedNotice(main, r); },
+    onError: (e) => render(main, h("div", { class: "panel banner bad" }, h("h2", {}, "Can't show this room"), h("p", {}, e))),
+    onView: ({ room: info, view, events }) => {
+      header.setTitle(info.name);
+      const join = info.joinUrl || `${location.origin}/j/${room}`;
+      document.getElementById("joinlink").textContent = join.replace(/^https?:\/\//, "");
+      if (qrFor !== join) { qrFor = join; fetch(`/qr.svg?text=${encodeURIComponent(join)}`).then((r) => r.text()).then((svg) => { document.getElementById("qr").innerHTML = svg; }); }
+      const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
+      announce(events, names, ITEM_NAMES, 5000);
+      const ck = view.check;
+      if (ck && ck.phase !== "closed") {
+        if (seenTricks !== null && ck.log.length > seenTricks) showReveal(ck.log[ck.log.length - 1], view, names);
+        seenTricks = ck.log.length;
+      } else seenTricks = 0;
+      lastView = [info, view, names];
+      draw(info, view, names);
+    },
+  });
+}
+startTable();
 
 function draw(info, view, names) {
   const ck = view.check && view.check.phase !== "closed" ? view.check : null;
@@ -142,15 +151,15 @@ function draw(info, view, names) {
   if (ck.phase !== "setup") {
     const live = ck.phase !== "resolve";
     parts.push(h("div", { class: "panel table-stage" },
-      live ? h("div", { class: "stack-center" }, h("span", { class: "label" }, `Trick ${ck.trick + 1} of ${ck.tricks}`), cardFace(ck.worldRow[ck.trick], "xl", { class: "current" }),
+      live ? h("div", { class: "stack-center" }, h("span", { class: "label" }, `Trick ${ck.trick + 1} of ${ck.tricks}`), cardFace(ck.worldRow[ck.trick], "xl", { class: "current", world: true }),
         worldNote(ck.worldRow[ck.trick]) ? h("span", { class: "label", "data-tip": WORLD_NOTE_TIP }, worldNote(ck.worldRow[ck.trick])) : null) : h("span", { class: "label" }, "All tricks played"),
       h("div", {}, h("div", { class: "label" }, live ? "Still to come" : "The world row"),
         // While a check runs, only the cards still to come; afterwards, the whole row.
         live && ck.trick >= ck.worldRow.length - 1 ? h("div", { class: "label" }, "This is the last trick.")
-          : h("div", { class: "strip" }, (live ? ck.worldRow.slice(ck.trick + 1) : ck.worldRow).map((c) => cardFace(c, "md"))))));
+          : h("div", { class: "strip" }, (live ? ck.worldRow.slice(ck.trick + 1) : ck.worldRow).map((c) => cardFace(c, "md", { world: true }))))));
   }
   const waiting = ck.waitingOn.length ? ck.waitingOn.map((w) => `${names[w.charId]} (${w.type === "peek" ? "Peek" : w.type === "recalculate" ? "Recalculate" : w.type === "evolve" ? "evolving" : "choosing"})`)
-    : ck.phase === "play" ? ck.participants.filter((id) => !ck.players[id].locked && ck.players[id].handCount).map((id) => names[id]) : [];
+    : ck.phase === "play" ? ck.participants.filter((id) => !ck.players[id].locked && !ck.players[id].busted && ck.players[id].handCount).map((id) => names[id]) : [];
   if (ck.phase !== "play" && waiting.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel banner" }, h("span", { class: "reason" }, `Waiting for ${waiting.join(", ")}`)));
   if (ck.log.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel" }, h("div", { class: "reason" }, trickSentence(ck.log[ck.log.length - 1], names))));
 
@@ -186,9 +195,9 @@ function draw(info, view, names) {
         h("div", { class: "small" }, p.approach ? [h("span", { class: `suit-word ${tone(p.approach)}` }, `${SUITS[p.approach].sym} ${SUITS[p.approach].name} trump`), p.approved ? "" : " · waiting for a target"] : "deciding on a goal",
           view.characters[id] && view.characters[id].bot ? h("span", { class: "muted" }, view.characters[id].bot === "ltr" ? " · left-to-right bot" : " · greedy bot") : null),
         p.survival ? h("span", { class: "pill bad" }, "Survival") : null),
-      h("div", {}, h("div", { class: "tally" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm")), h("strong", { class: `big ${tallyClass(p.total, p.target)}` }, ` ${p.total}`), h("span", { class: "muted" }, ` / ${p.target ?? "?"}`)),
+      h("div", {}, h("div", { class: "tally" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm", { world: true, badge: t.shave ? `−${t.shave}` : null, title: `${t.card.label}: scored ${t.score}${t.shave ? ` (Shaved ${t.shave})` : ""}.` })), h("strong", { class: `big ${tallyClass(p.total, p.target)}` }, ` ${p.total}`), h("span", { class: "muted" }, ` / ${p.target ?? "?"}`)),
         p.target ? h("div", { class: `bar${over ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / p.target)}%` })) : null,
-        p.openHand && p.openHand.length && ck.phase !== "resolve" ? h("div", { class: "open-hand mt" }, h("div", { class: "label" }, "Open hand · plays from the left"), h("div", { class: "row" }, p.openHand.map((c, i) => cardFace(c, "md", { class: i === 0 ? "next-up" : "" })))) : null,
+        p.openHand && p.openHand.length && !p.busted && ck.phase !== "resolve" ? h("div", { class: "open-hand mt" }, h("div", { class: "label" }, "Open hand · plays from the left"), h("div", { class: "row" }, p.openHand.map((c, i) => cardFace(c, "md", { class: i === 0 ? "next-up" : "" })))) : null,
         h("div", { class: "row small mt" }, ...consolationPills(p), p.boost ? h("span", { class: "pill good" }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null)),
       h("div", { class: "row" }, r ? h("div", { class: "align-right" }, h("div", { class: `reason res-text res-${r.result}` }, RESULT[r.result]), r.dies ? h("div", { class: "pill bad" }, "does not survive") : null)
         : ck.phase === "play" && p.locked ? cardBack("md", { class: "locked-back", title: "Locked in, face down until the reveal." }) : null));

@@ -183,7 +183,7 @@ test("Recalculate: a losing Diamond draws a card at once", () => {
 });
 
 test("new games use the automatic consolations; older games keep Peek and the choosing Recalculate", () => {
-  assert.deepEqual(game().rules, { consolations: 2, stumble: "deck", world: "lose" });
+  assert.deepEqual(game().rules, { consolations: 2, stumble: "deck", world: "lose", bustSitOut: true, survival: "3m+3" });
 });
 
 test("Older games' Peek: each losing Spade chooses blind; the next world card is replaced once if anyone chooses to", () => {
@@ -310,7 +310,7 @@ test("the world's consolation: Dexterity Shaves the next world card, on top of a
 });
 
 test("the world's consolation: Intelligence Peeks, Weird Mirrors; none when the world takes it or after the last trick", () => {
-  let s = dealt(game(["ana", "ben"]));
+  let s = dealt(game(["ana", "ben"]), { targets: { ana: 20, ben: 20 } });
   rig(s, { row: ["I2", "S4", "W3", "S9", "W5"], hands: { ana: ["I1", "S2", "S3", "S6", "S7"], ben: ["D9", "D1", "D2", "D3", "D4"] }, worldDeck: ["D6", "S2"] });
   let events;
   // Ben's 9 of Dexterity, his trump, takes the Intelligence 2: the next world card goes under the world deck, its top card comes up.
@@ -318,6 +318,8 @@ test("the world's consolation: Intelligence Peeks, Weird Mirrors; none when the 
   assert.equal(s.check.worldRow[1].suit + s.check.worldRow[1].v, "S2");
   assert.equal(s.check.worldDeck[0].suit + s.check.worldDeck[0].v, "S4");
   assert.ok(events.some((e) => e.type === "worldConsoled" && e.effect === "peek"));
+  assert.ok(typeof s.check.log[0].world === "string" && s.check.log[0].world.startsWith("world/I2"), "log.world keeps the world card id");
+  assert.equal(s.check.log[0].worldConsolation.effect, "peek", "worldConsolation is stored separately");
   // The world takes the new 2 (Ana's 2 only ties it): no world consolation.
   ({ state: s, events } = run(s, lock(s, "ana", "S2"), lock(s, "ben", "D1")));
   assert.ok(!events.some((e) => e.type === "worldConsoled"));
@@ -330,6 +332,7 @@ test("the world's consolation: Intelligence Peeks, Weird Mirrors; none when the 
   // The last trick: a win there gives no world consolation.
   ({ state: s, events } = run(s, lock(s, "ana", "S7"), lock(s, "ben", "D4")));
   assert.ok(!events.some((e) => e.type === "worldConsoled"));
+  assert.equal(s.check.log.at(-1).worldConsolation, undefined);
 });
 
 test("older games give the world no consolation", () => {
@@ -340,4 +343,66 @@ test("older games give the world no consolation", () => {
   ({ state: s, events } = run(s, lock(s, "ana", "S9"), lock(s, "ben", "I1")));
   assert.equal(s.check.worldRow[1].beat ?? null, null);
   assert.ok(!events.some((e) => e.type === "worldConsoled"));
+});
+
+test("busted players sit out the remaining tricks; if everyone busts, the check resolves", () => {
+  let s = dealt(game(["ana", "ben"]), { targets: { ana: 6, ben: 10 } });
+  s.check.tricks = 3;
+  s.check.worldRow = s.check.worldRow.slice(0, 3);
+  rig(s, { row: ["S7", "D4", "I3"], hands: { ana: ["S9", "S8", "S1"], ben: ["D1", "D6", "D5"] } });
+  // Trick 1: Ana wins the 7 -> tally 7 > target 6 -> busted!
+  ({ state: s } = run(s, lock(s, "ana", "S9"), lock(s, "ben", "D1")));
+  assert.equal(s.check.players.ana.tally[0].score, 7);
+  assert.throws(() => run(s, lock(s, "ana", "S8")), /busted/);
+  // Trick 2: only Ben plays; Ana sits out automatically.
+  ({ state: s } = run(s, lock(s, "ben", "D6")));
+  assert.equal(s.check.trick, 2);
+  // Trick 3: only Ben plays, resolving the check.
+  ({ state: s } = run(s, lock(s, "ben", "D5")));
+  assert.equal(s.check.phase, "resolve");
+  assert.equal(s.check.results.ana.result, "bust");
+
+  // Solo player busts early -> remaining tricks auto-resolve to the world and check moves to resolve.
+  let solo = dealt(game(["ana"]), { kind: "solo", targets: { ana: 6 } });
+  solo.check.tricks = 3;
+  solo.check.worldRow = solo.check.worldRow.slice(0, 3);
+  rig(solo, { row: ["S8", "D4", "I3"], hands: { ana: ["S9", "S5", "S4"] } });
+  ({ state: solo } = run(solo, lock(solo, "ana", "S9")));
+  assert.equal(solo.check.phase, "resolve", "all remaining tricks finish once nobody can play");
+  assert.equal(solo.check.results.ana.result, "bust");
+
+  // Older games without bustSitOut still let busted players play.
+  let old = dealt(game(["ana", "ben"]), { targets: { ana: 6, ben: 10 } });
+  old.rules = { consolations: 2, stumble: "deck", world: "lose" };
+  old.check.tricks = 2;
+  old.check.worldRow = old.check.worldRow.slice(0, 2);
+  rig(old, { row: ["S7", "D4"], hands: { ana: ["S9", "S8"], ben: ["D1", "D6"] } });
+  ({ state: old } = run(old, lock(old, "ana", "S9"), lock(old, "ben", "D1")));
+  ({ state: old } = run(old, lock(old, "ana", "S8"), lock(old, "ben", "D6")));
+  assert.equal(old.check.phase, "resolve");
+});
+
+test("lockCard waits for pending mid-play evolution prompts, and removeConsequence undoes a consequence", () => {
+  let s = game(["ana", "ben"]);
+  ({ state: s } = run(s, { type: "grantBlessed", charId: "ana" }));
+  s = dealt(s);
+  // Empty Ana's deck and put 2 Injuries in discard so giving Blessed triggers a mid-play evolution prompt.
+  s.characters.ana.discard.push(...s.characters.ana.deck.splice(0), card("Sx", "ana"), card("Sx", "ana"));
+  const b = find(s, "ana", "B");
+  ({ state: s } = run(s, { type: "giveBlessed", charId: "ana", to: "ben", cardId: b.id }));
+  assert.equal(s.check.pending[0].type, "evolve");
+  assert.throws(() => run(s, { type: "lockCard", charId: "ben", cardId: hand(s, "ben")[0].id }), /waiting choices/);
+  ({ state: s } = run(s, { type: "evolve", charId: "ana", skip: true }));
+  assert.equal(s.check.pending.length, 0);
+
+  // removeConsequence during resolve.
+  let r = dealt(game(["ana", "ben"]));
+  r.check.trick = r.check.tricks - 1;
+  rig(r, { row: ["S5"], hands: { ana: ["S7"], ben: ["D1"] } });
+  ({ state: r } = run(r, lock(r, "ana", "S7"), lock(r, "ben", "D1"),
+    { type: "addConsequence", charId: "ben", suit: "S" },
+    { type: "addConsequence", charId: "ben", suit: "I" },
+    { type: "removeConsequence", index: 0 }));
+  assert.equal(r.check.consequences.length, 1);
+  assert.equal(r.check.consequences[0].suit, "I");
 });

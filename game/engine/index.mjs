@@ -8,19 +8,19 @@ import { seedFrom, rngFor } from "./rng.mjs";
 import * as campaign from "./campaign.mjs";
 import * as check from "./check.mjs";
 
-export { RuleError } from "./campaign.mjs";
+export { RuleError, survivalTarget } from "./campaign.mjs";
 export { CHECK_KINDS as KINDS, presetTricks, DIFFICULTY, DIFFICULTY_ODDS, difficulty, difficultyHint, bandOf } from "./rules.mjs";
 export { label, SUITS, SUIT_INFO, STARTER, isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
-export { CHECK_KINDS, RESULT_RANK, resultFor, compareGoals, legalCards, trickWinner } from "./check.mjs";
+export { CHECK_KINDS, RESULT_RANK, resultFor, compareGoals, legalCards, trickWinner, isBusted, canPlay } from "./check.mjs";
 export { viewFor } from "./views.mjs";
 
 export const ENGINE_VERSION = 1;
 
 // Every new game's rules (RULES.md): consolations 2 is Shave and Recalculate's draw; stumble "deck" sends a played
-// Stumble to the top of your deck at cleanup; world "lose" gives the world a consolation when a player takes its card. Games begun before keep what they began with: no consolations field
-// means Peek and the choosing Recalculate (rules.peek "choose" or "auto"), no stumble field means Stumble's Price
-// (see legacy.mjs), and no world field means the world takes no consolation.
-export const RULES_NOW = { consolations: 2, stumble: "deck", world: "lose" };
+// Stumble to the top of your deck at cleanup; world "lose" gives the world a consolation when a player takes its card;
+// bustSitOut makes busted players sit out remaining tricks; survival "3m+3" sets survival targets to 3 × M + 3.
+// Games begun before keep what they began with (see legacy.mjs).
+export const RULES_NOW = { consolations: 2, stumble: "deck", world: "lose", bustSitOut: true, survival: "3m+3" };
 export function createGame({ seed = Date.now(), gmSeat = 0, rules = RULES_NOW } = {}) {
   return {
     version: ENGINE_VERSION,
@@ -78,13 +78,14 @@ const HANDLERS = {
   recalculate: check.recalculate,
   giveBlessed: check.giveBlessed,
   addConsequence: check.addConsequence,
+  removeConsequence: check.removeConsequence,
   endCheck: check.endCheck,
   gmBoost: check.gmBoost,
   gmWorldValue: check.gmWorldValue,
   gmAdjustTally: check.gmAdjustTally,
   gmAdjustTarget: check.gmAdjustTarget,
   gmDraw: (ctx, a) => { check.gmDraw(ctx, a); check.settle(ctx); },
-  gmDiscard: check.gmDiscard,
+  gmDiscard: (ctx, a) => { check.gmDiscard(ctx, a); check.settle(ctx); },
   gmMoveCard: (ctx, a) => { campaign.moveCard(ctx, a); check.settle(ctx); },
   gmAddCard: (ctx, a) => { campaign.gmAddCard(ctx, a); check.settle(ctx); },
   gmShuffleDeck: campaign.gmShuffleDeck,

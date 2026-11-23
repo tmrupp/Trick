@@ -1,7 +1,7 @@
 // Simple bot players, matching the bots in scripts/simulate_tally.mjs, so engine-driven games can be compared
 // with the published simulations. A bot reads only its own hand and the public table.
 import { apply } from "./index.mjs";
-import { legalCards, stumblePrice } from "./check.mjs";
+import { legalCards, stumblePrice, canPlay } from "./check.mjs";
 import { isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
 
 const total = (p) => p.tally.reduce((a, t) => a + t.score, 0);
@@ -116,8 +116,8 @@ export function nextBotAction(state) {
   }
   const prompt = ck.pending.find((x) => bots.includes(x.charId));
   if (prompt) return state.characters[prompt.charId].bot === "ltr" ? answerLeftToRight(state, prompt) : answerPrompt(state, prompt);
-  if (ck.phase === "play") {
-    const id = bots.find((x) => !ck.locks[x] && ck.players[x].hand.length);
+  if (ck.phase === "play" && !ck.pending.length) {
+    const id = bots.find((x) => !ck.locks[x] && canPlay(state, x));
     if (id) return state.characters[id].bot === "ltr" ? chooseLockLeftToRight(state, id) : chooseLock(state, id);
   }
   return null;
@@ -143,7 +143,7 @@ export function playCheck(state, { kind = "standard", goals, consequences = [], 
     const ck = state.check;
     const prompt = nextPrompt(ck);
     if (prompt) { step(answerPrompt(state, prompt)); continue; }
-    const id = ck.participants.find((x) => !ck.locks[x] && ck.players[x].hand.length);
+    const id = ck.participants.find((x) => !ck.locks[x] && canPlay(state, x));
     step(chooseLock(state, id));
   }
   for (const c of consequences) step({ type: "addConsequence", ...c });

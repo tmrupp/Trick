@@ -66,13 +66,13 @@ Quick checks run **Easy** 6–9, **Moderate** 10–11, **Hard** 12–13, **Very 
 ## Play the tricks
 
 1. **The world leads** the next card in its row.
-2. **Everyone chooses a card face down,** then all reveal together. **If you hold a status in the world card's suit, you must play one.** If your hand is empty, sit out that trick.
+2. **Everyone chooses a card face down,** then all reveal together. **If you hold a status in the world card's suit, you must play one.** If your hand is empty, or you have already **busted** (gone over your target), sit out the remaining tricks.
 3. **Find the single highest card on the table,** counting the world card and any Brace. If it is a player's card, and in the world card's suit **or** its owner's trump, it **wins**: its owner takes the world card into their tally pile and **scores its value**.
 4. **If players' cards tie for highest** above the world card and all are on-suit, rank them: a card in the world card's suit **and** its owner's trump beats one in the world card's suit only, which beats one in its owner's trump only. The single best-ranked card wins.
 5. Otherwise **the world takes the trick**: the world card is highest, the highest card is off-suit, or the tie stays level. Discard that world card.
 6. **Everyone who did not win** takes their card's consolation, all at once, before the next trick. If a player took the world card, the world takes its own consolation at the same time (see *The world's consolation*). Then play the next trick, until the row is used up.
 
-The winner has to beat everyone. **A high off-suit card cannot win, but it blocks:** nobody beats it, so the world takes the trick. **Winning is not optional:** if your card is highest and on-suit, you take the world card even if it busts you. To stay safe, play low, or let someone play over you.
+The winner has to beat everyone. **A high off-suit card cannot win, but it blocks:** nobody beats it, so the world takes the trick. **Winning is not optional:** if your card is highest and on-suit, you take the world card even if it busts you (once busted, you sit out the rest of the check). To stay safe, play low, or let someone play over you.
 
 With the whole row visible, the real decision is **which world cards to go after**, and which to leave for allies. Narrate progress and setbacks within your approach; other suits can represent supporting actions.
 
@@ -169,7 +169,7 @@ Resolve goals and deaths, then clean up:
 
 ## Survival
 
-For living characters, count **M Injuries** in the top **N** discard cards, where N is the check's number of tricks, or all cards if fewer exist. Below two, nothing happens. At **two or more**, survival becomes that player's forced goal, with **target 3 × M**: 6 for two Injuries, 9 for three, 12 for four, up to 18 for six. It takes priority over other goals. **A bust, or landing 7 or more short, means death;** any other result is survival, with that result's complications.
+For living characters, count **M Injuries** in the top **N** discard cards, where N is the check's number of tricks, or all cards if fewer exist. Below two, nothing happens. At **two or more**, survival becomes that player's forced goal, with **target 3 × M + 3**: 9 for two Injuries, 12 for three, 15 for four, up to 21 for six. It takes priority over other goals. **A bust, or landing 7 or more short, means death;** any other result is survival, with that result's complications.
 
 | Scan trigger | N | Survival applies |
 | --- | --- | --- |

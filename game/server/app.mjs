@@ -61,10 +61,11 @@ export function createServer({ port = 8787, savesDir = savesFolder(), adminToken
     res.end(type === "application/json" ? JSON.stringify(body) : body);
   };
 
-  const readJson = (req) => new Promise((ok, fail) => {
+  const readJson = (req, limit = 5 * 1024 * 1024) => new Promise((ok, fail) => {
     let data = "";
-    req.on("data", (d) => { data += d; if (data.length > 1e5) { fail(new Error("too big")); req.destroy(); } });
-    req.on("end", () => { try { ok(data ? JSON.parse(data) : {}); } catch (e) { fail(e); } });
+    req.on("data", (d) => { data += d; if (data.length > limit) { const err = new Error("Request body is too large."); err.status = 413; fail(err); req.destroy(); } });
+    req.on("error", fail);
+    req.on("end", () => { try { ok(data ? JSON.parse(data) : {}); } catch (e) { e.status = 400; fail(e); } });
   });
 
   async function serveFile(res, file, cache) {
@@ -148,7 +149,7 @@ export function createServer({ port = 8787, savesDir = savesFolder(), adminToken
         if (path === "/api/archive" && req.method === "POST") {
           const body = await readJson(req);
           const id = String(body.id);
-          for (const [code, r] of rooms) if (r.save.id === id) { for (const c of r.clients) c.close(); r.stop(); rooms.delete(code); }
+          for (const [code, r] of rooms) if (r.save.id === id) { for (const c of r.clients) { c.send({ type: "closed", reason: "The host archived this campaign." }); c.close(); } r.stop(); rooms.delete(code); }
           store.archive(id);
           return send(res, 200, info());
         }
@@ -156,13 +157,14 @@ export function createServer({ port = 8787, savesDir = savesFolder(), adminToken
       }
       send(res, 404, { error: "Not found" });
     } catch (e) {
+      if (e.status) return send(res, e.status, { error: e.message });
       log("request error:", e.message);
       send(res, 500, { error: "Server error" });
     }
   });
 
   // ---- WebSockets ----
-  const wss = new WebSocketServer({ server, path: "/ws", maxPayload: 16 * 1024 });
+  const wss = new WebSocketServer({ server, path: "/ws", maxPayload: 64 * 1024 });
 
   const clientIp = (req) => String(req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
 

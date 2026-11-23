@@ -66,7 +66,11 @@ export class Store {
   importSave(data, takenCodes) {
     if (!data || typeof data.seed !== "string" || !Array.isArray(data.actions) || !Array.isArray(data.seats)) throw new Error("That isn't a TRICK save.");
     const fresh = this.create({ name: `${String(data.name || "Imported").slice(0, 50)} (imported)`, seed: data.seed, takenCodes });
-    Object.assign(fresh, { gmSeat: data.gmSeat || 0, actions: data.actions, seats: data.seats, characterNames: data.characterNames || [] });
+    Object.assign(fresh, {
+      gmSeat: data.gmSeat || 0, actions: data.actions, seats: data.seats, characterNames: data.characterNames || [],
+      ...(data.notes && typeof data.notes === "object" ? { notes: data.notes } : {}),
+      ...(data.state && typeof data.state === "object" && Array.isArray(data.state.actions) && data.state.actions.length === data.actions.length ? { state: data.state } : {}),
+    });
     // It keeps the rules it was played under; a save that names none predates automatic consolations.
     fresh.rules = data.rules || (data.state && data.state.rules) || { peek: "choose" };
     // Keep the room code when it's free here, so old join links still name the right room.

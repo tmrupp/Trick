@@ -19,7 +19,7 @@ import { connect, params, h, render, cardFace, cardText, closedNotice } from "/s
 const room = (params.get("room") || "").toUpperCase();
 const main = document.getElementById("main");
 connect({
-  room, as: "player",
+  room, as: "player", allowShared: true,
   onClosed: (r) => closedNotice(main, r),
   onError: (e) => render(main, h("p", {}, e, " Open this from your phone's ", h("a", { href: `/play?room=${room}` }, "game page"), " first.")),
   onView: ({ room: info, view }) => {

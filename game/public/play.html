@@ -30,6 +30,7 @@ let last = null;
 let tab = "play"; // play | cards | history
 let ui = { chosen: null, price: null, info: false, creating: false };
 let lastTrickSeen = null; // the newest trick this phone has shown; null until the first view
+let lastCheckId = null;
 let lastPromptKey = "";
 const GUIDE_KEY = "trick:guide-seen";
 
@@ -85,11 +86,11 @@ function showReveal(e, view, me, names) {
   if (won) after = `+${e.score}: you're on ${p.total} of ${p.target}.`;
   else if (mine && !last && card && !card.blessed) {
     const auto = view.rules && view.rules.consolations === 2; // older games keep Peek and the choosing Recalculate
-    after = { S: `Brace +${card.v} on your next card.`, D: auto ? "Shave: your next win scores 1 less." : "Peek: choose below whether to replace the next world card.", I: auto ? "Recalculate: you drew a card." : "Recalculate: choose a card to swap below.", W: "Mirror: your next card counts 11 minus its value." }[card.suit] || "";
+    after = { S: card.v ? `Brace +${card.v} on your next card.` : "", D: auto ? "Shave: your next win scores 1 less." : "Peek: choose below whether to replace the next world card.", I: auto ? "Recalculate: you drew a card." : "Recalculate: choose a card to swap below.", W: "Mirror: your next card counts 11 minus its value." }[card.suit] || "";
   }
   const box = h("div", { class: `phone-reveal${won ? " won" : ""}`, role: "status", onclick: () => box.remove() },
     h("div", { class: "small muted" }, `Trick ${e.trick + 1}`),
-    h("div", { class: "cards" }, world ? cardFace(world, "md") : null, h("span", { class: "vs" }, mine ? "vs" : ""), card ? cardFace(card, "md", { class: won ? "chosen" : "" }) : null),
+    h("div", { class: "cards" }, world ? cardFace(world, "md", { world: true }) : null, h("span", { class: "vs" }, mine ? "vs" : ""), card ? cardFace(card, "md", { class: won ? "chosen" : "" }) : null),
     h("div", { class: "headline" }, headline),
     after ? h("p", { class: "note-gap" }, after) : null,
     h("p", { class: "small muted note-gap" }, trickSentence(e, names)), h("div", { class: "peek-slot small muted" }));
@@ -150,6 +151,8 @@ function react(msg) {
   const names = Object.fromEntries(Object.values(view.characters).map((c) => [c.id, c.name]));
   announce(msg.events, names, ITEM_NAMES, 4500);
   const ck = view.check;
+  const checkId = ck && ck.phase !== "closed" ? ck.id : null;
+  if (checkId !== lastCheckId) { forget("goal-text", "suggest"); lastCheckId = checkId; }
   const me = msg.room.you.charId;
   const newest = ck && ck.phase !== "closed" ? ck.log.length - 1 : -1;
   if (lastTrickSeen !== null && newest > lastTrickSeen && ck.players[me]) { chime("reveal"); showReveal(ck.log[newest], view, me, names); }
@@ -183,6 +186,7 @@ function createForm(you) {
       e.preventDefault();
       if (another && !name.value.trim()) return toast("Name your new character.");
       act({ type: "createCharacter", name: name.value, primary, secondary, others: [other, rest.find((s) => s !== other)], race: race.value || null });
+      forget("c-name", "c-race");
       ui.creating = false;
     } },
     h("h2", {}, another ? "New character" : "Create your character"),
@@ -239,7 +243,7 @@ function promptPanel(pr, view, me) {
     const next = ck.worldRow[ck.trick];
     return h("div", { class: "panel banner stack" }, h("h2", {}, "Peek"),
       h("p", {}, "You lost with a Dexterity card. Replace the next world card with the top of the world deck? Nobody sees the new card until it lands."),
-      h("div", { class: "row align-end" }, cardFace(next, "lg"), h("div", { class: "small muted narrow-note" }, "If anyone who lost with a Dexterity card chooses Replace, it's replaced once. Nobody sees who chose what.")),
+      h("div", { class: "row align-end" }, cardFace(next, "lg", { world: true }), h("div", { class: "small muted narrow-note" }, "If anyone who lost with a Dexterity card chooses Replace, it's replaced once. Nobody sees who chose what.")),
       h("div", { class: "row" },
         h("button", { class: "primary big", onclick: () => act({ type: "peek", charId: me, replace: true }) }, "Replace it"),
         h("button", { class: "big", onclick: () => act({ type: "peek", charId: me, replace: false }) }, "Keep it")));
@@ -250,13 +254,16 @@ function promptPanel(pr, view, me) {
   }
   if (pr.type === "evolve") {
     const discard = view.characters[me].discard;
-    const suit = h("select", { "data-key": "ev-suit", "aria-label": "Status to evolve" }, pr.suits.map((s) => h("option", { value: s }, `${SUITS[s].status} (${SUITS[s].name})`)));
-    const card = h("select", { "data-key": "ev-card", "aria-label": "Card to return" }, discard.filter((c) => !c.status && !c.blessed).map((c) => h("option", { value: c.id }, c.label)));
+    const pickedSuit = pr.suits.includes(draft("ev-suit")) ? draft("ev-suit") : pr.suits[0];
+    const suit = h("select", { "data-key": "ev-suit", "aria-label": "Status to evolve", onchange: () => draw() }, pr.suits.map((s) => h("option", { value: s, selected: s === pickedSuit }, `${SUITS[s].status} (${SUITS[s].name})`)));
+    const suitCards = discard.filter((c) => !c.status && !c.blessed && c.suit === pickedSuit);
+    const card = h("select", { "data-key": "ev-card", "aria-label": "Card to return", disabled: !suitCards.length },
+      suitCards.length ? suitCards.map((c) => h("option", { value: c.id }, c.label)) : h("option", { value: "" }, `No ordinary ${SUITS[pickedSuit].name} cards in discard`));
     return h("div", { class: "panel banner stack" }, h("h2", {}, "Evolve?"),
       h("p", {}, "Your deck is reshuffling, and your discard holds two matching statuses. You may return one of them to your reserve, then either gain a card of that suit (choose one of three) or return one of that suit's cards from your discard."),
       h("label", {}, "Status ", suit),
       h("button", { onclick: () => act({ type: "evolve", charId: me, suit: suit.value, mode: "gain" }) }, "Return one and gain a card"),
-      h("div", { class: "row" }, card, h("button", { onclick: () => act({ type: "evolve", charId: me, suit: suit.value, mode: "return", cardId: card.value }) }, "Return one and this card")),
+      h("div", { class: "row" }, card, h("button", { disabled: !suitCards.length, onclick: () => act({ type: "evolve", charId: me, suit: suit.value, mode: "return", cardId: card.value }) }, "Return one and this card")),
       h("button", { class: "ghost", onclick: () => act({ type: "evolve", charId: me, skip: true }) }, "Don't evolve"));
   }
   if (pr.type === "evolvePick") {
@@ -285,7 +292,7 @@ function hud(p, ck) {
 
 // Left-to-right bots play with their hands face up: everyone can plan around them.
 function openHands(ck, names) {
-  const open = ck.participants.filter((id) => ck.players[id].openHand && ck.players[id].openHand.length);
+  const open = ck.participants.filter((id) => ck.players[id].openHand && ck.players[id].openHand.length && !ck.players[id].busted);
   if (!open.length) return null;
   return open.map((id) => h("div", { class: "open-hand" }, h("div", { class: "small", "data-tip": "A left-to-right bot: it plays its leftmost legal card each trick, so you can see what's coming." }, h("strong", {}, names[id]), " plays left to right"),
     h("div", { class: "row" }, ck.players[id].openHand.map((c, i) => cardFace(c, "sm", { class: i === 0 ? "next-up" : "" })))));
@@ -296,13 +303,13 @@ function stage(ck) {
   const live = ck.phase !== "resolve";
   const cur = live ? ck.worldRow[ck.trick] : null;
   return h("div", { class: "stage" },
-    cur ? h("div", { class: "stage-card" }, h("span", { class: "stage-label" }, `Trick ${ck.trick + 1} of ${ck.tricks}`), cardFace(cur, "stage", { class: "current" }),
+    cur ? h("div", { class: "stage-card" }, h("span", { class: "stage-label" }, `Trick ${ck.trick + 1} of ${ck.tricks}`), cardFace(cur, "stage", { class: "current", world: true }),
       worldNote(cur) ? h("span", { class: "small", "data-tip": WORLD_NOTE_TIP }, worldNote(cur)) : null)
       : h("div", { class: "stage-card" }, h("span", { class: "stage-label" }, "All tricks played")),
     h("div", {}, h("div", { class: "stage-label" }, live ? "Still to come" : "The world row"),
       // While a check runs, only the cards still to come; afterwards, the whole row.
       live && ck.trick >= ck.worldRow.length - 1 ? h("div", { class: "small muted" }, "This is the last trick.")
-        : h("div", { class: "strip" }, (live ? ck.worldRow.slice(ck.trick + 1) : ck.worldRow).map((c) => cardFace(c, "sm")))));
+        : h("div", { class: "strip" }, (live ? ck.worldRow.slice(ck.trick + 1) : ck.worldRow).map((c) => cardFace(c, "sm", { world: true })))));
 }
 
 function checkView(view, info, me) {
@@ -342,15 +349,16 @@ function checkView(view, info, me) {
 
   for (const pr of view.prompts || []) out.push(promptPanel(pr, view, me));
 
-  // Who's still choosing.
-  if (ck.phase === "play" && w) out.push(h("div", { class: "panel" }, h("div", { class: "stage-label mb" }, "This trick"),
+  // Ally status strip: tallies, targets, trumps, active consolations and who's still choosing.
+  if (ck.phase !== "setup" && ck.phase !== "resolve") out.push(h("div", { class: "panel" }, h("div", { class: "stage-label mb" }, "Table & allies"),
     choosingList(ck, names, me),
     openHands(ck, names)));
 
   const blessed = (view.hand || []).find((c) => c.blessed);
   const nobodyLocked = ck.participants.every((id) => !ck.players[id].locked);
-  if (blessed && ck.participants.length > 1 && (ck.phase === "consolation" || (ck.phase === "play" && nobodyLocked))) {
-    const to = h("select", { "data-key": "bless-to", "aria-label": "Give to" }, ck.participants.filter((id) => id !== me).map((id) => h("option", { value: id }, names[id])));
+  const eligibleBlessedTargets = ck.participants.filter((id) => id !== me && !ck.players[id].busted);
+  if (blessed && !p.busted && eligibleBlessedTargets.length && (ck.phase === "consolation" || (ck.phase === "play" && nobodyLocked))) {
+    const to = h("select", { "data-key": "bless-to", "aria-label": "Give to" }, eligibleBlessedTargets.map((id) => h("option", { value: id }, names[id])));
     out.push(h("div", { class: "panel row" }, h("span", { "data-tip": cardText(blessed) }, "Give your Blessed to"), to, h("button", { onclick: () => act({ type: "giveBlessed", charId: me, to: to.value, cardId: blessed.id }) }, "Give"), h("span", { class: "small muted" }, "You draw a card.")));
   }
 
@@ -360,23 +368,31 @@ function checkView(view, info, me) {
       r.dies ? h("p", {}, h("strong", {}, "You do not survive.")) : null, h("p", { class: "small muted" }, "The GM narrates what happens and any consequences.")));
   }
   if (p.tally.length) out.push(h("div", { class: "panel" }, h("div", { class: "stage-label" }, "Won so far"), h("div", { class: "row mt" },
-    p.tally.map((t) => t.adjustment ? h("span", { class: "pill", "data-tip": t.reason || "A GM adjustment." }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm")))));
+    p.tally.map((t) => t.adjustment ? h("span", { class: "pill", "data-tip": t.reason || "A GM adjustment." }, `${t.score > 0 ? "+" : ""}${t.score}`)
+      : cardFace(t.card, "sm", { world: true, badge: t.shave ? `−${t.shave}` : null, title: `${t.card.label}: scored ${t.score}${t.shave ? ` (Shaved ${t.shave})` : ""}.` })))));
   out.push(trickLog(ck.log, names));
 
   // The hand, docked at the bottom where your thumb is.
   if (ck.phase === "play" && w) {
-    const waiting = ck.participants.filter((id) => !ck.players[id].locked && id !== me && ck.players[id].handCount).map((id) => names[id]);
-    if (view.myLock) {
+    const waiting = ck.participants.filter((id) => !ck.players[id].locked && !ck.players[id].busted && id !== me && ck.players[id].handCount).map((id) => names[id]);
+    if (p.busted) {
+      out.push(h("div", { class: "dock busted-dock stack-tight" },
+        h("div", { class: "row" }, h("span", { class: "pill chip-busted" }, "busted"), h("strong", {}, `${p.total} of ${p.target}`), h("span", { class: "small muted" }, "You sit out the remaining tricks.")),
+        h("div", { class: "small muted" }, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
+        view.hand.length ? h("div", { class: "fan" }, view.hand.map((c) => cardFace(c, "sm"))) : null));
+    } else if (view.myLock) {
       const c = view.hand.find((x) => x.id === view.myLock.cardId);
       out.push(h("div", { class: "dock" }, h("div", { class: "locked-row" }, cardFace(c, "lg", { class: "chosen" }), h("div", { class: "stack" },
         h("strong", {}, `Locked in: ${c ? c.label : ""}`), h("div", { class: "small muted" }, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
         h("button", { class: "small", onclick: () => act({ type: "unlockCard", charId: me }) }, "Change my card")))));
+    } else if (ck.waitingOn && ck.waitingOn.length) {
+      out.push(h("div", { class: "dock" }, h("p", { class: "hint" }, "Finish the waiting choices above before locking a card."), h("div", { class: "fan" }, view.hand.map((c) => cardFace(c, "md")))));
     } else {
       out.push(h("div", { class: "dock" }, handDock({ hand: view.hand, legal: view.legal, p, w, ui, rules: view.rules,
         onLock: (cardId, priceCardId) => act({ type: "lockCard", charId: me, cardId, priceCardId }) })));
     }
   } else if (ck.phase !== "setup" && view.hand && view.hand.length && ck.phase !== "resolve" && !(view.prompts || []).some((x) => x.type === "recalculate")) {
-    out.push(h("div", { class: "dock" }, h("p", { class: "hint" }, "Your hand. The next trick starts when everyone's ready."), h("div", { class: "fan" }, view.hand.map((c) => cardFace(c, "md")))));
+    out.push(h("div", { class: "dock" }, h("p", { class: "hint" }, p.busted ? "You busted and sit out the remaining tricks." : "Your hand. The next trick starts when everyone's ready."), h("div", { class: "fan" }, view.hand.map((c) => cardFace(c, "md")))));
   }
   return out;
 }

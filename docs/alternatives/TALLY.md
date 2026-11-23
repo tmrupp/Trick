@@ -65,7 +65,7 @@ The bands used to be named from the greedy bots, which made 15–20 very hard to
 
 The winner has to beat everyone. **A high off-suit card can't win, but it blocks:** nobody beats it, so the world takes the trick.
 
-**Winning isn't optional.** If your card is the highest on the table and on-suit, you take the world card, even if it busts you. To stay safe, play low, or let someone play over you.
+**Winning isn't optional.** If your card is the highest on the table and on-suit, you take the world card, even if it busts you. Once busted, you sit out the remaining tricks of the check. To stay safe, play low, or let someone play over you.
 
 Your own card's value only decides whether you win. **What you score is chosen by which world card you take.** With the whole row visible, the core decision is which world cards to go after, and which to leave for allies.
 
@@ -179,7 +179,7 @@ Rest and evolution still remove statuses as before. Curses still leave only thro
 ## How it fits the rest of Trick
 
 - **Blessed** always takes the trick and scores the world card. Two Blessed tie, so the world takes it.
-- **Survival** is a forced goal with target **3 per Injury** counted in the scan: 6 for two Injuries, 9 for three, 12 for four, 18 for six. A bust, or landing 7 or more short, is death: about 14%, 20%, 28%, 44% and 63% for two to six Injuries in simulation. At two Injuries the target is 6, so only a bust kills. Anything else is survival, at that step's cost.
+- **Survival** is a forced goal with target **3 × M + 3** for the M Injuries counted in the scan: 9 for two Injuries, 12 for three, 15 for four, up to 21 for six. A bust, or landing 7 or more short, is death. Starting at 9 ensures even a two-Injury survivor must score at least 3 points rather than surviving on 0. Anything else is survival, at that step's cost.
 - **Evolution and rest** are unchanged.
 - **Deck building shifts to reach and suit.** High cards take big world cards; suit spread lets you be on-suit more often. Card values no longer need to add up to anything.
 

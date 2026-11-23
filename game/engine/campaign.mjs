@@ -62,6 +62,10 @@ export function returnToReserve(ch, card) {
   if (isStatus(card) && card.suit === "W" && cursesOut(ch) === 0) ch.compulsion = [];
 }
 
+// Target for a forced survival check: 3 × M + 3 (9 for two Injuries, up to 21 for six).
+// Older saves without rules.survival "3m+3" keep 3 × M (see legacy.mjs).
+export const survivalTarget = (state, M) => (state && state.rules && state.rules.survival === "3m+3" ? 3 * M + 3 : 3 * M);
+
 // Injuries among the top N discard cards, or all cards if fewer exist.
 export function injuriesInTop(ch, N) {
   return ch.discard.slice(-N).filter((c) => isStatus(c) && c.suit === "S").length;
@@ -74,7 +78,7 @@ export function scanAfterInjury(ctx, ch) {
   const M = injuriesInTop(ch, N);
   if (M >= 2) {
     ch.survival = { M, N };
-    ctx.events.push({ type: "survivalRequired", id: ch.id, M, target: 3 * M, immediate: true });
+    ctx.events.push({ type: "survivalRequired", id: ch.id, M, target: survivalTarget(ctx.state, M), immediate: true });
   }
 }
 
@@ -101,6 +105,7 @@ export function rest(ctx, { charId, cardIds }) {
   const st = ctx.state;
   if (st.check && st.check.phase !== "closed") throw rule("Rest happens between checks.");
   const ch = character(st, charId);
+  if (ch.survival) throw rule(`${ch.name} must face their survival check first: no rest beforehand.`);
   for (const cid of cardIds || []) {
     const card = ch.discard.find((c) => c.id === cid);
     if (!card) throw rule("Rest removes cards from your discard.");
@@ -216,6 +221,8 @@ export function evolve(ctx, { charId, skip, suit, mode, cardId }) {
     if (mode === "return") {
       back = ch.discard.find((c) => c.id === cardId && isOrdinary(c) && c.suit === suit);
       if (!back) throw rule("Return an ordinary card of that suit from your discard.");
+      const ordinaryCount = [...ch.deck, ...ch.discard, ...p.hand, ...p.played].filter(isOrdinary).length;
+      if (ordinaryCount <= 13) throw rule("Keep at least 13 ordinary cards after any removal.");
     }
     const s1 = take(ch.discard, (c) => isStatus(c) && c.suit === suit);
     const s2 = take(ch.discard, (c) => isStatus(c) && c.suit === suit);
@@ -229,11 +236,11 @@ export function evolve(ctx, { charId, skip, suit, mode, cardId }) {
       const pool = ch.reserve.filter((c) => isOrdinary(c) && c.suit === suit);
       ctx.rng.shuffle(pool);
       const options = pool.slice(0, 3).map((c) => c.id);
+      ctx.events.push({ type: "evolved", id: charId, suit, mode, status: label(s1), returned: back ? label(back) : null });
       if (options.length) {
         // In preparation the kept card joins the discard before the shuffle, so the draw waits for the pick.
         const beforeShuffle = ck.phase === "deal";
         ck.pending.push({ type: "evolvePick", charId, options, beforeShuffle });
-        ctx.events.push({ type: "evolved", id: charId, suit, mode, status: label(s1), returned: back ? label(back) : null });
         if (beforeShuffle) { ck.pending.splice(pi, 1); p.evolveAsked = true; return; }
       }
     } else ctx.events.push({ type: "evolved", id: charId, suit, mode, status: label(s1), returned: back ? label(back) : null });
@@ -335,7 +342,7 @@ export function placeCard(ctx, ch, card, to, { scan = true } = {}) {
   else if (to === "discard") {
     ch.discard.push(card);
     if (scan && isStatus(card) && card.suit === "S" && !(st.check && st.check.phase !== "closed")) scanAfterInjury(ctx, ch);
-  } else if (to === "reserve") returnToReserve(ch, card);
+  } else if (to === "reserve") returnToReserve(isBlessed(card) && card.owner && st.characters[card.owner] ? st.characters[card.owner] : ch, card);
 }
 
 // Move one of a character's cards between deck, discard, hand and reserve. Removing a card returns it to reserve.

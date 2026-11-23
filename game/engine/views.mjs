@@ -3,26 +3,27 @@
 //   viewFor(state, { role: "player", charId })    one player's phone: the table plus their own hand and prompts
 //   viewFor(state, { role: "gm" })                the GM: everything except the order of unseen decks
 import { label, isStatus } from "./cards.mjs";
-import { legalCards } from "./check.mjs";
+import { survivalTarget } from "./campaign.mjs";
+import { legalCards, bustSitOut, isBusted } from "./check.mjs";
 
 const pub = (c) => (c ? { id: c.id, label: label(c), suit: c.suit || null, v: c.v, status: !!c.status, blessed: !!c.blessed } : null);
 
-function characterPublic(ch) {
+function characterPublic(ch, state) {
   return {
     id: ch.id, name: ch.name, alive: ch.alive, retired: !!ch.retired, controller: ch.controller, bot: ch.bot || null, race: ch.race || null, items: (ch.items || []).slice(),
     primary: ch.primary, secondary: ch.secondary,
     deckCount: ch.deck.length, discardCount: ch.discard.length,
     discardTop: pub(ch.discard[ch.discard.length - 1]),
     compulsion: ch.compulsion.slice(),
-    survival: ch.survival ? { ...ch.survival, target: 3 * ch.survival.M } : null,
+    survival: ch.survival ? { ...ch.survival, target: survivalTarget(state, ch.survival.M) } : null,
   };
 }
 
-function characterPrivate(ch) {
+function characterPrivate(ch, state) {
   const statuses = {};
   for (const c of ch.reserve) if (isStatus(c)) statuses[c.suit] = (statuses[c.suit] || 0) + 1;
   return {
-    ...characterPublic(ch),
+    ...characterPublic(ch, state),
     discard: ch.discard.map(pub),
     // The deck's contents, never its order.
     deckCards: ch.deck.map(pub).sort((a, b) => (a.blessed - b.blessed) || (a.status - b.status) || String(a.suit).localeCompare(String(b.suit)) || a.v - b.v),
@@ -45,6 +46,7 @@ function checkPublic(ck, state) {
       tally: p.tally.map((t) => ({ card: pub(t.card), mirrored: t.mirrored, score: t.score, shave: t.shave || 0, adjustment: !!t.adjustment, reason: t.reason || null })),
       boost: p.boost || 0,
       total: p.tally.reduce((a, t) => a + t.score, 0),
+      busted: !!(bustSitOut(state) && isBusted(p)),
       brace: p.brace, mirror: p.mirror, shave: p.shave || 0,
       locked: !!ck.locks[id],
       // A left-to-right bot plays with its hand face up, in order: the leftmost card plays next.
@@ -80,18 +82,22 @@ export function viewFor(state, who) {
     rules: { ...(state.rules || {}) }, // which consolations this game uses (older games keep Peek)
     characters: {},
     check: checkPublic(state.check, state),
-    history: state.history.map((h) => ({ id: h.id, kind: h.kind, tricks: h.tricks, results: h.results, log: h.log || [], players: h.players || null, consequences: h.consequences || [] })),
+    history: state.history.map((h) => ({ id: h.id, kind: h.kind, tricks: h.tricks, situation: h.situation || null, results: h.results, log: h.log || [], players: h.players || null, consequences: h.consequences || [] })),
     journal: journalFor(state, who),
   };
   for (const ch of Object.values(state.characters)) {
-    view.characters[ch.id] = who.role === "gm" || (who.role === "player" && who.charId === ch.id) ? characterPrivate(ch) : characterPublic(ch);
+    view.characters[ch.id] = who.role === "gm" || (who.role === "player" && who.charId === ch.id) ? characterPrivate(ch, state) : characterPublic(ch, state);
   }
   const ck = state.check;
   if (ck && ck.phase !== "closed") {
     if (who.role === "gm") {
       view.hands = Object.fromEntries(ck.participants.map((id) => [id, ck.players[id].hand.map(pub)]));
       view.locks = Object.fromEntries(Object.entries(ck.locks).map(([id, l]) => [id, { ...l }]));
-      view.pending = ck.pending.map((x) => ({ ...x }));
+      view.pending = ck.pending.map((x) => {
+        const out = { ...x };
+        if (x.type === "evolvePick") out.options = x.options.map((id) => pub(state.characters[x.charId].reserve.find((c) => c.id === id)));
+        return out;
+      });
       view.legal = Object.fromEntries(ck.participants.map((id) => [id, ck.phase === "play" ? legalCards(state, id) : []]));
     }
     if (who.role === "player" && ck.players[who.charId]) {

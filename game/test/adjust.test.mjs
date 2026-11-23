@@ -7,10 +7,13 @@ test("items: given, used for the table to see, and taken away", () => {
   let s = game(["ana"]);
   let events;
   ({ state: s } = run(s, { type: "giveItem", charId: "ana", itemId: "slate-shard" }));
-  assert.deepEqual(s.characters.ana.items, ["slate-shard"]);
+  assert.equal(s.characters.ana.items.length, 1);
+  assert.equal(s.characters.ana.items[0].itemId, "slate-shard");
+  assert.equal(s.characters.ana.items[0].qty, 1);
   assert.throws(() => run(s, { type: "giveItem", charId: "ana", itemId: "slate-shard" }), /already has/);
   ({ state: s, events } = run(s, { type: "useItem", charId: "ana", itemId: "slate-shard", note: "Ana speaks to Ben" }));
   assert.equal(events[0].type, "itemUsed");
+  assert.equal(events[0].instanceId, s.characters.ana.items[0].id);
   ({ state: s } = run(s, { type: "loseItem", charId: "ana", itemId: "slate-shard" }));
   assert.deepEqual(s.characters.ana.items, []);
   assert.throws(() => run(s, { type: "useItem", charId: "ana", itemId: "slate-shard" }), /don't have/);

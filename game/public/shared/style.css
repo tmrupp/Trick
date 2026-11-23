@@ -88,10 +88,15 @@ button.cf { padding: 0; border: 0; background: none; min-height: 0; cursor: poin
   padding: max(2px, calc(var(--cw) * .045)) 2px; border-radius: 0; white-space: nowrap; z-index: 2; }
 .cf.sm .beat, .stage .strip .cf .beat { top: auto; bottom: 0; font-size: max(10px, calc(var(--cw) * .25)); padding: 3px 2px; }
 /* When a small card carries an adjustment bar at its foot, keep the suit mark in the top-right corner so nothing collides. */
-.cf.simple.sm.has-beat .si, .stage .strip .cf.simple.has-beat .si { top: 8%; bottom: auto; width: calc(var(--cw) * .26); height: calc(var(--cw) * .26); }
-.cf.simple.sm.has-beat .sv, .stage .strip .cf.simple.has-beat .sv { font-size: calc(var(--cw) * .5); }
+.cf.simple.sm.has-tag .si, .stage .strip .cf.simple.has-tag .si { top: 8%; bottom: auto; width: calc(var(--cw) * .26); height: calc(var(--cw) * .26); }
+.cf.simple.sm.has-tag .sv, .stage .strip .cf.simple.has-tag .sv { font-size: calc(var(--cw) * .5); }
 /* The current world card shows the same note in words under it (worldNote), so its corner badge would only be clipped. */
 .cf.stage.current .beat, .cf.xl.current .beat { display: none; }
+/* A world card's modifier: its name where the band has room, a one-character mark on small cards. */
+.cf .beat { gap: .3em; }
+.cf .beat .tag-short { display: none; }
+.cf.sm .beat .tag-long, .strip .cf .beat .tag-long { display: none; }
+.cf.sm .beat .tag-short, .strip .cf .beat .tag-short { display: inline; }
 .cf.current { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink); }
 .cf.past { opacity: .35; filter: saturate(.4); }
 .cf.chosen { transform: translateY(-10px); box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--ink); }
@@ -514,3 +519,41 @@ button.toned-btn:hover { background: color-mix(in srgb, var(--tone) 14%, var(--c
 .history-check { scroll-margin-top: 12px; }
 @media (prefers-reduced-motion: no-preference) { .history-check.flash { animation: flash 1.4s ease; } }
 @media (prefers-reduced-motion: reduce) { .history-check.flash { outline: 4px solid var(--ink); } }
+
+/* ---- Items, Relic Prices, Set-Aside, Pinned & Peek Prompts ---- */
+.cf .pin-tag { position: absolute; top: 3px; right: 3px; padding: 1px 4px; font: 900 9px/1.2 var(--label); letter-spacing: .06em; text-transform: uppercase; background: var(--ink); color: var(--card); border: 1px solid var(--card); z-index: 3; }
+.cf.sm .pin-tag { font-size: 8px; padding: 1px 3px; }
+.cf.is-wedged { box-shadow: inset 0 0 0 3px var(--warn-fill); }
+.cf.is-inverted { box-shadow: inset 0 0 0 3px var(--w-fill); }
+.pill.chip-sitout { color: var(--muted); border-style: dashed; border-color: var(--muted); }
+.ally-row.is-sitout { opacity: .68; }
+.sitout-dock { border-top-color: var(--muted); }
+.sitout-dock .fan .cf { opacity: .45; }
+
+.aside-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border: 2px dashed var(--rule-soft); background: var(--paper); }
+.aside-item { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+
+.item-box { border: 2px solid var(--rule); padding: 10px 12px; background: var(--card); display: grid; gap: 6px; }
+.item-box.is-relic { border-left: 6px solid var(--accent); }
+.item-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.item-note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--track); padding-left: 8px; }
+.item-price-box { margin-top: 4px; padding: 8px 10px; border: 2px solid var(--bad); background: color-mix(in srgb, var(--bad) 9%, var(--card)); display: grid; gap: 4px; }
+.item-price-box strong { color: var(--bad); font: 800 12px/1.2 var(--label); text-transform: uppercase; letter-spacing: .06em; }
+.item-price-hidden { display: inline-flex; align-items: center; gap: 6px; font: 700 12px/1.3 var(--label); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border: 1.5px dashed var(--rule-soft); padding: 4px 8px; width: fit-content; }
+.item-tucked { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 4px; border-top: 1px solid var(--rule-soft); }
+.item-use-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.item-use-row input { flex: 1 1 160px; min-width: 0; }
+
+.item-quick-panel { border-left: 6px solid var(--accent); }
+.item-quick-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.peek-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
+.peek-slot-item { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px; border: 2px solid var(--rule-soft); background: var(--card); }
+.peek-slot-item.is-discard { border-style: dashed; border-color: var(--bad); opacity: .72; }
+.peek-slot-item.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.peek-controls { display: flex; gap: 4px; }
+.peek-rank { font: 800 11px/1.2 var(--label); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.world-swap-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.world-swap-btn { padding: 4px; border: 2px solid transparent; background: transparent; display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
+.world-swap-btn.is-selected { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+

@@ -2,7 +2,7 @@
 // with the published simulations. A bot reads only its own hand and the public table.
 import { apply } from "./index.mjs";
 import { legalCards, stumblePrice, canPlay } from "./check.mjs";
-import { isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
+import { isStatus, isBlessed, isOrdinary, countsNow } from "./cards.mjs";
 
 const total = (p) => p.tally.reduce((a, t) => a + t.score, 0);
 const onSuit = (c, p, w) => !isBlessed(c) && (c.suit === p.approach || c.suit === w.suit);
@@ -24,7 +24,7 @@ const prizeOf = (wc, p) => Math.max(0, wc.v - (p.shave || 0) - (wc.shave || 0));
 export function worth(p, wc) {
   const need = p.target - total(p);
   const prize = prizeOf(wc, p);
-  const beats = p.hand.filter((c) => !isBlessed(c) && onSuit(c, p, wc) && countsAs(c, p.mirror) + p.brace > beatOf(wc));
+  const beats = p.hand.filter((c) => !isBlessed(c) && onSuit(c, p, wc) && countsNow(c, p) > beatOf(wc));
   if (p.hand.length && beats.length === p.hand.length && prize > need) return -2;
   if (!beats.length || need <= 0 || prize > need) return 0;
   return prize === need ? 3 : 2;
@@ -45,7 +45,7 @@ export function chooseLock(state, charId) {
     const blessed = hand.find(isBlessed);
     if (blessed && prize === need) card = blessed;
     else {
-      const opts = hand.filter((c) => !isBlessed(c)).map((c) => ({ c, bv: countsAs(c, p.mirror) + p.brace, beats: onSuit(c, p, w) && countsAs(c, p.mirror) + p.brace > beatOf(w) }));
+      const opts = hand.filter((c) => !isBlessed(c)).map((c) => ({ c, bv: countsNow(c, p), beats: onSuit(c, p, w) && countsNow(c, p) > beatOf(w) }));
       const beaters = opts.filter((o) => o.beats).sort((a, b) => a.bv - b.bv);
       if (beaters.length && prize <= need) card = beaters[beaters.length > 1 && beaters[0].bv - beatOf(w) < 2 ? 1 : 0].c;
       else {
@@ -78,6 +78,8 @@ export function answerPrompt(state, prompt) {
   }
   if (prompt.type === "evolve") return { type: "evolve", charId: prompt.charId, skip: true };
   if (prompt.type === "evolvePick") return { type: "evolvePick", charId: prompt.charId, cardId: prompt.options[0] };
+  if (prompt.type === "peekDeck") return { type: "resolvePeekDeck", charId: prompt.charId, keepOrder: prompt.cards, discard: [] };
+  if (prompt.type === "peekWorld") return { type: "resolvePeekWorld", charId: prompt.charId };
   throw new Error(`No bot answer for ${prompt.type}`);
 }
 
@@ -100,6 +102,8 @@ function answerLeftToRight(state, prompt) {
   if (prompt.type === "recalculate") return { type: "recalculate", charId: prompt.charId, cardId: p.hand[0].id };
   if (prompt.type === "evolve") return { type: "evolve", charId: prompt.charId, skip: true };
   if (prompt.type === "evolvePick") return { type: "evolvePick", charId: prompt.charId, cardId: prompt.options[0] };
+  if (prompt.type === "peekDeck") return { type: "resolvePeekDeck", charId: prompt.charId, keepOrder: prompt.cards, discard: [] };
+  if (prompt.type === "peekWorld") return { type: "resolvePeekWorld", charId: prompt.charId };
   throw new Error(`No left-to-right answer for ${prompt.type}`);
 }
 

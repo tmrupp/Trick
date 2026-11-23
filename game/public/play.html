@@ -18,17 +18,18 @@
 </header>
 <main id="main" aria-live="polite"></main>
 <script type="module">
-import { connect, params, h, render, forget, cardFace, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, racesById, stripTags, difficultyHint, CHECK_KINDS, worldNote, WORLD_NOTE_TIP, draft, menu, zoomCard, cardFromLabel, markSuits, mountHeader, setRedraw, announce, trickLog, handDock, consolationText, choosingList, layoutSwitch, notesPanel, suitChoice, picked, setPicked, tone, resultPill, historyPanel, inPlayPills, segmented, closedNotice, consolationPills } from "/shared/client.js";
+import { connect, params, h, render, forget, cardFace, cardBack, cardText, SUITS, RESULT, RESULT_NOTE, trickSentence, eventText, toast, chime, buzz, hasToken, itemsById, itemPriceById, itemDisplayName, racesById, stripTags, difficultyHint, CHECK_KINDS, worldNote, WORLD_NOTE_TIP, draft, menu, zoomCard, cardFromLabel, markSuits, mountHeader, setRedraw, announce, trickLog, handDock, consolationText, choosingList, layoutSwitch, notesPanel, suitChoice, picked, setPicked, tone, resultPill, historyPanel, inPlayPills, segmented, closedNotice, consolationPills } from "/shared/client.js";
 
 const main = document.getElementById("main");
 const ITEMS = itemsById();
+const PRICES = itemPriceById();
 const RACES = racesById();
 const ITEM_NAMES = Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, v.label]));
 let room = (params.get("room") || "").toUpperCase();
 let conn = null;
 let last = null;
 let tab = "play"; // play | cards | history
-let ui = { chosen: null, price: null, info: false, creating: false };
+let ui = { chosen: null, price: null, info: false, creating: false, peekDeck: null, peekWorld: null };
 let lastTrickSeen = null; // the newest trick this phone has shown; null until the first view
 let lastCheckId = null;
 let lastPromptKey = "";
@@ -80,7 +81,7 @@ function showReveal(e, view, me, names) {
   const p = view.check.players[me];
   const last = e.trick === view.check.tricks - 1;
   const won = e.winner === me;
-  const headline = won ? `You take the ${e.worldLabel}` : e.winner ? `${names[e.winner]} takes the ${e.worldLabel}` : `The world keeps the ${e.worldLabel}`;
+  const headline = won ? `You take the ${e.worldLabel}` : e.winner ? `${names[e.winner]} takes the ${e.worldLabel}` : e.reason === "noOnSuit" ? `Nobody takes the ${e.worldLabel}` : `The world keeps the ${e.worldLabel}`;
   const card = mine && cardFromLabel(mine.label);
   let after = "";
   if (won) after = `+${e.score}: you're on ${p.total} of ${p.target}.`;
@@ -215,6 +216,39 @@ function charactersPanel(info, view, me, busy) {
 
 // ---- My cards ----
 
+// prices: view.itemPrices, the Price text the GM has revealed (the served catalog has none).
+function itemBoxes(ch, me, scope, prices) {
+  return ch.items.map((raw) => {
+    const inst = raw;
+    const cat = inst.itemId ? ITEMS[inst.itemId] : null;
+    const priceCard = inst.itemId ? PRICES[inst.itemId] : null;
+    const title = itemDisplayName(inst, ITEMS);
+    const noteKey = `use-note-${scope}-${inst.id}`;
+    const useInput = h("input", { "data-key": noteKey, placeholder: "Optional note (e.g. target, word)", maxlength: 120, "aria-label": `Note when using ${title}` });
+    return h("div", { class: `item-box${cat?.kind === "relic" ? " is-relic" : ""}` },
+      h("div", { class: "item-head" },
+        h("strong", {}, title),
+        cat?.kind === "relic" ? h("span", { class: "pill warn" }, "Relic") : cat?.kind === "trinket" ? h("span", { class: "pill" }, "Trinket") : h("span", { class: "pill" }, "Item"),
+        inst.qty > 1 ? h("span", { class: "pill" }, `×${inst.qty}`) : null,
+        inst.charges > 0 ? h("span", { class: "pill good" }, `${inst.charges} charge${inst.charges === 1 ? "" : "s"}`) : null),
+      inst.note ? h("div", { class: "item-note" }, inst.note) : null,
+      cat ? h("div", { class: "small", html: (cat.lines || []).join("<br>") })
+        : inst.text ? h("div", { class: "small" }, inst.text) : null,
+      priceCard ? (inst.revealed
+        ? h("div", { class: "item-price-box" }, h("strong", {}, "Price — Revealed"), h("div", { class: "small", html: (prices[inst.itemId] || []).join("<br>") }))
+        : h("div", { class: "item-price-hidden" }, "Price hidden until invoked")) : null,
+      (inst.tucked || []).length ? h("div", { class: "item-tucked" }, h("span", { class: "small muted" }, "Tucked under item:"), inst.tucked.map((c) => cardFace(c, "sm"))) : null,
+      h("div", { class: "item-use-row" },
+        useInput,
+        h("button", { class: "small primary", onclick: () => {
+          const note = useInput.value.trim();
+          act({ type: "useItem", charId: me, instanceId: inst.id, itemId: inst.itemId || undefined, note: note || undefined });
+          forget(noteKey);
+          useInput.value = "";
+        } }, "Use (tell GM & table)")));
+  });
+}
+
 function sheet(view, me) {
   const ch = view.characters[me];
   const race = ch.race && RACES[ch.race];
@@ -224,12 +258,7 @@ function sheet(view, me) {
       ch.compulsion.length ? h("p", { class: "banner panel warn" }, h("strong", {}, "Curse compulsion: "), ch.compulsion.join("; ")) : null,
       ch.survival ? h("p", { class: "banner panel bad" }, h("strong", {}, "Survival: "), `${ch.survival.M} Injuries near the top of your discard. Your next check's goal is to survive, target ${ch.survival.target}.`) : null,
       inPlayPills(ch, (k) => cardText(k === "B" ? { blessed: true } : { suit: k, status: true }))),
-    ch.items.length ? h("div", { class: "panel stack" }, h("h2", {}, "Items"), ch.items.map((id) => {
-      const it = ITEMS[id];
-      return h("details", {}, h("summary", {}, it ? it.label : id),
-        it ? h("div", { class: "small", html: (it.lines || []).join("<br>") }) : null,
-        h("button", { class: "small", onclick: () => act({ type: "useItem", charId: me, itemId: id }) }, "Use it (tell the table)"));
-    })) : null,
+    ch.items.length ? h("div", { class: "panel stack" }, h("h2", {}, "Items"), itemBoxes(ch, me, "sheet", view.itemPrices || {})) : null,
     h("div", { class: "panel" }, h("h2", {}, `Deck (${ch.deckCount})`), h("div", { class: "row" }, (ch.deckCards || []).map((c) => cardFace(c, "sm")))),
     h("div", { class: "panel" }, h("h2", {}, `Discard (${ch.discardCount})`), h("p", { class: "small muted" }, "Top card last."), h("div", { class: "row" }, (ch.discard || []).map((c) => cardFace(c, "sm")))),
     h("p", {}, h("a", { href: `/print?room=${room}`, target: "_blank" }, "Print my current cards")));
@@ -270,6 +299,79 @@ function promptPanel(pr, view, me) {
     return h("div", { class: "panel banner stack" }, h("h2", {}, "Keep one"), h("p", {}, "It goes into your discard; the others return to reserve."),
       h("div", { class: "hand" }, pr.options.map((c) => cardFace(c, "lg", { onclick: () => act({ type: "evolvePick", charId: me, cardId: c.id }) }))));
   }
+  if (pr.type === "peekDeck") {
+    const cards = pr.cards || [];
+    const byId = Object.fromEntries(cards.map((c) => [c.id, c]));
+    const key = cards.map((c) => c.id).join(",");
+    if (!ui.peekDeck || ui.peekDeck.key !== key) {
+      ui.peekDeck = { key, order: cards.map((c) => c.id), discard: new Set() };
+    }
+    const st = ui.peekDeck;
+    const kept = st.order.filter((id) => !st.discard.has(id));
+    const move = (id, dir) => {
+      const i = st.order.indexOf(id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= st.order.length) return;
+      [st.order[i], st.order[j]] = [st.order[j], st.order[i]];
+      draw();
+    };
+    const toggleDiscard = (id) => {
+      if (st.discard.has(id)) st.discard.delete(id); else st.discard.add(id);
+      draw();
+    };
+    return h("div", { class: "panel banner stack" },
+      h("h2", {}, `Top ${cards.length} of your deck`),
+      h("p", { class: "small muted" }, `Only you and the GM see these. Order left-to-right (first card is drawn next)${pr.allowDiscard ? ", and mark any to discard" : ""}.`),
+      h("div", { class: "peek-list" }, st.order.map((id, idx) => {
+        const c = byId[id];
+        const disc = st.discard.has(id);
+        const keptPos = disc ? -1 : kept.indexOf(id);
+        return h("div", { class: `peek-slot-item${disc ? " is-discard" : ""}` },
+          h("span", { class: "peek-rank" }, disc ? "Discard" : keptPos === 0 ? "#1 Next" : `#${keptPos + 1}`),
+          cardFace(c, "sm"),
+          h("div", { class: "peek-controls" },
+            h("button", { class: "small ghost", disabled: idx === 0, "aria-label": "Move earlier", onclick: () => move(id, -1) }, "←"),
+            h("button", { class: "small ghost", disabled: idx === st.order.length - 1, "aria-label": "Move later", onclick: () => move(id, 1) }, "→")),
+          pr.allowDiscard ? h("button", { class: `small ${disc ? "warn" : "ghost"}`, onclick: () => toggleDiscard(id) }, disc ? "Keep" : "Discard") : null);
+      })),
+      h("button", { class: "primary big", onclick: () => {
+        const keepOrder = st.order.filter((id) => !st.discard.has(id));
+        const discard = st.order.filter((id) => st.discard.has(id));
+        ui.peekDeck = null;
+        act({ type: "resolvePeekDeck", charId: me, keepOrder, discard });
+      } }, `Confirm (${kept.length} on deck${st.discard.size ? `, ${st.discard.size} discard` : ""})`));
+  }
+  if (pr.type === "peekWorld" && ck) {
+    const cards = pr.cards || [];
+    const key = cards.map((c) => c.id).join(",");
+    if (!ui.peekWorld || ui.peekWorld.key !== key) {
+      ui.peekWorld = { key, pickCardId: null, pickRowIdx: null };
+    }
+    const st = ui.peekWorld;
+    const unplayed = [];
+    for (let i = ck.trick; i < ck.worldRow.length; i++) unplayed.push({ index: i, card: ck.worldRow[i] });
+    return h("div", { class: "panel banner stack" },
+      h("h2", {}, `Top ${cards.length} of the world deck`),
+      h("p", { class: "small muted" }, "Only you and the GM see these. Pick one here and one unplayed world card below to swap them, or leave the row as is."),
+      h("div", { class: "peek-list" }, cards.map((c) => h("div", { class: `peek-slot-item${st.pickCardId === c.id ? " is-selected" : ""}` },
+        cardFace(c, "sm", { world: true, onclick: () => { st.pickCardId = st.pickCardId === c.id ? null : c.id; draw(); } })))),
+      h("div", { class: "stage-label" }, "Swap with an unplayed world card"),
+      h("div", { class: "world-swap-row" }, unplayed.map(({ index, card }) => h("button", {
+        type: "button",
+        class: `world-swap-btn${st.pickRowIdx === index ? " is-selected" : ""}`,
+        onclick: () => { st.pickRowIdx = st.pickRowIdx === index ? null : index; draw(); },
+      }, h("span", { class: "peek-rank" }, `Trick ${index + 1}`), cardFace(card, "sm", { world: true })))),
+      h("div", { class: "row" },
+        h("button", { class: "primary big", disabled: !st.pickCardId || st.pickRowIdx == null, onclick: () => {
+          const { pickCardId, pickRowIdx } = st;
+          ui.peekWorld = null;
+          act({ type: "resolvePeekWorld", charId: me, swapWorldId: pickCardId, rowIndex: pickRowIdx });
+        } }, "Swap selected"),
+        h("button", { class: "ghost big", onclick: () => {
+          ui.peekWorld = null;
+          act({ type: "resolvePeekWorld", charId: me });
+        } }, "Leave world row as is")));
+  }
   return null;
 }
 
@@ -286,6 +388,7 @@ function hud(p, ck) {
       need != null ? h("span", { class: `pill ${need < 0 ? "bad" : need === 0 ? "good" : ""}`, "data-tip": need < 0 ? "Over your target: a bust, unless an adjustment brings you back." : need === 0 ? "Exactly on target: a critical. Winning more would bust you." : "Points still needed. Exactly is a critical; 1–3 short a success; 4–6 a partial." }, need < 0 ? `Over by ${-need}` : need === 0 ? "On target" : `Need ${need}`) : null,
       p.approach ? h("span", { class: `pill solid ${tone(p.approach)}`, "data-tip": "Your goal's suit. Cards in it can win any trick, not only ones in the world card's suit." }, `Trump ${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
       ...consolationPills(p),
+      ...(p.cardRules || []).map((r) => h("span", { class: "pill", "data-tip": "Active item or check rule." }, r.label)),
       p.boost ? h("span", { class: "pill good", "data-tip": "The GM's adjustment to your next card, for beating." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null,
       ck.phase === "setup" ? h("span", { class: "pill" }, `${ck.kind} check · ${ck.tricks} tricks`) : null));
 }
@@ -323,7 +426,16 @@ function checkView(view, info, me) {
     ? h("div", { class: "panel stack-tight" }, h("h3", {}, "The situation"), h("p", { class: "situation" }, ck.situation))
     : h("div", { class: "small muted situation" }, ck.situation));
 
+  for (const pr of view.prompts || []) out.push(promptPanel(pr, view, me));
+
   if (ck.phase !== "setup") out.push(stage(ck));
+  if (ck.phase !== "setup" && p.aside && p.aside.length) {
+    out.push(h("div", { class: "aside-strip" },
+      h("span", { class: "stage-label" }, "Set aside"),
+      p.aside.map((a) => h("div", { class: "aside-item" },
+        a.card ? cardFace(a.card, "sm") : cardBack("sm"),
+        h("span", { class: "small muted" }, `${a.faceUp ? "face up" : "face down"}${a.setAtTrick != null ? ` · T${a.setAtTrick + 1}` : ""}`)))));
+  }
 
   if (ck.phase === "setup") {
     const goal = p.survival ? null : h("textarea", { class: "textarea-full", "data-key": "goal-text", rows: 3, placeholder: "Optional, e.g. Shoulder the gate shut before the bell", maxlength: 100, "aria-label": "What you're doing, and how" }, p.goal || "");
@@ -347,8 +459,6 @@ function checkView(view, info, me) {
       p.approach ? h("p", { class: `pill ${p.approved ? "good" : "warn"}` }, p.approved ? `Target ${p.target}${p.survival ? "" : ", set by the GM"}` : "Waiting for the GM to set the target") : null));
   }
 
-  for (const pr of view.prompts || []) out.push(promptPanel(pr, view, me));
-
   // Ally status strip: tallies, targets, trumps, active consolations and who's still choosing.
   if (ck.phase !== "setup" && ck.phase !== "resolve") out.push(h("div", { class: "panel" }, h("div", { class: "stage-label mb" }, "Table & allies"),
     choosingList(ck, names, me),
@@ -356,8 +466,8 @@ function checkView(view, info, me) {
 
   const blessed = (view.hand || []).find((c) => c.blessed);
   const nobodyLocked = ck.participants.every((id) => !ck.players[id].locked);
-  const eligibleBlessedTargets = ck.participants.filter((id) => id !== me && !ck.players[id].busted);
-  if (blessed && !p.busted && eligibleBlessedTargets.length && (ck.phase === "consolation" || (ck.phase === "play" && nobodyLocked))) {
+  const eligibleBlessedTargets = ck.participants.filter((id) => id !== me && !ck.players[id].busted && !ck.players[id].sitOut);
+  if (blessed && !p.busted && !p.sitOut && eligibleBlessedTargets.length && (ck.phase === "consolation" || (ck.phase === "play" && nobodyLocked))) {
     const to = h("select", { "data-key": "bless-to", "aria-label": "Give to" }, eligibleBlessedTargets.map((id) => h("option", { value: id }, names[id])));
     out.push(h("div", { class: "panel row" }, h("span", { "data-tip": cardText(blessed) }, "Give your Blessed to"), to, h("button", { onclick: () => act({ type: "giveBlessed", charId: me, to: to.value, cardId: blessed.id }) }, "Give"), h("span", { class: "small muted" }, "You draw a card.")));
   }
@@ -370,21 +480,33 @@ function checkView(view, info, me) {
   if (p.tally.length) out.push(h("div", { class: "panel" }, h("div", { class: "stage-label" }, "Won so far"), h("div", { class: "row mt" },
     p.tally.map((t) => t.adjustment ? h("span", { class: "pill", "data-tip": t.reason || "A GM adjustment." }, `${t.score > 0 ? "+" : ""}${t.score}`)
       : cardFace(t.card, "sm", { world: true, badge: t.shave ? `−${t.shave}` : null, title: `${t.card.label}: scored ${t.score}${t.shave ? ` (Shaved ${t.shave})` : ""}.` })))));
+  const myChar = view.characters[me];
+  if (myChar && myChar.items && myChar.items.length) {
+    out.push(h("details", { class: "panel" },
+      h("summary", {}, `Your items (${myChar.items.length})`),
+      h("div", { class: "stack mt" }, itemBoxes(myChar, me, "check", view.itemPrices || {}))));
+  }
   out.push(trickLog(ck.log, names));
 
   // The hand, docked at the bottom where your thumb is.
   if (ck.phase === "play" && w) {
-    const waiting = ck.participants.filter((id) => !ck.players[id].locked && !ck.players[id].busted && id !== me && ck.players[id].handCount).map((id) => names[id]);
+    const waiting = ck.participants.filter((id) => !ck.players[id].locked && !ck.players[id].busted && !ck.players[id].sitOut && id !== me && ck.players[id].handCount).map((id) => names[id]);
     if (p.busted) {
       out.push(h("div", { class: "dock busted-dock stack-tight" },
         h("div", { class: "row" }, h("span", { class: "pill chip-busted" }, "busted"), h("strong", {}, `${p.total} of ${p.target}`), h("span", { class: "small muted" }, "You sit out the remaining tricks.")),
+        h("div", { class: "small muted" }, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
+        view.hand.length ? h("div", { class: "fan" }, view.hand.map((c) => cardFace(c, "sm"))) : null));
+    } else if (p.sitOut) {
+      out.push(h("div", { class: "dock sitout-dock stack-tight" },
+        h("div", { class: "row" }, h("span", { class: "pill chip-sitout" }, "sits out"), h("strong", {}, `${p.total} of ${p.target}`), h("span", { class: "small muted" }, "You sit out the remaining tricks.")),
         h("div", { class: "small muted" }, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
         view.hand.length ? h("div", { class: "fan" }, view.hand.map((c) => cardFace(c, "sm"))) : null));
     } else if (view.myLock) {
       const c = view.hand.find((x) => x.id === view.myLock.cardId);
       out.push(h("div", { class: "dock" }, h("div", { class: "locked-row" }, cardFace(c, "lg", { class: "chosen" }), h("div", { class: "stack" },
         h("strong", {}, `Locked in: ${c ? c.label : ""}`), h("div", { class: "small muted" }, waiting.length ? `Waiting for ${waiting.join(", ")}.` : "Revealing…"),
-        h("button", { class: "small", onclick: () => act({ type: "unlockCard", charId: me }) }, "Change my card")))));
+        view.myLock.random ? h("div", { class: "small" }, "Locked at random: it plays this trick.")
+          : h("button", { class: "small", onclick: () => act({ type: "unlockCard", charId: me }) }, "Change my card")))));
     } else if (ck.waitingOn && ck.waitingOn.length) {
       out.push(h("div", { class: "dock" }, h("p", { class: "hint" }, "Finish the waiting choices above before locking a card."), h("div", { class: "fan" }, view.hand.map((c) => cardFace(c, "md")))));
     } else {
@@ -423,6 +545,7 @@ function draw() {
   if (tab === "cards") parts.push(charactersPanel(info, view, me, !!inCheck), sheet(view, me));
   else if (tab === "history") parts.push(...historyPanel(view, { items: ITEM_NAMES, notes: notes.current(), seats: info.seats }));
   else if (!inCheck) {
+    for (const pr of view.prompts || []) parts.push(promptPanel(pr, view, me));
     parts.push(h("div", { class: "panel stack" }, h("h2", {}, ck && ck.phase !== "closed" ? "You're not in this check" : "Waiting for the GM"),
       h("p", { class: "muted" }, "Talk the scene through. When the GM starts a check, it appears here."),
       ch.survival ? h("p", { class: "pill bad" }, `Your next check is survival, target ${ch.survival.target}.`) : null));

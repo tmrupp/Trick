@@ -1,8 +1,8 @@
 // A Tally check, from setup to cleanup (RULES.md: Start a check, Play the tricks, Consolations,
 // Statuses, Blessed, Resolve the check, Survival).
-import { SUITS, SUIT_INFO, worldCards, isOrdinary, isStatus, isBlessed, label, countsAs } from "./cards.mjs";
+import { SUITS, SUIT_INFO, worldCards, isOrdinary, isStatus, isBlessed, label, countsAs, countsNow } from "./cards.mjs";
 import { CHECK_KINDS } from "./rules.mjs";
-import { rule, character, drawOwed, gainStatus, returnToReserve, injuriesInTop, scanAfterInjury, survivalTarget, moveCard, placeCard } from "./campaign.mjs";
+import { rule, character, drawOwed, gainStatus, returnToReserve, injuriesInTop, scanAfterInjury, survivalTarget, moveCard, placeCard, findItem } from "./campaign.mjs";
 
 export { CHECK_KINDS } from "./rules.mjs";
 
@@ -13,7 +13,7 @@ export const isBusted = (p) => p.target != null && tallyTotal(p) > p.target;
 export const bustSitOut = (st) => !!(st.rules && st.rules.bustSitOut);
 export const canPlay = (st, id) => {
   const p = st.check && st.check.players[id];
-  return !!(p && p.hand.length && !(bustSitOut(st) && isBusted(p)));
+  return !!(p && p.hand.length && !p.sitOut && !(bustSitOut(st) && isBusted(p)));
 };
 
 export function resultFor(tally, target) {
@@ -59,6 +59,8 @@ const situationText = (s) => String(s ?? "").trim().slice(0, SITUATION_MAX) || n
 export function beginCheck(ctx, { kind = "standard", participants, tricks: wanted, situation }) {
   const st = ctx.state;
   if (st.check && st.check.phase !== "closed") throw rule("A check is already running.");
+  // A deck peek offered between checks lives outside the check: answer it first, or it couldn't be answered until after.
+  if ((st.betweenPending || []).length) throw rule("Finish the waiting choices first: a deck peek is still open.");
   const spec = CHECK_KINDS[kind];
   if (!spec) throw rule("A check is standard, quick or solo.");
   const ids = [...new Set(participants || [])];
@@ -88,7 +90,7 @@ export function beginCheck(ctx, { kind = "standard", participants, tricks: wante
       target: ch.survival ? survivalTarget(st, ch.survival.M) : null,
       survival: ch.survival ? { ...ch.survival } : null,
       approach: null, approved: false,
-      hand: [], played: [], tally: [],
+      hand: [], played: [], tally: [], aside: [], cardRules: [], sitOut: false,
       brace: 0, mirror: false, shave: 0,
       drawOwed: 0, evolveAsked: false, afterShuffle: null,
     };
@@ -206,7 +208,9 @@ export function lockCard(ctx, { charId, cardId, priceCardId }) {
   const ck = activeCheck(st, ["play"]);
   if (ck.pending.length) throw rule("Finish waiting choices before locking a card.");
   const p = participant(ck, charId);
+  if (p.sitOut) throw rule("You are sitting out the rest of this check.");
   if (bustSitOut(st) && isBusted(p)) throw rule("You have busted and sit out the rest of this check.");
+  if (ck.locks[charId] && ck.locks[charId].random) throw rule(RANDOM_LOCKED);
   const card = p.hand.find((c) => c.id === cardId);
   if (!card) throw rule("That card isn't in your hand.");
   if (!legalCards(st, charId).includes(cardId)) {
@@ -226,26 +230,51 @@ export function lockCard(ctx, { charId, cardId, priceCardId }) {
   if (ck.participants.every((id) => ck.locks[id] || !canPlay(st, id))) resolveTrick(ctx);
 }
 
-export function unlockCard(ctx, { charId }) {
+// A card locked at random (gmLockRandom, e.g. Hushbell Chain) stays: only the GM can undo it, with force
+// (server/room.mjs refuses force from a player's seat).
+const RANDOM_LOCKED = "That card was locked at random: it plays this trick.";
+
+export function unlockCard(ctx, { charId, force = false }) {
   const ck = activeCheck(ctx.state, ["play"]);
   if (!ck.locks[charId]) throw rule("You haven't locked a card.");
+  if (ck.locks[charId].random && !force) throw rule(RANDOM_LOCKED);
   delete ck.locks[charId];
   ctx.events.push({ type: "unlocked", id: charId });
 }
 
 // Who takes the trick (RULES.md, Play the tricks 3–5, and Blessed).
+// Also supports GM trick modifiers: w.invert (lowest card of world's suit under world wins, no trump)
+// and w.worldCannotWin (world cannot take the trick; highest on-suit card takes it).
 export function trickWinner(w, plays) {
+  if (!plays.length) return { winner: null, reason: w.worldCannotWin ? "noOnSuit" : "worldHighest" };
   const blessed = plays.filter((x) => isBlessed(x.card));
   if (blessed.length === 1) return { winner: blessed[0], reason: "blessed" };
   if (blessed.length > 1) return { winner: null, reason: "blessedTie" };
   const wv = w.beat ?? w.v; // a GM adjustment can change what a world card counts for beating
+  if (w.invert) {
+    const under = plays.filter((x) => x.card.suit === w.suit && x.bv < wv);
+    if (!under.length) return { winner: null, reason: w.worldCannotWin ? "noOnSuit" : "worldInverted" };
+    const low = Math.min(...under.map((x) => x.bv));
+    const atLow = under.filter((x) => x.bv === low);
+    return atLow.length === 1 ? { winner: atLow[0], reason: "inverted" } : { winner: null, reason: "tieLevel" };
+  }
+  const score = (x) => (x.card.suit === w.suit ? 2 : 0) + (x.card.suit === x.approach ? 1 : 0);
+  if (w.worldCannotWin) {
+    const on = plays.filter((x) => x.onSuit);
+    if (!on.length) return { winner: null, reason: "noOnSuit" };
+    const top = Math.max(...on.map((x) => x.bv));
+    const atTop = on.filter((x) => x.bv === top);
+    if (atTop.length === 1) return { winner: atTop[0], reason: "worldCannotWin" };
+    const best = Math.max(...atTop.map(score));
+    const tops = atTop.filter((x) => score(x) === best);
+    return tops.length === 1 ? { winner: tops[0], reason: "tieBreak" } : { winner: null, reason: "tieLevel" };
+  }
   const top = Math.max(wv, ...plays.map((x) => x.bv));
   if (top <= wv) return { winner: null, reason: "worldHighest" };
   const atTop = plays.filter((x) => x.bv === top);
   if (atTop.length === 1) return atTop[0].onSuit ? { winner: atTop[0], reason: "highest" } : { winner: null, reason: "blocked", by: atTop[0] };
   if (!atTop.every((x) => x.onSuit)) return { winner: null, reason: "blocked", by: atTop.find((x) => !x.onSuit) };
   // Suit, then trump: world suit and own trump > world suit only > own trump only.
-  const score = (x) => (x.card.suit === w.suit ? 2 : 0) + (x.card.suit === x.approach ? 1 : 0);
   const best = Math.max(...atTop.map(score));
   const tops = atTop.filter((x) => score(x) === best);
   return tops.length === 1 ? { winner: tops[0], reason: "tieBreak" } : { winner: null, reason: "tieLevel" };
@@ -270,10 +299,16 @@ function resolveTrick(ctx) {
     }
     plays.push({
       id, card, approach: p.approach, mirrored: p.mirror && isOrdinary(card),
-      bv: isBlessed(card) ? null : countsAs(card, p.mirror) + p.brace + (p.boost || 0),
+      bv: countsNow(card, p),
       boost: p.boost || 0, brace: p.brace, shave: p.shave || 0,
       onSuit: !isBlessed(card) && (card.suit === p.approach || card.suit === w.suit),
+      pinned: !!card.pinned,
     });
+    // Consume any one-shot multNext rule that applied to this played card.
+    if (p.cardRules && p.cardRules.length && isOrdinary(card)) {
+      const mi = p.cardRules.findIndex((r) => r.kind === "multNext" && (!r.suit || card.suit === r.suit));
+      if (mi >= 0) p.cardRules.splice(mi, 1);
+    }
     p.brace = 0;
     p.mirror = false;
     p.shave = 0;
@@ -286,15 +321,17 @@ function resolveTrick(ctx) {
     const shave = (winner.shave || 0) + (w.shave || 0);
     score = Math.max(0, w.v - shave);
     ck.players[winner.id].tally.push({ card: w, mirrored: false, score, shave });
-  } else ck.worldTaken.push(w);
+  } else if (!w.worldCannotWin) ck.worldTaken.push(w);
   for (const x of plays) {
     // A played Blessed returns to its owner's reserve, even if it was given to someone else.
     if (isBlessed(x.card)) returnToReserve(st.characters[x.card.owner] || st.characters[x.id], x.card);
-    else ck.players[x.id].played.push(x.card);
+    // A pinned card (e.g. Grave Sledge) returns straight to hand instead of played row and gives no consolation.
+    else if (x.pinned) ck.players[x.id].hand.push(x.card);
+    else { delete x.card.beat; delete x.card.beatDelta; ck.players[x.id].played.push(x.card); }
   }
   ck.log.push({
     trick: ck.trick, world: w.id, worldLabel: label(w), worldBeat: w.beat ?? w.v,
-    plays: plays.map((x) => ({ id: x.id, card: x.card.id, label: label(x.card), bv: x.bv, brace: x.brace, boost: x.boost, onSuit: x.onSuit, mirrored: x.mirrored, shave: x.shave })),
+    plays: plays.map((x) => ({ id: x.id, card: x.card.id, label: label(x.card), bv: x.bv, brace: x.brace, boost: x.boost, onSuit: x.onSuit, mirrored: x.mirrored, shave: x.shave, pinned: x.pinned })),
     winner: winner ? winner.id : null, reason, by: by ? by.id : null, score, worldShave: w.shave || 0,
   });
   ctx.events.push({
@@ -308,7 +345,7 @@ function resolveTrick(ctx) {
     const auto = consolationsV2(st);
     if (!auto) legacyPeek(ctx, plays, winner); // games begun before consolations became automatic
     for (const x of plays) {
-      if (x === winner || isBlessed(x.card)) continue;
+      if (x === winner || isBlessed(x.card) || x.pinned) continue;
       const p = ck.players[x.id];
       const s = x.card.suit;
       if (s === "S") p.brace = x.card.v;
@@ -480,9 +517,9 @@ export function compareGoals(results, a, b) {
   return da === db ? null : da < db ? a : b;
 }
 
-// The GM records consequence statuses before cleanup; they go on top of discard, Injuries last.
+// The GM records consequence statuses during a check or before cleanup; they go on top of discard, Injuries last.
 export function addConsequence(ctx, { charId, suit, compulsion }) {
-  const ck = activeCheck(ctx.state, ["resolve"]);
+  const ck = activeCheck(ctx.state, ["setup", "deal", "play", "consolation", "resolve"]);
   participant(ck, charId);
   if (!SUITS.includes(suit)) throw rule("Name the status by its suit: S, D, I or W.");
   const ch = ctx.state.characters[charId];
@@ -493,7 +530,7 @@ export function addConsequence(ctx, { charId, suit, compulsion }) {
 }
 
 export function removeConsequence(ctx, { index }) {
-  const ck = activeCheck(ctx.state, ["resolve"]);
+  const ck = activeCheck(ctx.state, ["setup", "deal", "play", "consolation", "resolve"]);
   if (!Number.isInteger(index) || index < 0 || index >= ck.consequences.length) throw rule("No such consequence to remove.");
   const [c] = ck.consequences.splice(index, 1);
   ctx.events.push({ type: "consequenceRemoved", id: c.charId, status: SUIT_INFO[c.suit].status });
@@ -512,12 +549,19 @@ export function endCheck(ctx) {
   for (const id of ck.participants) {
     const ch = st.characters[id];
     const p = ck.players[id];
-    ctx.rng.shuffle(p.hand);
-    ch.discard.push(...p.hand); // unplayed cards, shuffled together
+    const unplayed = [...p.hand, ...(p.aside || []).map((a) => a.card)];
+    for (const c of unplayed) { delete c.beat; delete c.beatDelta; delete c.pinned; }
+    ctx.rng.shuffle(unplayed);
+    ch.discard.push(...unplayed); // unplayed and set-aside cards, shuffled together
     p.hand = [];
+    p.aside = [];
+    p.cardRules = [];
     // The played row, earliest to latest. A played Stumble goes on top of the deck instead (older games: discard).
     const back = stumblePrice(st) ? [] : p.played.filter((c) => isStatus(c) && c.suit === "D");
-    for (const c of p.played) if (back.includes(c)) placeCard(ctx, ch, c, "deck-top"); else ch.discard.push(c);
+    for (const c of p.played) {
+      delete c.beat; delete c.beatDelta; delete c.pinned;
+      if (back.includes(c)) placeCard(ctx, ch, c, "deck-top"); else ch.discard.push(c);
+    }
     if (back.length) ctx.events.push({ type: "stumbleToDeck", id, n: back.length });
     p.played = [];
   }
@@ -596,6 +640,207 @@ export function gmDiscard(ctx, { charId, cardId }) {
   const p = participant(ck, charId);
   if (!p.hand.some((c) => c.id === cardId)) throw rule("That card isn't in their hand.");
   moveCard(ctx, { charId, cardId, to: "discard" });
+}
+
+// ---- Reusable Item & People Primitives ----
+
+// Set a hand card aside during a check (e.g. Red Thread, Hearthhide Coat, Scoped Rifle).
+export function gmSetAside(ctx, { charId, cardId, faceUp = true, tag }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  const p = participant(ck, charId);
+  if (ck.locks[charId] && ck.locks[charId].cardId === cardId) throw rule("That card is locked in.");
+  const card = take(p.hand, (c) => c.id === cardId);
+  if (!card) throw rule("That card isn't in their hand.");
+  p.aside = p.aside || [];
+  p.aside.push({ card, faceUp: !!faceUp, setAtTrick: ck.trick, tag: tag ? String(tag).trim().slice(0, 40) || null : null });
+  ctx.events.push({ type: "cardSetAside", id: charId, card: faceUp ? label(card) : null, faceUp: !!faceUp, tag: tag || null });
+  if (ck.phase === "play") advance(ctx);
+}
+
+// Return a set-aside card to hand (with optional beating delta, e.g. Red Thread's +tricks away), discard, or tucked under an item.
+export function gmReturnAside(ctx, { charId, cardId, to = "hand", beatDelta = 0, instanceId, itemId }) {
+  const st = ctx.state;
+  const ck = activeCheck(st, ["deal", "play", "consolation", "resolve"]);
+  const p = participant(ck, charId);
+  const ch = character(st, charId);
+  const entry = take(p.aside || [], (a) => a.card.id === cardId);
+  if (!entry) throw rule("That card isn't set aside.");
+  const card = entry.card;
+  if (to === "tucked") {
+    const item = findItem(ch, instanceId || itemId);
+    if (!item) { p.aside.push(entry); throw rule(`${ch.name} doesn't have that item.`); }
+    delete card.beat; delete card.beatDelta; delete card.pinned;
+    if (entry.faceUp) card.tuckFaceUp = true;
+    item.tucked = item.tucked || [];
+    item.tucked.push(card);
+    ctx.events.push({ type: "cardTucked", id: charId, instanceId: item.id, itemId: item.itemId, card: label(card) });
+    return;
+  }
+  if (to === "hand" && Number.isInteger(beatDelta) && beatDelta !== 0) card.beatDelta = (card.beatDelta || 0) + beatDelta;
+  else { delete card.beat; delete card.beatDelta; delete card.pinned; }
+  placeCard(ctx, ch, card, to);
+  // A face-down card stays unnamed: everyone hears of this, and only its holder and the GM know which card it is.
+  ctx.events.push({ type: "asideReturned", id: charId, card: entry.faceUp ? label(card) : null, to, beatDelta: to === "hand" ? beatDelta : 0 });
+}
+
+// Pin an ordinary card in hand face up: playing it returns it straight to hand without consolation (e.g. Grave Sledge).
+export function gmPinCard(ctx, { charId, cardId, pinned = true }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  const p = participant(ck, charId);
+  const card = p.hand.find((c) => c.id === cardId);
+  if (!card) throw rule("That card isn't in their hand.");
+  if (pinned && !isOrdinary(card)) throw rule("Only an ordinary card can be pinned.");
+  card.pinned = !!pinned;
+  ctx.events.push({ type: "cardPinned", id: charId, card: label(card), pinned: !!pinned });
+}
+
+// Set or adjust a single hand card's beating value for this check (e.g. Black Wedge half, Scoped Rifle +5, Red Thread).
+export function gmCardValue(ctx, { charId, cardId, beat, beatDelta, clear = false, reason }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  const p = participant(ck, charId);
+  const card = p.hand.find((c) => c.id === cardId);
+  if (!card) throw rule("That card isn't in their hand.");
+  if (isBlessed(card)) throw rule("Blessed has no beating value to change.");
+  if (clear) { delete card.beat; delete card.beatDelta; }
+  else {
+    if (beat !== undefined) {
+      if (!Number.isInteger(beat) || beat < 0 || beat > 30) throw rule("A card's value is 0 to 30.");
+      card.beat = beat;
+    }
+    if (beatDelta !== undefined) {
+      if (!Number.isInteger(beatDelta) || beatDelta < -20 || beatDelta > 20) throw rule("An adjustment is -20 to +20.");
+      card.beatDelta = (card.beatDelta || 0) + beatDelta;
+    }
+  }
+  // A hand card is hidden: name it only when it is pinned face up.
+  ctx.events.push({ type: "cardValueSet", id: charId, card: card.pinned ? label(card) : null, beat: card.beat ?? null, beatDelta: card.beatDelta || 0, reason: reason || null });
+}
+
+// Add a check-scoped card value rule (Grip Bone setValue, Iron Apple minValue, Iron Apple Seed multNext).
+export function gmCheckCardRule(ctx, { charId, kind, suit = null, matchValue, to, min, mult, ordinaryOnly = true, label: ruleLabel }) {
+  const ck = activeCheck(ctx.state, ["setup", "deal", "play", "consolation"]);
+  const p = participant(ck, charId);
+  if (suit != null && !SUITS.includes(suit)) throw rule("A suit is S, D, I or W.");
+  let entry;
+  if (kind === "setValue") {
+    if (!Number.isInteger(matchValue) || matchValue < 1 || matchValue > 10) throw rule("Choose a printed value from 1 to 10.");
+    if (!Number.isInteger(to) || to < 0 || to > 30) throw rule("Choose a target value from 0 to 30.");
+    entry = { kind, matchValue, to, label: String(ruleLabel || `${matchValue}s count as ${to}`).slice(0, 60) };
+  } else if (kind === "minValue") {
+    if (!Number.isInteger(min) || min < 1 || min > 20) throw rule("Choose a minimum value from 1 to 20.");
+    entry = { kind, suit, min, ordinaryOnly: !!ordinaryOnly, label: String(ruleLabel || `${suit ? SUIT_INFO[suit].name + " " : ""}min ${min}`).slice(0, 60) };
+  } else if (kind === "multNext") {
+    if (typeof mult !== "number" || !Number.isFinite(mult) || mult <= 0 || mult > 5) throw rule("Choose a positive multiplier.");
+    entry = { kind, suit, mult, label: String(ruleLabel || `Next ${suit ? SUIT_INFO[suit].name + " " : ""}×${mult}`).slice(0, 60) };
+  } else throw rule("Unknown card rule kind.");
+  p.cardRules = p.cardRules || [];
+  p.cardRules.push(entry);
+  ctx.events.push({ type: "cardRuleAdded", id: charId, rule: entry });
+}
+
+export function gmClearCardRules(ctx, { charId }) {
+  const ck = activeCheck(ctx.state, ["setup", "deal", "play", "consolation"]);
+  const p = participant(ck, charId);
+  p.cardRules = [];
+  ctx.events.push({ type: "cardRulesCleared", id: charId });
+}
+
+// Directly set or transfer a participant's active Brace, Shave, or Mirror (e.g. Porter's Rope).
+export function gmSetConsolation(ctx, { charId, brace, shave, mirror, reason }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  const p = participant(ck, charId);
+  if (brace !== undefined) {
+    if (!Number.isInteger(brace) || brace < 0 || brace > 30) throw rule("Brace is 0 to 30.");
+    p.brace = brace;
+  }
+  if (shave !== undefined) {
+    if (!Number.isInteger(shave) || shave < 0 || shave > 10) throw rule("Shave is 0 to 10.");
+    p.shave = shave;
+  }
+  if (mirror !== undefined) p.mirror = !!mirror;
+  ctx.events.push({ type: "consolationSet", id: charId, brace: p.brace, shave: p.shave, mirror: p.mirror, reason: reason || null });
+}
+
+// Set trick-level modifiers on an unplayed world card: worldCannotWin (Black Wedge) or invert (Borrowed Face).
+export function gmSetTrickMod(ctx, { index, worldCannotWin, invert, reason }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  if (!Number.isInteger(index) || index < ck.trick || index >= ck.worldRow.length) throw rule("Choose an unplayed world card.");
+  const next = { ...ck.worldRow[index] };
+  if (worldCannotWin !== undefined) next.worldCannotWin = !!worldCannotWin;
+  if (invert !== undefined) next.invert = !!invert;
+  ck.worldRow[index] = next;
+  ctx.events.push({ type: "trickModSet", index, worldCannotWin: !!next.worldCannotWin, invert: !!next.invert, reason: reason || null });
+}
+
+// Mark a participant as sitting out the rest of the check (e.g. Hollow Blindfold) or bring them back.
+export function gmSitOut(ctx, { charId, sitOut = true, reason }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  const p = participant(ck, charId);
+  p.sitOut = !!sitOut;
+  if (p.sitOut) delete ck.locks[charId];
+  ctx.events.push({ type: "sitOutSet", id: charId, sitOut: p.sitOut, reason: reason || null });
+  if (ck.phase === "play") advance(ctx);
+}
+
+// Lock a random legal card for each participant named who can play (e.g. Hushbell Chain), replacing any card they
+// had already locked. The lock is binding: they can't unlock it or lock another.
+export function gmLockRandom(ctx, { charIds, reason }) {
+  const st = ctx.state;
+  const ck = activeCheck(st, ["play"]);
+  if (ck.pending.length) throw rule("Finish waiting choices before locking cards.");
+  const targets = [...new Set(charIds || [])].filter((id) => ck.players[id] && canPlay(st, id));
+  if (!targets.length) throw rule("Nobody selected can lock a card right now.");
+  const locked = [];
+  for (const id of targets) {
+    const legal = legalCards(st, id);
+    if (!legal.length) continue;
+    const cardId = legal[ctx.rng.int(legal.length)];
+    const p = ck.players[id];
+    const card = p.hand.find((c) => c.id === cardId);
+    let priceCardId = null;
+    if (isStatus(card) && card.suit === "D" && stumblePrice(st)) {
+      const ords = p.hand.filter((c) => isOrdinary(c));
+      if (ords.length) priceCardId = ords[ctx.rng.int(ords.length)].id;
+    }
+    ck.locks[id] = { cardId, priceCardId, random: true };
+    locked.push(id);
+  }
+  ctx.events.push({ type: "lockedRandom", ids: locked, reason: reason || null });
+  if (ck.participants.every((id) => ck.locks[id] || !canPlay(st, id))) resolveTrick(ctx);
+}
+
+// Privately show a participant the top N cards of the world deck to optionally swap one with an unplayed world card (Afterimage Lens).
+export function gmPeekWorld(ctx, { charId, n = 3 }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  participant(ck, charId);
+  if (!Number.isInteger(n) || n < 1 || n > 10) throw rule("Peek 1 to 10 world cards.");
+  if (!ck.worldDeck.length) throw rule("The world deck is empty.");
+  if (ck.pending.some((x) => x.type === "peekWorld" && x.charId === charId)) throw rule("Already peeking the world deck.");
+  const cards = ck.worldDeck.slice(-n).reverse().map((c) => c.id);
+  ck.pending.push({ type: "peekWorld", charId, cards });
+  ctx.events.push({ type: "peekWorldOffered", id: charId, n: cards.length });
+}
+
+export function resolvePeekWorld(ctx, { charId, swapWorldId = null, rowIndex = null }) {
+  const ck = activeCheck(ctx.state, ["deal", "play", "consolation"]);
+  const pi = ck.pending.findIndex((x) => x.type === "peekWorld" && x.charId === charId);
+  if (pi < 0) throw rule("There is no world-deck peek to resolve.");
+  const prompt = ck.pending[pi];
+  let swapped = null;
+  if (swapWorldId != null) {
+    if (!prompt.cards.includes(swapWorldId)) throw rule("Choose one of the peeked world cards.");
+    if (!Number.isInteger(rowIndex) || rowIndex < ck.trick || rowIndex >= ck.worldRow.length) throw rule("Choose an unplayed world card to replace.");
+    const di = ck.worldDeck.findIndex((c) => c.id === swapWorldId);
+    if (di < 0) throw rule("That card is no longer in the world deck.");
+    const out = ck.worldRow[rowIndex];
+    const incoming = ck.worldDeck[di];
+    ck.worldRow[rowIndex] = incoming;
+    ck.worldDeck[di] = out;
+    swapped = { index: rowIndex, out: label(out), in: label(incoming) };
+  }
+  ck.pending.splice(pi, 1);
+  ctx.events.push({ type: "worldPeeked", id: charId, swapped });
+  advance(ctx);
 }
 
 // The GM cancels the running check: every participant goes back to how they were before it began, and

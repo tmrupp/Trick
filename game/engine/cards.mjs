@@ -29,6 +29,19 @@ export const isOrdinary = (c) => !!c && !c.status && !c.blessed;
 // into 11 minus it (a 2 counts 9); statuses stay at 0.
 export const countsAs = (c, mirror) => (mirror && isOrdinary(c) ? 11 - c.v : c.v);
 
+// Effective beating value of a card right now, accounting for per-card overrides, check-scoped card rules
+// (from items/peoples), Mirror, per-card delta, Brace, and GM boost. Shared by engine, bots, and browser UI.
+export function countsNow(c, p = {}) {
+  if (!c || isBlessed(c)) return null;
+  let base = c.beat != null ? c.beat : countsAs(c, p.mirror);
+  for (const r of p.cardRules || []) {
+    if (r.kind === "setValue" && isOrdinary(c) && c.v === r.matchValue) base = r.to;
+    else if (r.kind === "minValue" && (!r.ordinaryOnly || isOrdinary(c)) && (!r.suit || c.suit === r.suit) && base < r.min) base = r.min;
+    else if (r.kind === "multNext" && isOrdinary(c) && (!r.suit || c.suit === r.suit)) base = Math.floor(base * r.mult);
+  }
+  return Math.max(0, base + (c.beatDelta || 0) + (p.brace || 0) + (p.boost || 0));
+}
+
 export function label(c) {
   if (!c) return "nothing";
   if (isBlessed(c)) return "Blessed";

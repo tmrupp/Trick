@@ -158,8 +158,8 @@ function draw(info, view, names) {
         live && ck.trick >= ck.worldRow.length - 1 ? h("div", { class: "label" }, "This is the last trick.")
           : h("div", { class: "strip" }, (live ? ck.worldRow.slice(ck.trick + 1) : ck.worldRow).map((c) => cardFace(c, "md", { world: true }))))));
   }
-  const waiting = ck.waitingOn.length ? ck.waitingOn.map((w) => `${names[w.charId]} (${w.type === "peek" ? "Peek" : w.type === "recalculate" ? "Recalculate" : w.type === "evolve" ? "evolving" : "choosing"})`)
-    : ck.phase === "play" ? ck.participants.filter((id) => !ck.players[id].locked && !ck.players[id].busted && ck.players[id].handCount).map((id) => names[id]) : [];
+  const waiting = ck.waitingOn.length ? ck.waitingOn.map((w) => `${names[w.charId]} (${w.type === "peek" ? "Peek" : w.type === "recalculate" ? "Recalculate" : w.type === "evolve" ? "evolving" : w.type === "peekDeck" ? "deck peek" : w.type === "peekWorld" ? "world peek" : "choosing"})`)
+    : ck.phase === "play" ? ck.participants.filter((id) => !ck.players[id].locked && !ck.players[id].busted && !ck.players[id].sitOut && ck.players[id].handCount).map((id) => names[id]) : [];
   if (ck.phase !== "play" && waiting.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel banner" }, h("span", { class: "reason" }, `Waiting for ${waiting.join(", ")}`)));
   if (ck.log.length && ck.phase !== "resolve") parts.push(h("div", { class: "panel" }, h("div", { class: "reason" }, trickSentence(ck.log[ck.log.length - 1], names))));
 
@@ -198,7 +198,12 @@ function draw(info, view, names) {
       h("div", {}, h("div", { class: "tally" }, p.tally.map((t) => t.adjustment ? h("span", { class: "pill" }, `${t.score > 0 ? "+" : ""}${t.score}`) : cardFace(t.card, "sm", { world: true, badge: t.shave ? `−${t.shave}` : null, title: `${t.card.label}: scored ${t.score}${t.shave ? ` (Shaved ${t.shave})` : ""}.` })), h("strong", { class: `big ${tallyClass(p.total, p.target)}` }, ` ${p.total}`), h("span", { class: "muted" }, ` / ${p.target ?? "?"}`)),
         p.target ? h("div", { class: `bar${over ? " over" : ""}` }, h("span", { style: `width:${Math.min(100, (100 * p.total) / p.target)}%` })) : null,
         p.openHand && p.openHand.length && !p.busted && ck.phase !== "resolve" ? h("div", { class: "open-hand mt" }, h("div", { class: "label" }, "Open hand · plays from the left"), h("div", { class: "row" }, p.openHand.map((c, i) => cardFace(c, "md", { class: i === 0 ? "next-up" : "" })))) : null,
-        h("div", { class: "row small mt" }, ...consolationPills(p), p.boost ? h("span", { class: "pill good" }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null)),
+        (p.pinnedCards && p.pinnedCards.length) || (p.aside && p.aside.length) ? h("div", { class: "row small mt" },
+          ...(p.pinnedCards || []).map((c) => h("span", { class: "row" }, h("span", { class: "small muted" }, "Pinned"), cardFace(c, "sm"))),
+          ...(p.aside || []).map((a) => h("span", { class: "row" }, h("span", { class: "small muted" }, "Aside"), a.card ? cardFace(a.card, "sm") : cardBack("sm")))) : null,
+        h("div", { class: "row small mt" }, ...consolationPills(p),
+          ...(p.cardRules || []).map((rule) => h("span", { class: "pill" }, rule.label)),
+          p.boost ? h("span", { class: "pill good" }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null)),
       h("div", { class: "row" }, r ? h("div", { class: "align-right" }, h("div", { class: `reason res-text res-${r.result}` }, RESULT[r.result]), r.dies ? h("div", { class: "pill bad" }, "does not survive") : null)
         : ck.phase === "play" && p.locked ? cardBack("md", { class: "locked-back", title: "Locked in, face down until the reveal." }) : null));
   })));

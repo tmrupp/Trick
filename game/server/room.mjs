@@ -11,7 +11,7 @@ const MAX_SEATS = 10;
 // What a player seat may do: act for its own character only. The GM may do anything.
 // Every action carries the time it happened, for the campaign history. The rules never read it.
 const stamp = (a) => ({ ...a, at: Date.now() });
-const PLAYER_ACTIONS = new Set(["createCharacter", "declareApproach", "lockCard", "unlockCard", "recalculate", "peek", "giveBlessed", "evolve", "evolvePick", "useItem"]);
+const PLAYER_ACTIONS = new Set(["createCharacter", "declareApproach", "lockCard", "unlockCard", "recalculate", "peek", "giveBlessed", "evolve", "evolvePick", "useItem", "resolvePeekDeck", "resolvePeekWorld"]);
 
 export function authorize(seat, action) {
   if (seat.role === "gm") return;
@@ -19,6 +19,7 @@ export function authorize(seat, action) {
   if (action.type === "createCharacter") return; // the room checks the seat isn't mid-check
   if (!seat.charId) throw new RuleError("Create your character first.");
   if (action.charId !== seat.charId) throw new RuleError("You can only act for your own character.");
+  if (action.force) throw new RuleError("Only the GM can do that."); // e.g. undoing a random lock
 }
 
 
@@ -42,8 +43,9 @@ async function fetchDocText(url) {
 const BOT_KINDS = { greedy: "Greedy", ltr: "Lantern" };
 
 export class Room {
-  constructor(save, store, linkBase = () => "", { botDelay = 650 } = {}) {
+  constructor(save, store, linkBase = () => "", { botDelay = 650, itemPrices = {} } = {}) {
     this.botDelay = botDelay;
+    this.itemPrices = itemPrices; // Relic Price text by item id: hidden information, sent only through viewFor
     this.botTimer = null;
     this.save = save;
     this.store = store;
@@ -292,9 +294,9 @@ export class Room {
 
   viewMessage(seat, events = []) {
     // The GM's card edits name cards from a deck or reserve: only the GM and that character's player hear of them.
-    const secret = (e) => /^gm(CardMoved|CardAdded|DeckShuffled)$/.test(e.type);
+    const secret = (e) => /^(gm(CardMoved|CardAdded|DeckShuffled)|cardTucked|cardUntucked)$/.test(e.type);
     const mine = (e) => seat && (seat.role === "gm" || charsOf(seat).includes(e.id));
-    return { type: "view", room: this.roomInfo(seat), view: viewFor(this.state, this.who(seat)), events: events.filter((e) => !secret(e) || mine(e)) };
+    return { type: "view", room: this.roomInfo(seat), view: viewFor(this.state, this.who(seat), { itemPrices: this.itemPrices }), events: events.filter((e) => !secret(e) || mine(e)) };
   }
 
   broadcast(events = []) {

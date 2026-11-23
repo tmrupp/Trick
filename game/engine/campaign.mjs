@@ -1,6 +1,7 @@
 // Characters and everything that happens to their cards between and around checks:
 // creation, statuses, Curses, rest, Blessed grants, drawing, reshuffles, evolution and survival scans.
 import { SUITS, SUIT_INFO, STATUSES_PER_SUIT, buildStarter, isOrdinary, isStatus, isBlessed, label } from "./cards.mjs";
+import { upgradeItems } from "./legacy.mjs";
 
 export class RuleError extends Error {
   constructor(message) { super(message); this.name = "RuleError"; }
@@ -35,7 +36,8 @@ export function createCharacter(ctx, { id, name, primary, secondary, others, con
     compulsion: [], // the terms of the shared Curse compulsion
     survival: null, // a recorded survival requirement: { M, N }
     race: race || null,
-    items: [], // item ids from items/item_catalog.js
+    items: [], // item instances: { id, itemId, label, text, qty, charges, revealed, note, tucked }
+    itemSeq: 0,
     bot: bot || null,
   };
   if (!st.seats.includes(id)) st.seats.push(id);
@@ -270,31 +272,204 @@ export function evolvePick(ctx, { charId, cardId }) {
   }
 }
 
-// ---- Items (items/item_catalog.js). Their effects are applied by the GM with the adjustment actions. ----
+// ---- Items (items/item_catalog.js + custom campaign items) ----
 
 const ITEM_ID = /^[a-z0-9-]{1,48}$/;
+const STACKABLE_ITEMS = new Set(["iron-apple-seed"]);
 
-export function giveItem(ctx, { charId, itemId }) {
-  const ch = character(ctx.state, charId);
-  if (!ITEM_ID.test(itemId || "")) throw rule("Unknown item.");
-  if (ch.items.includes(itemId)) throw rule(`${ch.name} already has that item.`);
-  ch.items.push(itemId);
-  ctx.events.push({ type: "itemGiven", id: charId, itemId });
+// An item action's item, by instance id or (older saves' actions) catalog itemId. Item actions only: a character
+// from an older save has its bare item ids turned into instances first (legacy.mjs).
+export function findItem(ch, ref) {
+  if (!ref) return null;
+  upgradeItems(ch);
+  return (ch.items || []).find((x) => x.id === ref || x.itemId === ref) || null;
 }
 
-export function loseItem(ctx, { charId, itemId }) {
+export function giveItem(ctx, { charId, itemId = null, label = null, text = null, qty = 1, charges = 0, note = "", stack = false }) {
   const ch = character(ctx.state, charId);
-  const i = ch.items.indexOf(itemId);
-  if (i < 0) throw rule(`${ch.name} doesn't have that item.`);
-  ch.items.splice(i, 1);
-  ctx.events.push({ type: "itemLost", id: charId, itemId });
+  upgradeItems(ch); // older saves' bare item ids, so a duplicate is caught (legacy.mjs)
+  const cleanQty = Number.isInteger(qty) && qty >= 1 && qty <= 99 ? qty : 1;
+  const cleanCharges = Number.isInteger(charges) && charges >= 0 && charges <= 99 ? charges : 0;
+  const cleanNote = String(note ?? "").trim().slice(0, 160);
+  if (itemId != null) {
+    if (!ITEM_ID.test(itemId)) throw rule("Unknown item.");
+    const existing = ch.items.find((x) => x.itemId === itemId);
+    if (existing) {
+      if (stack || STACKABLE_ITEMS.has(itemId)) {
+        existing.qty = Math.min(99, (existing.qty || 1) + cleanQty);
+        ctx.events.push({ type: "itemGiven", id: charId, instanceId: existing.id, itemId, qty: cleanQty });
+        return;
+      }
+      throw rule(`${ch.name} already has that item.`);
+    }
+  } else {
+    const cleanLabel = String(label ?? "").trim().slice(0, 48);
+    if (!cleanLabel) throw rule("Give a custom item a name.");
+    label = cleanLabel;
+    text = String(text ?? "").trim().slice(0, 400);
+  }
+  ch.itemSeq = (ch.itemSeq || 0) + 1;
+  const inst = {
+    id: `it-${ch.itemSeq}`,
+    itemId: itemId || null,
+    label: itemId ? null : label,
+    text: itemId ? null : text,
+    qty: cleanQty,
+    charges: cleanCharges,
+    revealed: false, // Relics keep their hidden Price card concealed until the GM reveals it
+    note: cleanNote,
+    tucked: [],
+  };
+  ch.items.push(inst);
+  ctx.events.push({ type: "itemGiven", id: charId, instanceId: inst.id, itemId: inst.itemId, label: inst.label, qty: cleanQty });
 }
 
-// A player wakes or uses an item: everyone sees it, and the GM applies its effect and cost.
-export function useItem(ctx, { charId, itemId, note }) {
+export function loseItem(ctx, { charId, instanceId, itemId, qty }) {
   const ch = character(ctx.state, charId);
-  if (!ch.items.includes(itemId)) throw rule("You don't have that item.");
-  ctx.events.push({ type: "itemUsed", id: charId, itemId, note: note ? String(note).slice(0, 120) : null });
+  const item = findItem(ch, instanceId || itemId);
+  if (!item) throw rule(`${ch.name} doesn't have that item.`);
+  if (Number.isInteger(qty) && qty >= 1 && item.qty > qty) {
+    item.qty -= qty;
+    ctx.events.push({ type: "itemLost", id: charId, instanceId: item.id, itemId: item.itemId, label: item.label, qty });
+    return;
+  }
+  // Return any tucked personal cards to discard so cards are never lost.
+  for (const c of item.tucked || []) {
+    delete c.tuckFaceUp;
+    if (c.owner && c.owner !== "world") placeCard(ctx, ctx.state.characters[c.owner] || ch, c, "discard", { scan: false });
+  }
+  ch.items.splice(ch.items.indexOf(item), 1);
+  ctx.events.push({ type: "itemLost", id: charId, instanceId: item.id, itemId: item.itemId, label: item.label, qty: item.qty });
+}
+
+export function updateItem(ctx, { charId, instanceId, itemId, qty, charges, note, revealed }) {
+  const ch = character(ctx.state, charId);
+  const item = findItem(ch, instanceId || itemId);
+  if (!item) throw rule(`${ch.name} doesn't have that item.`);
+  if (qty !== undefined) {
+    if (!Number.isInteger(qty) || qty < 1 || qty > 99) throw rule("Quantity must be 1 to 99.");
+    item.qty = qty;
+  }
+  if (charges !== undefined) {
+    if (!Number.isInteger(charges) || charges < 0 || charges > 99) throw rule("Charges must be 0 to 99.");
+    item.charges = charges;
+  }
+  if (note !== undefined) item.note = String(note ?? "").trim().slice(0, 160);
+  if (revealed !== undefined) item.revealed = !!revealed; // the GM can hide a Price again
+  ctx.events.push({ type: "itemUpdated", id: charId, instanceId: item.id, itemId: item.itemId, label: item.label, qty: item.qty, charges: item.charges, note: item.note, revealed: item.revealed });
+}
+
+// Flip a Relic's hidden Price card open so the player and table can see it.
+export function revealItemPrice(ctx, { charId, instanceId, itemId }) {
+  const ch = character(ctx.state, charId);
+  const item = findItem(ch, instanceId || itemId);
+  if (!item) throw rule(`${ch.name} doesn't have that item.`);
+  if (item.revealed) return;
+  item.revealed = true;
+  ctx.events.push({ type: "itemPriceRevealed", id: charId, instanceId: item.id, itemId: item.itemId, label: item.label });
+}
+
+// A player wakes or uses an item: everyone sees it, and the GM gets quick-actions for its effect and cost.
+export function useItem(ctx, { charId, instanceId, itemId, note }) {
+  const ch = character(ctx.state, charId);
+  const item = findItem(ch, instanceId || itemId);
+  if (!item) throw rule("You don't have that item.");
+  ctx.events.push({ type: "itemUsed", id: charId, instanceId: item.id, itemId: item.itemId, label: item.label, note: note ? String(note).trim().slice(0, 140) || null : null });
+}
+
+// Tuck a character's card beneath an item (outside deck/discard/reserve, e.g. Grave Sledge's pinned card).
+// Face down (the default), only its holder and the GM see which card it is.
+export function gmTuckCard(ctx, { charId, instanceId, itemId, cardId, faceUp = false }) {
+  const st = ctx.state;
+  const ch = character(st, charId);
+  const item = findItem(ch, instanceId || itemId);
+  if (!item) throw rule(`${ch.name} doesn't have that item.`);
+  const at = findCard(st, ch, cardId);
+  if (!at) throw rule("That card isn't in their deck, discard, hand, aside or reserve.");
+  if (at.name === "hand" && st.check && st.check.locks[charId] && st.check.locks[charId].cardId === cardId) throw rule("That card is locked in.");
+  const raw = at.pile.splice(at.i, 1)[0];
+  const card = at.name === "aside" ? raw.card : raw;
+  delete card.beat; delete card.beatDelta; delete card.pinned;
+  if (faceUp) card.tuckFaceUp = true;
+  item.tucked = item.tucked || [];
+  item.tucked.push(card);
+  ctx.events.push({ type: "cardTucked", id: charId, instanceId: item.id, itemId: item.itemId, card: label(card) });
+}
+
+// Return a tucked card from beneath an item back into play.
+export function gmUntuckCard(ctx, { charId, instanceId, itemId, cardId, to = "discard" }) {
+  const st = ctx.state;
+  const ch = character(st, charId);
+  const item = findItem(ch, instanceId || itemId);
+  if (!item) throw rule(`${ch.name} doesn't have that item.`);
+  checkPlace(st, to);
+  const i = (item.tucked || []).findIndex((c) => c.id === cardId);
+  if (i < 0) throw rule("That card isn't tucked beneath that item.");
+  const [card] = item.tucked.splice(i, 1);
+  delete card.tuckFaceUp;
+  placeCard(ctx, ch, card, to);
+  ctx.events.push({ type: "cardUntucked", id: charId, instanceId: item.id, itemId: item.itemId, card: label(card), to });
+}
+
+// Exchange two characters' complete personal card pools between checks (e.g. Halved Locket).
+export function gmSwapPools(ctx, { charA, charB }) {
+  const st = ctx.state;
+  if (st.check && st.check.phase !== "closed") throw rule("Swap card pools between checks.");
+  if (charA === charB) throw rule("Choose two different characters.");
+  const a = character(st, charA);
+  const b = character(st, charB);
+  for (const field of ["deck", "discard", "reserve", "compulsion", "survival"]) {
+    const tmp = a[field];
+    a[field] = b[field];
+    b[field] = tmp;
+  }
+  // The cards now belong to the character using them: a played Blessed returns to its owner's reserve.
+  for (const ch of [a, b]) for (const c of [...ch.deck, ...ch.discard, ...ch.reserve]) c.owner = ch.id;
+  ctx.events.push({ type: "poolsSwapped", a: charA, b: charB });
+}
+
+// ---- Private deck peek & reorder (e.g. Ripped Page): works both between checks and during one ----
+
+export function pendingList(st) {
+  if (st.check && st.check.phase !== "closed") return st.check.pending;
+  if (!st.betweenPending) st.betweenPending = [];
+  return st.betweenPending;
+}
+
+export function gmPeekDeck(ctx, { charId, n = 3, allowDiscard = true }) {
+  const st = ctx.state;
+  const ch = character(st, charId);
+  if (!Number.isInteger(n) || n < 1 || n > 10) throw rule("Peek 1 to 10 cards.");
+  if (!ch.deck.length) throw rule(`${ch.name}'s deck is empty.`);
+  const list = pendingList(st);
+  if (list.some((x) => x.type === "peekDeck" && x.charId === charId)) throw rule(`${ch.name} is already peeking their deck.`);
+  const cards = ch.deck.slice(-n).reverse().map((c) => c.id); // index 0 is the very top card
+  list.push({ type: "peekDeck", charId, cards, allowDiscard: !!allowDiscard });
+  ctx.events.push({ type: "peekDeckOffered", id: charId, n: cards.length });
+}
+
+export function resolvePeekDeck(ctx, { charId, keepOrder = [], discard = [] }) {
+  const st = ctx.state;
+  const list = pendingList(st);
+  const pi = list.findIndex((x) => x.type === "peekDeck" && x.charId === charId);
+  if (pi < 0) throw rule("There is no deck peek to resolve.");
+  const prompt = list[pi];
+  const ch = character(st, charId);
+  if (!prompt.allowDiscard && discard.length) throw rule("You can't discard cards on this peek.");
+  // Only the peeked cards still on the deck: the GM may have moved one since, and the peek must still resolve.
+  const present = prompt.cards.filter((id) => ch.deck.some((c) => c.id === id));
+  const expected = new Set(present);
+  const combined = [...keepOrder, ...discard];
+  if (combined.length !== expected.size || new Set(combined).size !== expected.size || combined.some((id) => !expected.has(id))) {
+    throw rule("Account for every peeked card once.");
+  }
+  const taken = new Map();
+  for (const id of present) taken.set(id, ch.deck.splice(ch.deck.findIndex((c) => c.id === id), 1)[0]);
+  for (const id of discard) placeCard(ctx, ch, taken.get(id), "discard");
+  // keepOrder[0] goes on top (last element of ch.deck).
+  for (let i = keepOrder.length - 1; i >= 0; i--) ch.deck.push(taken.get(keepOrder[i]));
+  list.splice(pi, 1);
+  ctx.events.push({ type: "deckPeeked", id: charId, kept: keepOrder.length, discarded: discard.length });
 }
 
 // ---- Cards: one way to find, take and place a character's cards ----
@@ -313,12 +488,12 @@ export function matcher({ kind = "ordinary", suit, v }) {
 
 export const takeFromReserve = (ch, match) => take(ch.reserve, match);
 
-// Where a character's card is now: deck, discard, reserve, or (in a check) hand.
+// Where a character's card is now: deck, discard, reserve, or (in a check) hand and aside.
 export function findCard(st, ch, cardId) {
   const p = st.check && st.check.phase !== "closed" && st.check.players[ch.id];
-  const piles = [["deck", ch.deck], ["discard", ch.discard], ["reserve", ch.reserve], ...(p ? [["hand", p.hand]] : [])];
+  const piles = [["deck", ch.deck], ["discard", ch.discard], ["reserve", ch.reserve], ...(p ? [["hand", p.hand], ["aside", p.aside || []]] : [])];
   for (const [name, pile] of piles) {
-    const i = pile.findIndex((c) => c.id === cardId);
+    const i = pile.findIndex((c) => (name === "aside" ? c.card.id : c.id) === cardId);
     if (i >= 0) return { name, pile, i };
   }
   return null;
@@ -354,7 +529,9 @@ export function moveCard(ctx, { charId, cardId, to }) {
   if (!at) throw rule("That card isn't in their deck, discard, hand or reserve.");
   if (at.name === "hand" && st.check.locks[charId] && st.check.locks[charId].cardId === cardId) throw rule("That card is locked in.");
   if (to === "hand" && !(st.check && ["play", "consolation"].includes(st.check.phase) && st.check.players[charId])) throw rule("A card goes to a hand only during a check they're in.");
-  const [card] = at.pile.splice(at.i, 1);
+  const raw = at.pile.splice(at.i, 1)[0];
+  const card = at.name === "aside" ? raw.card : raw;
+  if (to !== "hand") { delete card.beat; delete card.beatDelta; delete card.pinned; }
   placeCard(ctx, ch, card, to);
   ctx.events.push({ type: "gmCardMoved", id: charId, card: label(card), from: at.name, to });
 }

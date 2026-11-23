@@ -10,7 +10,7 @@ import * as check from "./check.mjs";
 
 export { RuleError, survivalTarget } from "./campaign.mjs";
 export { CHECK_KINDS as KINDS, presetTricks, DIFFICULTY, DIFFICULTY_ODDS, difficulty, difficultyHint, bandOf } from "./rules.mjs";
-export { label, SUITS, SUIT_INFO, STARTER, isStatus, isBlessed, isOrdinary, countsAs } from "./cards.mjs";
+export { label, SUITS, SUIT_INFO, STARTER, isStatus, isBlessed, isOrdinary, countsAs, countsNow } from "./cards.mjs";
 export { CHECK_KINDS, RESULT_RANK, resultFor, compareGoals, legalCards, trickWinner, isBusted, canPlay } from "./check.mjs";
 export { viewFor } from "./views.mjs";
 
@@ -58,7 +58,14 @@ const HANDLERS = {
   rest: campaign.rest,
   giveItem: campaign.giveItem,
   loseItem: campaign.loseItem,
+  updateItem: campaign.updateItem,
+  revealItemPrice: campaign.revealItemPrice,
   useItem: campaign.useItem,
+  gmTuckCard: (ctx, a) => { campaign.gmTuckCard(ctx, a); check.settle(ctx); },
+  gmUntuckCard: (ctx, a) => { campaign.gmUntuckCard(ctx, a); check.settle(ctx); },
+  gmSwapPools: campaign.gmSwapPools,
+  gmPeekDeck: campaign.gmPeekDeck,
+  resolvePeekDeck: (ctx, a) => { campaign.resolvePeekDeck(ctx, a); check.settle(ctx); },
   grantBlessed: campaign.grantBlessed,
   resurrect: campaign.resurrect,
   retireCharacter: campaign.retireCharacter,
@@ -89,6 +96,18 @@ const HANDLERS = {
   gmMoveCard: (ctx, a) => { campaign.moveCard(ctx, a); check.settle(ctx); },
   gmAddCard: (ctx, a) => { campaign.gmAddCard(ctx, a); check.settle(ctx); },
   gmShuffleDeck: campaign.gmShuffleDeck,
+  gmSetAside: check.gmSetAside,
+  gmReturnAside: check.gmReturnAside,
+  gmPinCard: check.gmPinCard,
+  gmCardValue: check.gmCardValue,
+  gmCheckCardRule: check.gmCheckCardRule,
+  gmClearCardRules: check.gmClearCardRules,
+  gmSetConsolation: check.gmSetConsolation,
+  gmSetTrickMod: check.gmSetTrickMod,
+  gmSitOut: check.gmSitOut,
+  gmLockRandom: check.gmLockRandom,
+  gmPeekWorld: check.gmPeekWorld,
+  resolvePeekWorld: check.resolvePeekWorld,
 };
 
 // Older saves' actions, kept apart in legacy.mjs.
@@ -102,9 +121,9 @@ export const JOURNAL = new Set([
   "characterCreated", "renamed", "retired", "unretired", "died", "resurrected",
   "checkBegun", "checkCancelled", "checkClosed", "survivalRequired",
   "statusGained", "statusUnavailable", "curseViolated", "compulsionEdited", "rested", "evolved", "evolveKept",
-  "blessedGranted", "blessedGiven", "itemGiven", "itemLost", "itemUsed",
+  "blessedGranted", "blessedGiven", "itemGiven", "itemLost", "itemUsed", "itemPriceRevealed", "poolsSwapped",
   "tallyAdjusted", "targetAdjusted", // the GM's hand on a check's outcome, with the reason given
-  "gmCardAdded", "gmCardMoved", // the GM adding, moving or removing a character's cards: private, see PRIVATE_JOURNAL in views.mjs
+  "gmCardAdded", "gmCardMoved", "cardTucked", "cardUntucked", // private card edits: see PRIVATE_JOURNAL in views.mjs
 ]);
 
 function keepInJournal(st, action, events) {

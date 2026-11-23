@@ -1,8 +1,9 @@
 // Shared browser code: the room connection, rendering that keeps what people are typing, card faces,
 // readable event text, sounds and small helpers. Load /suit_icons.js and /card_rules.js before this module.
 
-import { SUIT_INFO, countsAs, STATUSES_PER_SUIT, BLESSED_PER_PLAYER } from "/engine/cards.mjs";
+import { SUIT_INFO, countsAs, countsNow, STATUSES_PER_SUIT, BLESSED_PER_PLAYER } from "/engine/cards.mjs";
 import { DIFFICULTY, CHECK_KINDS, difficulty as difficultyWord } from "/engine/rules.mjs";
+export { countsNow };
 
 // The suits come from the engine; the pages add only what they need to draw them (art and rule-text keys).
 const SUIT_UI = { S: { key: "strength", statusKey: "injury" }, D: { key: "dexterity", statusKey: "dazed" }, I: { key: "intelligence", statusKey: "stress" }, W: { key: "weird", statusKey: "curse" } };
@@ -387,13 +388,18 @@ function simpleFace(c, world = false) {
   ];
 }
 
-// What a world card's world consolation or a GM adjustment has changed: "counts 14 to beat", "scores 1 less", or both.
+// What a world card's world consolation or a GM adjustment has changed: "counts 14 to beat", "scores 1 less", or trick modifiers.
 // The stage on every screen shows it under the current world card; cardFace puts the short form in the card's corner.
 export function worldNote(c) {
   if (!c) return "";
-  return [c.beat != null ? `counts ${c.beat} to beat` : null, c.shave ? `scores ${c.shave} less` : null].filter(Boolean).join(", ");
+  return [
+    c.beat != null ? `counts ${c.beat} to beat` : null,
+    c.shave ? `scores ${c.shave} less` : null,
+    c.worldCannotWin ? "world cannot win" : null,
+    c.invert ? "inverted (lowest under wins)" : null,
+  ].filter(Boolean).join(", ");
 }
-export const WORLD_NOTE_TIP = "Changed by the world's consolation or the GM. Taking it still scores its printed value, less any Shave.";
+export const WORLD_NOTE_TIP = "Changed by the world's consolation, an item, or the GM. Taking it still scores its printed value, less any Shave.";
 
 // A card. size: "sm" | "md" | "lg" | "xl" | "stage". The screens draw simple faces; extra.art draws the printed card.
 // extra: { class, onclick, title, disabled, badge, art, world }. Press and hold any card to see the printed card full size.
@@ -401,20 +407,25 @@ export function cardFace(c, size = "md", extra = {}) {
   if (!c) return h("div", { class: `cf ${size} empty`, "aria-label": "no card" });
   const label = cardLabel(c);
   const kind = c.blessed ? "blessed" : SUITS[c.suit].key;
-  const beatBadge = c.beat != null || c.shave
-    ? [c.beat != null ? `→${c.beat}` : null, c.shave ? `−${c.shave}` : null].filter(Boolean).join(" ")
+  // A world card's modifiers say their name on larger cards and a mark on small ones (style.css: .tag-long, .tag-short).
+  const nums = [c.beat != null ? `→${c.beat}` : null, c.shave ? `−${c.shave}` : null].filter(Boolean).join(" ");
+  const mods = [c.worldCannotWin ? ["NO WIN", "⊘"] : null, c.invert ? ["INVERT", "⇅"] : null].filter(Boolean);
+  const beatBadge = nums || mods.length
+    ? [nums || null, ...mods.map(([long, short]) => [h("span", { class: "tag-long" }, long), h("span", { class: "tag-short", "aria-hidden": "true" }, short)])]
     : null;
-  const tag = beatBadge || extra.badge || null;
+  const tag = extra.badge || beatBadge || null;
   const tipBody = extra.world ? worldCardText(c) : cardText(c);
   const note = worldNote(c);
+  const valueChanged = c.beat != null || !!extra.badge;
   const el = h(extra.onclick ? "button" : "div", {
-    class: `cf ${size} ${extra.art ? "" : `simple k-${kind}${c.status ? " is-status" : ""}${c.blessed ? " is-blessed" : ""}`}${tag ? " has-beat" : ""} ${extra.class || ""}`,
-    "data-tip": extra.title || `${label}${note ? ` (${note})` : ""}. ${tipBody}`,
+    class: `cf ${size} ${extra.art ? "" : `simple k-${kind}${c.status ? " is-status" : ""}${c.blessed ? " is-blessed" : ""}`}${valueChanged ? " has-beat" : ""}${tag ? " has-tag" : ""}${c.pinned ? " is-pinned" : ""}${c.worldCannotWin ? " is-wedged" : ""}${c.invert ? " is-inverted" : ""} ${extra.class || ""}`,
+    "data-tip": extra.title || `${label}${note ? ` (${note})` : ""}${c.pinned ? " (pinned: returns to hand when played)" : ""}. ${tipBody}`,
     onclick: extra.onclick, "aria-disabled": extra.disabled ? "true" : undefined, type: extra.onclick ? "button" : undefined,
     "aria-label": extra.onclick ? label : undefined,
   },
   extra.art ? art(artName(c), label) : simpleFace(c, !!extra.world),
-  tag ? h("span", { class: `beat${beatBadge ? "" : " badge"}` }, tag) : null);
+  c.pinned ? h("span", { class: "pin-tag", "aria-label": "Pinned" }, "PIN") : null,
+  tag ? h("span", { class: `beat${beatBadge && !extra.badge ? "" : " badge"}` }, tag) : null);
   if (!extra.onclick) el.setAttribute("aria-label", label), el.setAttribute("role", "img");
   el._card = c;
   el._world = !!extra.world;
@@ -525,7 +536,13 @@ export function trickSentence(e, names) {
   const bits = (p) => [p.mirrored ? `Mirrored, it counts ${p.bv}` : "", p.brace ? `Brace +${p.brace}` : "", p.boost ? `${p.boost > 0 ? "+" : ""}${p.boost}` : ""].filter(Boolean).join(", ");
   if (e.winner) {
     const p = play(e.winner);
-    const how = { blessed: "Blessed always takes it", highest: `the highest on-suit card${bits(p) ? ` (${bits(p)})` : ""}`, tieBreak: "a tie, settled by suit, then trump" }[e.reason];
+    const how = {
+      blessed: "Blessed always takes it",
+      highest: `the highest on-suit card${bits(p) ? ` (${bits(p)})` : ""}`,
+      tieBreak: "a tie, settled by suit, then trump",
+      inverted: "inverted trick: lowest card of the world's suit under it",
+      worldCannotWin: "world could not win; highest on-suit card",
+    }[e.reason] || "takes the trick";
     const shaved = (p.shave || 0) + (e.worldShave || 0);
     const wc = e.worldConsolation || (e.world && typeof e.world === "object" ? e.world : null);
     const wcText = worldConsolationText(wc);
@@ -533,17 +550,20 @@ export function trickSentence(e, names) {
   }
   const why = {
     worldHighest: `no card beat it${e.worldBeat !== undefined ? ` (it counts ${e.worldBeat})` : ""}`,
+    worldInverted: `no card of the world's suit was below it${e.worldBeat !== undefined ? ` (counts ${e.worldBeat})` : ""}`,
+    noOnSuit: "the world could not win and no on-suit card was played",
     blocked: `${e.by ? `${n(e.by)}'s ${play(e.by).label}` : "an off-suit card"} is highest but off-suit, and blocks`,
     tieLevel: "a tie that stays level",
     blessedTie: "two Blessed tie",
-  }[e.reason];
-  return `The world keeps the ${e.worldLabel}: ${why}.`;
+  }[e.reason] || "unwon";
+  return e.reason === "noOnSuit" ? `Nobody takes the ${e.worldLabel}: ${why}.` : `The world keeps the ${e.worldLabel}: ${why}.`;
 }
 
 const PLACE_NAMES = { "deck-top": "the top of their deck", "deck-bottom": "the bottom of their deck", "deck-shuffle": "shuffled into their deck", discard: "their discard", hand: "their hand", reserve: "reserve" };
 
 export function eventText(e, names, items = {}) {
   const n = (id) => names[id] || id;
+  const itemName = (ev) => ev.label || (ev.itemId && items[ev.itemId]) || ev.itemId || "an item";
   switch (e.type) {
     case "statusGained": return `${n(e.id)} gains ${e.status}${e.compulsion ? ` (compulsion: ${e.compulsion})` : ""}.`;
     case "statusUnavailable": return `${n(e.id)} has no ${e.status} left in reserve.`;
@@ -570,8 +590,27 @@ export function eventText(e, names, items = {}) {
     case "stumbleToDeck": return `${e.n > 1 ? `${e.n} Stumbles go` : "Stumble goes"} back on top of ${n(e.id)}'s deck.`;
     case "peekReplaced": return `Peek: the next world card, ${e.out}, is replaced by the ${e.in}.`;
     case "peekKept": return `Peek: the ${e.world} stays.`;
-    case "itemUsed": return `${n(e.id)} uses ${items[e.itemId] || e.itemId}${e.note ? `: ${e.note}` : ""}.`;
-    case "itemGiven": return `${n(e.id)} gains ${items[e.itemId] || e.itemId}.`;
+    case "itemUsed": return `${n(e.id)} uses ${itemName(e)}${e.note ? `: ${e.note}` : ""}.`;
+    case "itemGiven": return `${n(e.id)} gains ${itemName(e)}${e.qty > 1 ? ` ×${e.qty}` : ""}.`;
+    case "itemLost": return `${n(e.id)} loses ${itemName(e)}${e.qty > 1 ? ` ×${e.qty}` : ""}.`;
+    case "itemPriceRevealed": return `${n(e.id)}'s ${itemName(e)} — Price revealed!`;
+    case "cardTucked": return `GM: tucked ${n(e.id)}'s ${e.card} under ${itemName(e)}.`;
+    case "cardUntucked": return `GM: untucked ${n(e.id)}'s ${e.card} to ${PLACE_NAMES[e.to] || e.to}.`;
+    case "poolsSwapped": return `${n(e.a)} and ${n(e.b)} swap card pools.`;
+    case "cardSetAside": return `${n(e.id)} sets ${e.faceUp ? e.card : "a card"} aside.`;
+    case "asideReturned": return `${n(e.id)}'s ${e.card || "set-aside card"} returns to ${PLACE_NAMES[e.to] || e.to}${e.beatDelta ? ` (${e.beatDelta > 0 ? "+" : ""}${e.beatDelta})` : ""}.`;
+    case "cardPinned": return `${n(e.id)} ${e.pinned ? "pins" : "unpins"} ${e.card}.`;
+    case "cardValueSet": return `${e.card ? `${n(e.id)}'s ${e.card}` : `A card in ${n(e.id)}'s hand`} counts differently${e.reason ? ` (${e.reason})` : ""}.`;
+    case "cardRuleAdded": return `${n(e.id)}: ${e.rule?.label || "card rule added"}.`;
+    case "cardRulesCleared": return `${n(e.id)}'s card rules cleared.`;
+    case "consolationSet": return `GM adjusts ${n(e.id)}'s consolations${e.reason ? ` (${e.reason})` : ""}.`;
+    case "trickModSet": return `${e.worldCannotWin ? "World card cannot win its trick" : e.invert ? "Trick inverted" : "Trick modifier cleared"}${e.reason ? ` (${e.reason})` : ""}.`;
+    case "sitOutSet": return `${n(e.id)} ${e.sitOut ? "sits out the rest of the check" : "returns to play"}${e.reason ? ` (${e.reason})` : ""}.`;
+    case "lockedRandom": return `Random card locked for ${(e.ids || []).map(n).join(", ")}${e.reason ? ` (${e.reason})` : ""}.`;
+    case "peekDeckOffered": return `${n(e.id)} looks at the top ${e.n} cards of their deck.`;
+    case "deckPeeked": return `${n(e.id)} reorders their deck${e.discarded ? ` (discarded ${e.discarded})` : ""}.`;
+    case "peekWorldOffered": return `${n(e.id)} looks at the top ${e.n} cards of the world deck.`;
+    case "worldPeeked": return e.swapped ? `${n(e.id)} swaps world card ${e.swapped.out} with ${e.swapped.in}.` : `${n(e.id)} leaves the world row as it is.`;
     case "compulsionEdited": return `The GM changes ${n(e.id)}'s compulsion to: ${e.to.join("; ")}.`;
     case "curseViolated": return `${n(e.id)} breaks the compulsion and gains ${e.stress} Stress.`;
     case "rested": return `${n(e.id)} rests.`;
@@ -581,7 +620,6 @@ export function eventText(e, names, items = {}) {
       return `${n(e.id)} evolves: ${e.status ? `one ${status} goes back to reserve` : `two ${status} cards are set aside`}${e.returned ? `, and so does their ${e.returned}` : e.mode === "return" ? ", with a card" : ""}${e.mode === "gain" ? `, and they draw ${SUITS[e.suit] ? SUITS[e.suit].name : ""} cards to keep one` : ""}.`;
     }
     case "evolveKept": return `${n(e.id)} keeps the ${e.card} from evolving.`;
-    case "itemLost": return `${n(e.id)} loses ${items[e.itemId] || e.itemId}.`;
     case "reshuffled": return `${n(e.id)} reshuffles.`;
     case "boosted": return `${n(e.id)}'s next card counts ${e.amount > 0 ? "+" : ""}${e.amount}${e.reason ? ` (${e.reason})` : ""}.`;
     case "tallyAdjusted": return `${n(e.id)}'s tally ${e.delta > 0 ? "+" : ""}${e.delta}${e.reason ? ` (${e.reason})` : ""}.`;
@@ -601,6 +639,17 @@ export function suitSelect(key, value, exclude = []) {
 export function itemsById() {
   const cat = globalThis.TrickItemCatalog ? globalThis.TrickItemCatalog.itemCatalog : [];
   return Object.fromEntries(cat.filter((i) => i.kind !== "reveal").map((i) => [i.id, i]));
+}
+// Which items have a Relic Price card, by item id. The host serves these entries without their text: a Price's
+// words come only in view.itemPrices, once the GM may show them (game/server/items.mjs).
+export function itemPriceById() {
+  const cat = globalThis.TrickItemCatalog ? globalThis.TrickItemCatalog.itemCatalog : [];
+  return Object.fromEntries(cat.filter((i) => i.kind === "reveal").map((i) => [i.id.replace(/-price$/, ""), i]));
+}
+export function itemDisplayName(inst, items = {}) {
+  if (!inst) return "Item";
+  if (typeof inst === "string") return (items[inst] && items[inst].label) || items[inst] || inst;
+  return inst.label || (inst.itemId && ((items[inst.itemId] && items[inst.itemId].label) || items[inst.itemId])) || inst.itemId || "Custom item";
 }
 export function racesById() {
   const cat = globalThis.TrickRaceCatalog ? globalThis.TrickRaceCatalog.raceCatalog : [];
@@ -961,6 +1010,7 @@ export function choosingChip(ck, id) {
   if (!ck || ck.phase !== "play") return null;
   const p = ck.players[id];
   if (p.busted) return h("span", { class: "pill chip-busted", "data-tip": "Over target: busted and sitting out the rest of this check." }, "busted");
+  if (p.sitOut) return h("span", { class: "pill chip-sitout", "data-tip": "Sitting out the rest of this check." }, "sits out");
   const key = `${ck.id}:${ck.trick}:${id}`;
   if (p.locked) {
     if (chipSeen.choosing.has(key) && !chipSeen.lockedAt.has(key)) chipSeen.lockedAt.set(key, Date.now());
@@ -981,7 +1031,7 @@ export function choosingList(ck, names, me) {
       : need < 0 ? `Busted (over by ${-need}).`
       : need === 0 ? "Exactly on target (critical)."
       : `Needs ${need} more for exact hit.`;
-    return h("div", { class: `person-row ally-row ${tone(p.approach)}${id === me ? " me" : ""}${p.busted ? " is-busted" : ""}` },
+    return h("div", { class: `person-row ally-row ${tone(p.approach)}${id === me ? " me" : ""}${p.busted ? " is-busted" : ""}${p.sitOut ? " is-sitout" : ""}` },
       h("div", { class: "ally-top" },
         h("strong", { class: "ally-name" }, id === me ? `${names[id]} (you)` : names[id]),
         choosingChip(ck, id),
@@ -990,6 +1040,7 @@ export function choosingList(ck, names, me) {
         p.approach ? h("span", { class: `pill tinted ${tone(p.approach)}`, "data-tip": `Trump: ${SUITS[p.approach].name}.` }, `${SUITS[p.approach].sym} ${SUITS[p.approach].name}`) : null,
         p.survival ? h("span", { class: "pill bad", "data-tip": "Forced survival goal." }, "Survival") : null,
         ...consolationPills(p),
+        ...(p.cardRules || []).map((r) => h("span", { class: "pill", "data-tip": "Active item/check rule." }, r.label)),
         p.boost ? h("span", { class: "pill good", "data-tip": "GM adjustment to their next card." }, `Next ${p.boost > 0 ? "+" : ""}${p.boost}`) : null));
   }));
 }
@@ -1016,9 +1067,6 @@ export function layoutSwitch(page) {
 }
 
 
-// What a card counts for beating right now, with Brace, Mirror and the GM's adjustment (the engine's countsAs).
-export const countsNow = (c, p) => (c.blessed ? null : countsAs(c, p.mirror) + (p.brace || 0) + (p.boost || 0));
-
 // A hand to choose from: tap to choose, tap again to see the card full size; a white bar across each card that
 // can beat the world card, and the value it counts now when an effect changes it. The phone and the GM's own
 // character both use it. ui is { chosen, price } and is updated in place. Stumble's Price is asked for only in older
@@ -1031,19 +1079,26 @@ export function handDock({ hand, legal, p, w, ui, rules, onLock, size = "md" }) 
   const hint = needsPrice ? (ui.price ? "Price chosen. Lock in when ready." : "Stumble's Price: tap an ordinary card to discard.")
     : forced ? `The situation finds your weakness: you must play your ${SUITS[w.suit].status}.`
     : chosen ? `${cardLabel(chosen)}: ${cardText(chosen)}`
+    : w.invert ? `Inverted trick: lowest ${SUITS[w.suit].name} card below ${toBeat} wins (trump does not apply).`
+    : w.worldCannotWin ? `World cannot win this trick: highest on-suit card takes it.`
     : `Pick a card. A white bar means it can beat the ${w.label}${w.beat != null ? ` (counts ${w.beat})` : ""}. Hold a card to see it full size.`;
   return [
-    h("p", { class: `hint${forced || needsPrice ? " pill warn" : ""}` }, hint),
+    h("p", { class: `hint${forced || needsPrice || w.invert || w.worldCannotWin ? " pill warn" : ""}` }, hint),
     h("div", { class: "fan" }, hand.map((c) => {
       const isLegal = legal.includes(c.id);
       const pickPrice = needsPrice && c.id !== chosen.id && !c.status && !c.blessed;
       const n = countsNow(c, p);
-      const canBeat = isLegal && (c.blessed || c.suit === w.suit || c.suit === p.approach) && (c.blessed || n > toBeat);
+      const canBeat = isLegal && (
+        c.blessed ? true
+          : w.invert ? (c.suit === w.suit && n < toBeat)
+          : w.worldCannotWin ? (c.suit === w.suit || c.suit === p.approach)
+          : ((c.suit === w.suit || c.suit === p.approach) && n > toBeat)
+      );
       return cardFace(c, size, {
         class: [ui.chosen === c.id ? "chosen" : "", ui.price === c.id ? "price" : "", forced && isLegal ? "forced" : "", canBeat && !needsPrice ? "can-beat" : ""].join(" "),
         disabled: !(isLegal || pickPrice),
         badge: n != null && n !== c.v ? `→${n}` : null,
-        title: `${c.label}${n != null && n !== c.v ? ` (counts ${n} now)` : ""}. ${cardText(c)}`,
+        title: `${c.label}${n != null && n !== c.v ? ` (counts ${n} now)` : ""}${c.pinned ? " (pinned)" : ""}. ${cardText(c)}`,
         onclick: () => {
           if (pickPrice) ui.price = c.id;
           else if (ui.chosen === c.id) return zoomCard(c);

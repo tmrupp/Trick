@@ -77,7 +77,7 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | `beginCheck { kind, participants, situation }` | No check running | GM. Runs the survival scan. `situation` is optional: the GM's description of what the check is about, up to 300 characters |
 | `setSituation { situation }` | Any time in a check | GM: describes, rewrites or clears (blank) the check's situation. Everyone sees it, and the check's record keeps it |
 | `declareApproach { charId, goal, suit, suggested }` | Setup | The player states their goal, the suit it leans on (their trump), and optionally a suggested target. A survival goal is fixed and accepted at once; restating a goal sends it back to the GM |
-| `setGoal { charId, suit, goal, target }` | Setup | GM: sets any of a participant's trump, goal and target directly, with or without their input; a player's `declareApproach` is a convenience that fills these in. A participant with a trump and a target is ready. A survival target is fixed at 3 × M. (`approveApproach` remains only so older saves replay) |
+| `setGoal { charId, suit, goal, target }` | Setup | GM: sets any of a participant's trump, goal and target directly, with or without their input; a player's `declareApproach` is a convenience that fills these in. A participant with a trump and a target is ready. A survival target is fixed at 3 × M + 3 (3 × M in games begun before that rule). (`approveApproach` remains only so older saves replay) |
 | `peek { charId, replace }` | After a trick, older games | A player who lost with a Spade, in a game begun before consolations became automatic: replace the next world card unseen, or keep it |
 | `resurrect { charId }` | Between checks | GM: bring a dead character back |
 | `gmMoveCard { charId, cardId, to }`, `gmAddCard { charId, kind, suit, v, to }`, `gmShuffleDeck { charId }` | Any time | GM: free card editing for items and story effects. `to` is `deck-top`, `deck-bottom`, `deck-shuffle`, `discard`, `hand` (in a check) or `reserve` (removes it). Adding takes a matching card from reserve, or makes an extra one. Only the GM and that player are told |
@@ -86,7 +86,7 @@ Suits are `S` (Strength, Hearts), `D` (Dexterity, Spades), `I` (Intelligence, Di
 | `recalculate { charId, cardId }` | Consolation, older games | A player who lost with a Diamond, in a game begun before consolations became automatic |
 | `giveBlessed { charId, to, cardId }` | Between tricks | A player holding a Blessed |
 | `evolve { charId, skip \| suit, mode, cardId }`, `evolvePick { charId, cardId }` | When a draw reshuffles and evolution is possible | That player |
-| `addConsequence { charId, suit, compulsion }`, `endCheck` | After the final trick | GM |
+| `addConsequence { charId, suit, compulsion }`, `removeConsequence { index }`, `endCheck` | After the final trick | GM |
 | `gainStatus`, `curseViolation`, `rest`, `grantBlessed` | Between checks (`grantBlessed` any time) | GM |
 | `giveItem`, `loseItem { charId, itemId }` | Any time | GM |
 | `useItem { charId, itemId, note }` | Any time | The item's holder: announces it |

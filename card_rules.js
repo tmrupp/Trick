@@ -84,3 +84,21 @@ globalThis.TrickCoreCards = {
     "description": "Blessed always takes the trick it is played in and scores the world card. It has no suit."
   }
 };
+globalThis.TrickWorldConsolations = {
+  "strength": {
+    "name": "Brace",
+    "description": "The next world card counts the taken card's value higher for beating. It still scores its printed value."
+  },
+  "dexterity": {
+    "name": "Shave",
+    "description": "The next world card scores 1 less, never below 0."
+  },
+  "intelligence": {
+    "name": "Peek",
+    "description": "Put the next world card on the bottom of the world deck and deal the world deck's top card face up in its place."
+  },
+  "weird": {
+    "name": "Mirror",
+    "description": "The next world card counts 11 minus its value for beating: a 2 counts 9, a 9 counts 2. It still scores its printed value."
+  }
+};

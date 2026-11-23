@@ -10,6 +10,8 @@
 // - check.mjs: games without rules.world "lose" (worldConsoles) give the world no consolation.
 // - check.mjs: games without rules.bustSitOut (bustSitOut) let busted players keep playing remaining tricks.
 // - campaign.mjs: games without rules.survival "3m+3" (survivalTarget) set survival target to 3 × M instead of 3 × M + 3.
+// - shared/client.js, trickSentence(): a trick log entry whose world field holds the world's consolation record (saves
+//   from before it moved to worldConsolation, when it overwrote the world card id).
 // - server/room.mjs and store.mjs: a save naming no rules replays under { peek: "choose" }.
 // - check.mjs, legacyPeek: rules.peek === "auto" (Peek replaced the next world card with no choice).
 // - check.mjs, peek(): the `swap` field (the old name for `replace`).

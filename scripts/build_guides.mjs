@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { cardRulesModule, cardsFromRules, readRules } from "./rules_source.mjs";
+import { cardRulesModule, cardsFromRules, readRules, worldFromRules } from "./rules_source.mjs";
 import "../races/race_catalog.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -74,9 +74,9 @@ await writeFile(path.join(root, "race_mechanics.html"), racePage);
 
 const rules = await readRules();
 
-// Card faces print RULES.md's tables; card_rules.js is generated so pages can load it without a build step.
+// Card faces print RULES.md's tables, and world cards on screen show its world's consolation; card_rules.js is generated so pages can load it without a build step.
 const cards = cardsFromRules(rules);
-await writeFile(path.join(root, "card_rules.js"), cardRulesModule(cards));
+await writeFile(path.join(root, "card_rules.js"), cardRulesModule(cards, worldFromRules(rules)));
 
 // The condensed player guide was retired; its old URLs forward to the full rules.
 const redirect = `<!doctype html>

@@ -338,16 +338,11 @@ export function cardText(c) {
   return entry ? entry.description : "";
 }
 
-// The world's consolation when a player takes a world card of each suit (RULES.md, The world's consolation).
-const WORLD_CONSOLATION = {
-  S: { name: "Brace", text: "World card. If taken, the world Braces: the next world card counts this card's value higher for beating (scores its printed value)." },
-  D: { name: "Shave", text: "World card. If taken, the world Shaves: the next world card scores 1 less, never below 0." },
-  I: { name: "Peek", text: "World card. If taken, the world Peeks: puts the next world card on the bottom of the world deck and deals the top card in its place." },
-  W: { name: "Mirror", text: "World card. If taken, the world Mirrors: the next world card counts 11 minus its value for beating (scores its printed value)." },
-};
+// The world's consolation for a world card of this suit, as RULES.md words it (via card_rules.js): { name, description }.
+const worldConsolation = (c) => (c && c.suit && !c.status && !c.blessed && SUITS[c.suit] && (globalThis.TrickWorldConsolations || {})[SUITS[c.suit].key]) || null;
 export function worldCardText(c) {
-  if (!c || !c.suit || !WORLD_CONSOLATION[c.suit]) return cardText(c);
-  return WORLD_CONSOLATION[c.suit].text;
+  const wc = worldConsolation(c);
+  return wc ? `World card. If a player takes it, the world's consolation is ${wc.name}: ${wc.description}` : cardText(c);
 }
 
 // A consolation's rule, as RULES.md words it (via card_rules.js): consolationText("S") is Brace's.
@@ -383,7 +378,7 @@ export function cardLabel(c) {
 function simpleFace(c, world = false) {
   const key = c.blessed ? "blessed" : SUITS[c.suit].key;
   const icons = globalThis.TrickSuitIcons;
-  const foot = c.blessed ? "Blessed" : c.status ? SUITS[c.suit].status : world && WORLD_CONSOLATION[c.suit] ? WORLD_CONSOLATION[c.suit].name : SUITS[c.suit].consolation;
+  const foot = c.blessed ? "Blessed" : c.status ? SUITS[c.suit].status : world && worldConsolation(c) ? worldConsolation(c).name : SUITS[c.suit].consolation;
   return [
     h("span", { class: "sv" }, c.blessed ? "" : c.status ? "0" : valueLabel(c.v)),
     h("span", { class: "si", html: icons ? icons.svg(key) : "" }),

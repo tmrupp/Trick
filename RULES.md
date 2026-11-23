@@ -64,7 +64,7 @@ Quick checks run **Easy** 6–9, **Moderate** 10–11, **Hard** 12–13, **Very 
 ## Play the tricks
 
 1. **The world leads** the next card in its row.
-2. **Everyone chooses a card face down,** then all reveal together. **If you hold a status in the world card's suit, you must play one.** If your hand is empty, or you have already **busted** (gone over your target), sit out the remaining tricks.
+2. **Everyone chooses a card face down,** then all reveal together. **If you hold a status in the world card's suit, you must play one.** If your hand is empty, sit out that trick. Once you have **busted** (gone over your target), sit out the remaining tricks.
 3. **Find the single highest card on the table,** counting the world card and any Brace. If it is a player's card, and in the world card's suit **or** its owner's trump, it **wins**: its owner takes the world card into their tally pile and **scores its value**.
 4. **If players' cards tie for highest** above the world card and all are on-suit, rank them: a card in the world card's suit **and** its owner's trump beats one in the world card's suit only, which beats one in its owner's trump only. The single best-ranked card wins.
 5. Otherwise **the world takes the trick**: the world card is highest, the highest card is off-suit, or the tie stays level. Discard that world card.

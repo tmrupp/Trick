@@ -4,7 +4,7 @@ import {fileURLToPath,pathToFileURL} from "node:url";
 import {chromium} from "playwright";
 import {blessedCards,buildDeckCards,suitCards} from "../card_registry.mjs";
 import "../items/item_catalog.js";
-import { cardRulesModule, cardsFromRules, readRules } from "./rules_source.mjs";
+import { cardRulesModule, cardsFromRules, readRules, worldFromRules } from "./rules_source.mjs";
 import "../races/race_catalog.js";
 import "../rules_reference.js";
 
@@ -20,7 +20,7 @@ for(const suit of suitCards){
 }
 // Card text is generated from RULES.md; a stale card_rules.js means someone skipped npm run build:guides.
 const normLF = (s) => s.replace(/\r\n/g, "\n");
-if(normLF(await readFile(path.join(root,"card_rules.js"),"utf8"))!==normLF(cardRulesModule(cardsFromRules(await readRules()))))throw Error("card_rules.js is out of date with RULES.md; run npm run build:guides");
+if(normLF(await readFile(path.join(root,"card_rules.js"),"utf8"))!==normLF(cardRulesModule(cardsFromRules(await readRules()), worldFromRules(await readRules()))))throw Error("card_rules.js is out of date with RULES.md; run npm run build:guides");
 const browser=await chromium.launch();
 const page=await browser.newPage({viewport:{width:1050,height:1470}});
 const errors=[],overflows=[],screens=[];
